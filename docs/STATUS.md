@@ -6,14 +6,15 @@
 
 ## מצב נוכחי
 
-שלב **תשתית**. WP-D1 ✓ · WP-00 ✓ · WP-01 ✓ · **WP-02 שלב א' ✓** —
-ליבת auth כתובה בבית (ADR-015): argon2id, sessions ב-DB (opaque token), נעילה + חנק IP, TOTP, הזמנה, איפוס.
-Drizzle + PGlite מקומית. 17 בדיקות ירוקות. **הבא: WP-02 שלב ב'** — routes + middleware + מסכים.
+שלב **תשתית**. WP-D1 ✓ · WP-00 ✓ · WP-01 ✓ · **WP-02 ✓ (שלב א' + ב')** · הפריסה חיה (`nofar-clinic.vercel.app`).
+התחברות/יציאה/קבלת-הזמנה/איפוס עובדים מקצה לקצה מקומית (PGlite). **הבא: WP-03 — Scoping Guard.**
 
 ## קישורים
 
 - GitHub: https://github.com/maor561/nofar-clinic
-- Vercel: https://vercel.com/maor561s-projects/nofar-clinic (חיבור בפועל — ב-WP-04/פריסה)
+- Vercel: https://nofar-clinic.vercel.app · dashboard: https://vercel.com/maor561s-projects/nofar-clinic
+- git↔Vercel מחובר, auto-deploy מ-`main`. **תיקון:** Framework Preset היה "Other" (הגיש `public/` סטטית → 404) → שונה ל-Next.js.
+- הפריסה כרגע = עמודים סטטיים בלבד (`/`, `/design`). auth ידרוש DB — Neon ב-WP-04.
 
 ## מה נעשה
 
@@ -25,10 +26,10 @@ Drizzle + PGlite מקומית. 17 בדיקות ירוקות. **הבא: WP-02 ש�
 
 ## בעבודה
 
-- **WP-02 שלב ב'** (הבא): route handlers / server actions, middleware → request context (תפר ה-guard),
-  מסכי התחברות/הזמנה/איפוס/TOTP מהמוקאפים, `import "server-only"` בשכבת ה-routes.
+- **WP-03 — Scoping Guard** (הבא). נקודת האכיפה היחידה: אין DB handle בלי scope. `getCurrentSession` (ב-`auth/server.ts`) הוא התפר.
 - **דיוקי תוכן במוקאפים** — טראק מקביל מול הלקוח, לא חוסם.
-- **DB פרודקשן:** Neon בפרויקט Vercel — יוקם ב-WP-04 (או קודם, לפי הצורך). כרגע PGlite מקומית.
+- **DB פרודקשן:** Neon בפרויקט Vercel — WP-04. כרגע PGlite מקומית; הפריסה מריצה רק את העמודים הסטטיים + מסכי auth (שנכשלים בחן — "אין DB").
+- **TOTP enrollment UI** + change-password UI — נדחו ל-WP-02 המשך / הגדרות (WP-20). הליבה + בדיקות קיימות.
 
 ## ✅ הושלם
 
@@ -52,8 +53,13 @@ Drizzle + PGlite מקומית. 17 בדיקות ירוקות. **הבא: WP-02 ש�
   (`therapist`/`user`/`session`/`invite`/`password_reset`/`login_attempt`) + `patient` מינימלי, מיגרציה `0000_init` ·
   `modules/core/auth`: argon2id · sessions (opaque token, sha256 ב-DB, 7d + rotation) · נעילה 5/15דק' + חנק IP 15/15דק' ·
   TOTP (otpauth) · invite חד-פעמי 7d · reset חד-פעמי 1h (מבטל sessions) · `index.ts` = חוזה ציבורי ·
-  scripts `db:generate`/`db:migrate`/`db:seed` (tsx) · seed = נופר + 2 מטופלים · **17 בדיקות** (`auth.test.ts`, env=node) ·
-  כל הבדיקות ירוקות. **פתוח:** `server-only` הוסר זמנית מ-modules (שובר tsx/vitest) — יוחזר בשכבת ה-routes ב-WP-02ב'; הצפנת `totp_secret` at-rest → WP-21.
+  scripts `db:generate`/`db:migrate`/`db:seed` (tsx) · seed = נופר + 2 מטופלים · הצפנת `totp_secret` at-rest → WP-21.
+- **WP-02 שלב ב' — routes + מסכים.** `modules/core/auth/server.ts` (`import "server-only"`): cookie httpOnly/lax · `getCurrentSession` (עם rotation) ·
+  `requireTherapist`/`requirePatient` (redirect `/login`) · `logout` · `requestContext` (ip/ua) · `getDisplayName` ·
+  `middleware.ts` — gate גס: `/t*` `/p*` בלי cookie → `/login?next=` (edge, לא נוגע ב-DB) ·
+  מסכי auth (design-system, RTL): `/login` (+שלב TOTP) · `/invite/[token]` (one-click) · `/forgot` · `/reset/[token]` · route groups `(auth)`/`(therapist)`/`(patient)` + placeholder dashboards ·
+  `serverExternalPackages: [pglite, argon2]` ב-`next.config` (ה-bundler שבר את PGlite) · `DbNotConfiguredError` — auth על Vercel בלי DB מטופל בחן ולא קורס ·
+  **19 בדיקות** (+2: display-name, invite→session) · **נבדק בדפדפן מקומית:** login מטפל→`/t` · logout→`/login` · invite→סיסמה→`/p` · middleware redirect. build + כל הבדיקות ירוקים.
 
 ## מיתוג (מ-Instagram @nofar_naturopathy — ravpage/FB חסומים ב-Cloudflare)
 
@@ -90,6 +96,13 @@ Drizzle + PGlite מקומית. 17 בדיקות ירוקות. **הבא: WP-02 ש�
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-30 — פריסת Vercel + WP-02 שלב ב'
+**פריסה:** האתר החזיר 404 — Framework Preset ב-Vercel היה "Other" (הגיש `public/` סטטית; `/next.svg`→200, `/`→404).
+הלקוח שינה ל-Next.js; קומיט לנעילת Node 22 אילץ build טרי → `nofar-clinic.vercel.app` חי (`/`, `/design`). (ניסיון ביניים: `next build --webpack` — נשאר, אבל לא זה היה הבאג.)
+**WP-02ב':** `auth/server.ts` (cookie+guards+logout+context+displayName) · `middleware.ts` (gate edge) · מסכי login/invite/forgot/reset (design-system) · route groups + placeholder dashboards ·
+`serverExternalPackages` תיקן `TypeError: path... Received URL` מ-PGlite תחת ה-bundler · `DbNotConfiguredError` ל-Vercel · +2 בדיקות (19) ·
+נבדק בדפדפן: כל זרימות ה-auth עובדות מקומית מקצה לקצה.
 
 ### 2026-08-30 — WP-02 שלב א' (Auth core)
 הלקוח בחר "התחל עכשיו מול DB מקומי, החלף ל-Neon בהמשך" ומסר קישורי GitHub + Vercel (`nofar-clinic`) ·

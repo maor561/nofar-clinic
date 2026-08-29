@@ -4,9 +4,11 @@ import { TOTP, Secret } from "otpauth";
 import { eq } from "drizzle-orm";
 import { createTestDb } from "@/modules/core/data/testing";
 import type { Db } from "@/modules/core/data/client";
+import { patient } from "@/modules/patients/schema";
 import { invite, loginAttempt, session, user } from "./schema";
 
 import { registerTherapist, getUserByEmail } from "./internal/register";
+import { getDisplayName } from "./internal/profile";
 import { authenticate } from "./internal/authenticate";
 import { passwordSchema } from "./internal/password";
 import {
@@ -36,18 +38,16 @@ async function seedTherapist() {
   return r.therapistId;
 }
 
-async function seedPatient(email = "michal@example.co.il") {
+async function seedPatient(email = "michal@example.co.il", first = "מיכל", last = "אברהם") {
   const [p] = await db
+    .insert(patient)
+    .values({ therapistId, firstName: first, lastName: last })
+    .returning({ id: patient.id });
+  const [u] = await db
     .insert(user)
-    .values({
-      role: "patient",
-      email,
-      status: "invited",
-      therapistId,
-      patientId: crypto.randomUUID(),
-    })
-    .returning({ id: user.id, patientId: user.patientId });
-  return { userId: p.id, patientId: p.patientId! };
+    .values({ role: "patient", email, status: "invited", therapistId, patientId: p.id })
+    .returning({ id: user.id });
+  return { userId: u.id, patientId: p.id };
 }
 
 beforeEach(async () => {
@@ -228,6 +228,48 @@ describe("password reset", () => {
 
   it("does not reveal whether an email exists", async () => {
     expect(await startPasswordReset(db, "nobody@example.co.il", null)).toBeNull();
+  });
+});
+
+describe("display name", () => {
+  it("resolves the therapist and patient names", async () => {
+    const t = await getUserByEmail(db, "nofar@example.co.il");
+    expect(
+      await getDisplayName(db, {
+        userId: t!.id,
+        role: "therapist",
+        therapistId,
+        patientId: null,
+        expiresAt: new Date(),
+      }),
+    ).toBe("נופר");
+
+    const { userId, patientId } = await seedPatient("noa@example.co.il", "נועה", "שרון");
+    expect(
+      await getDisplayName(db, {
+        userId,
+        role: "patient",
+        therapistId,
+        patientId,
+        expiresAt: new Date(),
+      }),
+    ).toBe("נועה שרון");
+  });
+});
+
+describe("invite → session end to end", () => {
+  it("a fresh patient can accept an invite and open a session", async () => {
+    const { patientId } = await seedPatient("dana@example.co.il", "דנה", "פרץ");
+    const { token } = await createPatientInvite(db, {
+      therapistId,
+      patientId,
+      email: "dana@example.co.il",
+    });
+    const { userId } = await acceptInvite(db, token, NEW_PW);
+    const { token: sessionToken } = await createSession(db, userId);
+    const read = await readSession(db, sessionToken);
+    expect(read?.active.role).toBe("patient");
+    expect(read?.active.patientId).toBe(patientId);
   });
 });
 

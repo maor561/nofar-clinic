@@ -327,23 +327,20 @@ export default function DesignSystemPage() {
 
           <div className="border-line h-[560px] overflow-auto rounded-[var(--radius-card)] border">
             {shell === "therapist" ? (
-              <TherapistShell
-                activeKey="patients"
-                user={{ name: "נופר כהן", role: "נטורופתית · מנהלת" }}
-              >
+              <TherapistShell user={{ name: "נופר כהן", role: "נטורופתית · מנהלת" }}>
                 <h1 className="mb-1 font-[family-name:var(--font-display)] text-2xl font-bold">
                   מטופלים
                 </h1>
-                <p className="text-ink-soft text-sm">אזור התוכן. הניווט מימין, פעיל: «מטופלים».</p>
+                <p className="text-ink-soft text-sm">
+                  אזור התוכן. הניווט מימין; הפריט הפעיל נגזר מכתובת ה-URL.
+                </p>
               </TherapistShell>
             ) : (
-              <PatientShell activeKey="dashboard" user={{ name: "מיכל אברהם" }}>
+              <PatientShell user={{ name: "מיכל אברהם" }}>
                 <h1 className="mb-1 font-[family-name:var(--font-display)] text-2xl font-bold">
                   שלום מיכל
                 </h1>
-                <p className="text-ink-soft text-sm">
-                  ניווט עליון, תוכן ממורכז וצר יותר. פעיל: «דשבורד».
-                </p>
+                <p className="text-ink-soft text-sm">ניווט עליון, תוכן ממורכז וצר יותר.</p>
               </PatientShell>
             )}
           </div>

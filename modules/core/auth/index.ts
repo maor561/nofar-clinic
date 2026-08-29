@@ -43,6 +43,7 @@ import {
   beginTotpEnrollment as _beginTotpEnrollment,
   confirmTotpEnrollment as _confirmTotpEnrollment,
 } from "./internal/totp";
+import { getDisplayName as _getDisplayName } from "./internal/profile";
 
 export { SESSION_COOKIE, SESSION_TTL_MS, passwordSchema };
 export type { AuthResult, ActiveSession, SessionContext, InvitePreview };
@@ -95,6 +96,10 @@ export async function login(
 
 export function createSession(userId: string, ctx?: SessionContext) {
   return _createSession(getDb(), userId, ctx);
+}
+
+export function getDisplayName(session: ActiveSession) {
+  return _getDisplayName(getDb(), session);
 }
 
 export function readSession(token: string | undefined) {
