@@ -104,3 +104,23 @@ Patients · Patient File + Timeline · Treatment Sessions · Appointments (יו�
 - **RTL:** `Direction.Provider` של radix ב-`app/providers.tsx` (מיקום נכון של popovers/menus), בנוסף ל-`<html dir="rtl">`.
 - **DoD של WP-01:** דף `/design` מרנדר כל token/רכיב/shell/מצב. נבדק בדפדפן — RTL, פונטים, פלטה, שני ה-shells תקינים.
 **נדחו:** רכיב `sidebar` של shadcn — כבד ואטום; נבנה shell פשוט משלנו. Prisma-style theme — לא רלוונטי. פלטת ברירת המחדל (neutral OKLCH) — הוחלפה במיפוי Calm Wellness.
+
+## ADR-015 — Auth: שכבת credentials + sessions כתובה בבית (במקום Auth.js)
+**תאריך:** 2026-08-30 · **סטטוס:** נעול · **מחליף את חלק "Auth.js self-hosted" ב-ADR-003**
+נשמר מ-ADR-003: email+סיסמה · sessions **במסד** · איפוס/שינוי סיסמה + נעילה + rate-limit באחריותנו · **TOTP למטפל כבר ב-v1**.
+משתנה: לא משתמשים ב-Auth.js. נכתבה שכבה דקה ב-`modules/core/auth`.
+
+**למה:** ה-Credentials provider של Auth.js כופה `strategy: "jwt"`; sessions במסד (דרישת ADR-003) דורשים עקיפה שבירה שנשברת בכל שדרוג. למערכת מידע רפואי צריך שליטה מלאה ב-revocation/rotation, "נתק את כל המכשירים", נעילה, ו-audit לכל session — ~250 שורות כתובות ידנית פשוטות ובר-ביקורת יותר מהתאבקות עם Auth.js. אין ספקי OAuth (מטפלת יחידה + מטופלים מוזמנים).
+
+**מה נבנה (WP-02 שלב א'):**
+- **סיסמאות:** argon2id (`@node-rs/argon2`, פרמטרי OWASP: m=19MiB, t=2, p=1). מדיניות: ≥10 תווים, אות + ספרה.
+- **Sessions:** טוקן אטום (~192 ביט); ב-DB נשמר רק `sha256`. חיים מוחלטים 7 ימים + רוטציה כשעבר יום מ-last-seen. `revokeSession` / `revokeAllForUser` / `purgeExpiredSessions`.
+- **הגנה מפני brute-force:** נעילת חשבון אחרי 5 כשלונות ל-15 דק' + חנק IP עצמאי (15 כשלונות/15 דק') · טבלת `login_attempt` כ-audit.
+- **TOTP** (`otpauth`) — enrollment דו-שלבי, אימות עם window=1. הסוד ב-plaintext כרגע — הצפנה at-rest = פריט ל-WP-21.
+- **הזמנת מטופל:** טוקן חד-פעמי, 7 ימים, `sha256` ב-DB; `acceptInvite` מפעיל את החשבון וקובע סיסמה בלחיצה אחת.
+- **איפוס סיסמה:** טוקן חד-פעמי, שעה; `completePasswordReset` מבטל את כל ה-sessions; אין account enumeration.
+- **DB:** Drizzle + PGlite מקומית (מקדים את המלצת WP-04 ל-ORM). סכימה זהה תרוץ על Neon ב-WP-04. מיגרציות ב-`modules/core/data/migrations`. seed = נופר + 2 מטופלים.
+- **17 בדיקות** ב-`modules/core/auth/auth.test.ts` (env=node, PGlite in-memory).
+
+**שלב ב' (הבא):** route handlers / server actions · middleware → request context (התפר שאליו נכנס ה-guard ב-WP-03) · מסכי התחברות/הזמנה/איפוס/TOTP מהמוקאפים · `import "server-only"` בשכבת ה-routes.
+**נדחו:** Auth.js עם עקיפת DB-sessions — שביר; Lucia — בארכיון; JWT-only sessions — מתנגש עם ADR-003 ועם דרישת ה-revocation.

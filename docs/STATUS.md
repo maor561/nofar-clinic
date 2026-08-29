@@ -6,10 +6,9 @@
 
 ## מצב נוכחי
 
-שלב **תשתית**. WP-D1 ✓ · WP-00 (Scaffold + CI) ✓ · **WP-01 (Design System) ✓** —
-shadcn/ui (radix, RTL) ממופה ל-Calm Wellness, ~20 רכיבים, שני shells, מצבי ריק/טעינה/שגיאה,
-סט אייקונים, ודף `/design` שמרכז הכול. כל הבדיקות ירוקות, נבדק בדפדפן.
-הבא: WP-02 — Auth + Session.
+שלב **תשתית**. WP-D1 ✓ · WP-00 ✓ · WP-01 ✓ · **WP-02 שלב א' ✓** —
+ליבת auth כתובה בבית (ADR-015): argon2id, sessions ב-DB (opaque token), נעילה + חנק IP, TOTP, הזמנה, איפוס.
+Drizzle + PGlite מקומית. 17 בדיקות ירוקות. **הבא: WP-02 שלב ב'** — routes + middleware + מסכים.
 
 ## קישורים
 
@@ -26,8 +25,10 @@ shadcn/ui (radix, RTL) ממופה ל-Calm Wellness, ~20 רכיבים, שני she
 
 ## בעבודה
 
-- **WP-02 — Auth + Session** (הבא). Auth.js credentials, session ב-DB, הזמנת מטופל magic-link, TOTP למטפל, נעילה + rate-limit.
+- **WP-02 שלב ב'** (הבא): route handlers / server actions, middleware → request context (תפר ה-guard),
+  מסכי התחברות/הזמנה/איפוס/TOTP מהמוקאפים, `import "server-only"` בשכבת ה-routes.
 - **דיוקי תוכן במוקאפים** — טראק מקביל מול הלקוח, לא חוסם.
+- **DB פרודקשן:** Neon בפרויקט Vercel — יוקם ב-WP-04 (או קודם, לפי הצורך). כרגע PGlite מקומית.
 
 ## ✅ הושלם
 
@@ -47,6 +48,12 @@ shadcn/ui (radix, RTL) ממופה ל-Calm Wellness, ~20 רכיבים, שני she
   `app/providers.tsx` (Direction + Tooltip + Toaster) · `app/design/page.tsx` = דף ה-DoD (יסודות/רכיבים/shells/מצבים).
   DoD: כל הרכיבים והמצבים מרונדרים · שני ה-shells עומדים (נבדק בדפדפן, desktop + mobile) · typecheck/lint/format/test/build ירוקים.
   **הערת ניגודיות:** `ink-faint` (#9AA29B) על surface ≈ 2.4:1 — לשימוש בטקסט ≥16px bold / דקורטיבי בלבד, לא בטקסט גוף.
+- **WP-02 שלב א' — Auth core.** ADR-015 (שכבה כתובה בבית במקום Auth.js). Drizzle + PGlite (`modules/core/data`), סכימת auth
+  (`therapist`/`user`/`session`/`invite`/`password_reset`/`login_attempt`) + `patient` מינימלי, מיגרציה `0000_init` ·
+  `modules/core/auth`: argon2id · sessions (opaque token, sha256 ב-DB, 7d + rotation) · נעילה 5/15דק' + חנק IP 15/15דק' ·
+  TOTP (otpauth) · invite חד-פעמי 7d · reset חד-פעמי 1h (מבטל sessions) · `index.ts` = חוזה ציבורי ·
+  scripts `db:generate`/`db:migrate`/`db:seed` (tsx) · seed = נופר + 2 מטופלים · **17 בדיקות** (`auth.test.ts`, env=node) ·
+  כל הבדיקות ירוקות. **פתוח:** `server-only` הוסר זמנית מ-modules (שובר tsx/vitest) — יוחזר בשכבת ה-routes ב-WP-02ב'; הצפנת `totp_secret` at-rest → WP-21.
 
 ## מיתוג (מ-Instagram @nofar_naturopathy — ravpage/FB חסומים ב-Cloudflare)
 
@@ -83,6 +90,15 @@ shadcn/ui (radix, RTL) ממופה ל-Calm Wellness, ~20 רכיבים, שני she
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-30 — WP-02 שלב א' (Auth core)
+הלקוח בחר "התחל עכשיו מול DB מקומי, החלף ל-Neon בהמשך" ומסר קישורי GitHub + Vercel (`nofar-clinic`) ·
+הוחלט לכתוב auth בבית במקום Auth.js (ADR-015) — Credentials של Auth.js כופה JWT, מתנגש עם sessions-ב-DB ·
+נוספו deps: drizzle-orm, @electric-sql/pglite, @node-rs/argon2, otpauth, zod, nanoid, server-only, drizzle-kit, tsx ·
+`modules/core/data` (client/schema-barrel/migrate/seed/testing) + `drizzle.config.ts` + מיגרציה `0000_init` (7 טבלאות) ·
+`modules/core/auth` (schema + 8 קבצי internal + index) · argon2 `Algorithm` const-enum עקף עם `algorithm: 2` ·
+בדיקות DB רצות ב-`// @vitest-environment node` (PGlite נשבר ב-jsdom) · `server-only` הוסר מ-modules כי שובר tsx/vitest ·
+PGlite file-backed צריך `mkdirSync` ידני · migrate+seed עובדים מקומית · 17/17 בדיקות · build ירוק · ADR-014/015 ב-DECISIONS.
 
 ### 2026-08-30 — WP-01 Design System
 shadcn init (`--base radix --rtl`, סגנון radix-nova) דרך `npx` (dlx שבור על zod) · `globals.css` נכתב מחדש: `@theme` Calm Wellness + מיפוי tokens סמנטיים של shadcn · `.dark` הוסר, `next-themes` הוסר מ-sonner ·
