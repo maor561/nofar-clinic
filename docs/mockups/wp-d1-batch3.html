@@ -1,0 +1,521 @@
+<title>מוקאפים · מערכת נופר — מנה 3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700&family=Frank+Ruhl+Libre:wght@500;700&display=swap">
+
+<style>
+  :root {
+    --sage-deep: #4E6B58; --sage: #7C9885; --sage-soft: #E4EDE4; --sage-tint: #F1F5F0;
+    --blush: #CE8A90; --blush-soft: #F6E7E8;
+    --amber-ink: #9A6B33; --amber-soft: #F6EBD9;
+    --brick-ink: #A9524A;
+    --ground: #FAF8F4; --surface: #FFFFFF; --surface-2: #FBFAF7;
+    --ink: #2C3630; --ink-soft: #6C756E; --ink-faint: #9AA29B;
+    --line: #EBE7DE; --line-soft: #F2EFE8;
+    --shadow-md: 0 1px 2px rgba(44,54,48,.04), 0 10px 28px -14px rgba(44,54,48,.14);
+    --radius-card: 16px; --radius-ctrl: 10px;
+    --font-body: "Assistant", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-display: "Frank Ruhl Libre", "Assistant", Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; direction: rtl; background: var(--ground); color: var(--ink);
+    font-family: var(--font-body); font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  h1,h2,h3,h4 { margin: 0; font-weight: 600; text-wrap: balance; }
+  p { margin: 0; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  svg { display: block; }
+  .i { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .i-sm { width: 16px; height: 16px; }
+  input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--sage-deep); outline-offset: 2px; border-radius: 8px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+  .viewer { max-width: 1120px; margin: 0 auto; padding: 28px 24px 56px; }
+  .viewer-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; }
+  .viewer-head h1 { font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+  .viewer-head .meta { color: var(--ink-soft); font-size: 13px; }
+  .viewer-sub { color: var(--ink-soft); font-size: 13px; margin: 6px 0 18px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .tab { border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft);
+    padding: 8px 16px; border-radius: 999px; font-weight: 600; font-size: 13.5px; transition: background .15s, color .15s, border-color .15s; }
+  .tab:hover { color: var(--ink); border-color: #DEDACE; }
+  .tab[aria-selected="true"] { background: var(--sage-deep); border-color: var(--sage-deep); color: #fff; }
+
+  .frame { background: var(--surface); border: 1px solid var(--line); border-radius: 20px;
+    box-shadow: var(--shadow-md); overflow: hidden; min-height: 720px; }
+  .screen { display: none; }
+  .screen.is-active { display: block; animation: fade .18s ease both; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .avatar { border-radius: 999px; background: var(--sage-soft); color: var(--sage-deep);
+    display: grid; place-items: center; font-weight: 700; flex: none; }
+  .avatar.a-30 { width: 30px; height: 30px; font-size: 12px; }
+  .avatar.a-36 { width: 36px; height: 36px; font-size: 13px; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 16px; border-radius: var(--radius-ctrl);
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 600; font-size: 13.5px;
+    transition: background .14s, border-color .14s; }
+  .btn:hover { border-color: #DCD7CA; background: var(--surface-2); }
+  .btn-primary { background: var(--sage-deep); border-color: var(--sage-deep); color: #fff; }
+  .btn-primary:hover { background: #45604F; border-color: #45604F; }
+  .btn-block { width: 100%; }
+  .btn-sm { padding: 7px 12px; font-size: 12.5px; }
+  .btn-ghost { border-color: transparent; background: transparent; color: var(--sage-deep); }
+  .btn-ghost:hover { background: var(--sage-tint); }
+
+  .chip { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 7px; font-size: 11.5px; font-weight: 600; }
+  .chip.nat { background: var(--sage-soft); color: var(--sage-deep); }
+
+  /* ---------- patient shell (top nav) ---------- */
+  .ptop { display: flex; align-items: center; gap: 20px; padding: 14px 26px; border-bottom: 1px solid var(--line); background: var(--surface); }
+  .pbrand { display: flex; align-items: center; gap: 10px; }
+  .pbrand .mark { width: 32px; height: 32px; border-radius: 10px; background: var(--sage-soft); display: grid; place-items: center; color: var(--sage-deep); }
+  .pbrand .name { font-family: var(--font-display); font-weight: 700; font-size: 17px; }
+  .pnav { display: flex; gap: 2px; margin-inline-start: 8px; flex-wrap: wrap; }
+  .pnav a { padding: 8px 13px; border-radius: 9px; font-weight: 600; font-size: 13.5px; color: var(--ink-soft); text-decoration: none; display: inline-flex; align-items: center; gap: 7px; transition: background .14s, color .14s; }
+  .pnav a:hover { background: var(--sage-tint); color: var(--ink); }
+  .pnav a[aria-current="page"] { background: var(--sage-soft); color: var(--sage-deep); }
+  .pnav a .badge { background: var(--blush); color: #fff; font-size: 11px; font-weight: 700; min-width: 17px; height: 17px; border-radius: 999px; display: grid; place-items: center; padding: 0 4px; }
+  .pme { margin-inline-start: auto; display: flex; align-items: center; gap: 9px; }
+  .pme .nm { font-weight: 600; font-size: 13px; }
+
+  .pmain { padding: 26px 26px 40px; max-width: 880px; margin: 0 auto; }
+  .p-greet { font-family: var(--font-display); font-weight: 700; font-size: 25px; }
+  .p-greet + p { color: var(--ink-soft); font-size: 13.5px; margin-top: 3px; margin-bottom: 22px; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); }
+  .card-pad { padding: 18px; }
+  .card-hd { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line-soft); }
+  .card-hd h3 { font-size: 14.5px; }
+  .card-hd .link { border: 0; background: none; color: var(--sage-deep); font-weight: 600; font-size: 12.5px; }
+  .card-hd .link:hover { text-decoration: underline; }
+
+  .hero-appt { background: linear-gradient(135deg, var(--sage-soft), var(--sage-tint)); border: 1px solid var(--sage-soft);
+    border-radius: var(--radius-card); padding: 20px; display: flex; align-items: center; gap: 20px; margin-bottom: 16px; }
+  .hero-appt .big-date { text-align: center; background: var(--surface); border-radius: 14px; padding: 12px 18px; flex: none; box-shadow: var(--shadow-md); }
+  .hero-appt .big-date .d { font-family: var(--font-display); font-weight: 700; font-size: 26px; line-height: 1; }
+  .hero-appt .big-date .m { font-size: 12px; color: var(--ink-soft); font-weight: 600; margin-top: 3px; }
+  .hero-appt .lbl { font-size: 11.5px; font-weight: 700; letter-spacing: .06em; color: var(--sage-deep); }
+  .hero-appt h2 { font-family: var(--font-display); font-size: 20px; margin: 4px 0 4px; }
+  .hero-appt .meta { font-size: 13px; color: var(--ink-soft); }
+  .hero-appt .acts { margin-inline-start: auto; display: flex; flex-direction: column; gap: 8px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  .ptask { display: flex; align-items: flex-start; gap: 11px; padding: 11px 4px; }
+  .ptask + .ptask { border-top: 1px solid var(--line-soft); }
+  .ptask .cb { width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--sage); flex: none; margin-top: 1px; display: grid; place-items: center; color: transparent; transition: background .14s, color .14s; }
+  .ptask.done .cb { background: var(--sage-deep); border-color: var(--sage-deep); color: #fff; }
+  .ptask.done .tt { text-decoration: line-through; color: var(--ink-faint); }
+  .ptask .tt { font-weight: 600; font-size: 13.5px; }
+  .ptask .due { font-size: 12px; color: var(--ink-faint); }
+  .progress { height: 7px; border-radius: 999px; background: var(--line-soft); overflow: hidden; }
+  .progress > i { display: block; height: 100%; background: var(--sage); border-radius: 999px; }
+
+  .update-item { display: flex; gap: 12px; padding: 12px 0; }
+  .update-item + .update-item { border-top: 1px solid var(--line-soft); }
+  .update-item .ic { width: 32px; height: 32px; border-radius: 9px; background: var(--sage-soft); color: var(--sage-deep); display: grid; place-items: center; flex: none; }
+  .update-item .ic.b { background: var(--blush-soft); color: var(--brick-ink); }
+  .update-item .t { font-weight: 600; font-size: 13.5px; }
+  .update-item .m { font-size: 12.5px; color: var(--ink-soft); margin-top: 1px; }
+  .update-item .when { font-size: 11.5px; color: var(--ink-faint); margin-top: 3px; }
+
+  .plan-mini li { font-size: 13px; color: var(--ink-soft); margin: 0 0 6px; padding-inline-start: 16px; position: relative; }
+  .plan-mini li::before { content: ""; position: absolute; inset-inline-start: 0; top: 8px; width: 6px; height: 6px; border-radius: 999px; background: var(--sage); }
+  .plan-mini ul { list-style: none; padding: 0; margin: 8px 0 0; }
+
+  /* ---------- questionnaire ---------- */
+  .quiz-top { border-bottom: 1px solid var(--line); padding: 16px 26px; display: flex; align-items: center; gap: 14px; background: var(--surface); }
+  .quiz-top .pbrand .name { font-size: 16px; }
+  .quiz-top .prog-wrap { margin-inline-start: auto; min-width: 240px; }
+  .quiz-top .prog-lbl { font-size: 12px; font-weight: 700; color: var(--ink-soft); margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .quiz-body { max-width: 620px; margin: 0 auto; padding: 30px 26px 40px; }
+  .quiz-body .step-name { font-family: var(--font-display); font-weight: 700; font-size: 22px; }
+  .quiz-body .step-help { color: var(--ink-soft); font-size: 13px; margin: 5px 0 22px; }
+
+  .q { margin-bottom: 20px; }
+  .q > label { display: block; font-weight: 700; font-size: 13.5px; margin-bottom: 8px; }
+  .q .sub { font-weight: 500; color: var(--ink-faint); font-size: 12px; }
+  .q input[type="text"], .q input[type="number"], .q input[type="date"], .q textarea, .q select {
+    width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius-ctrl);
+    padding: 10px 12px; font-size: 13.5px; }
+  .q textarea { min-height: 76px; resize: vertical; line-height: 1.5; }
+  .q input:focus, .q textarea:focus, .q select:focus { outline: 0; border-color: var(--sage); box-shadow: 0 0 0 3px var(--sage-tint); }
+  .opts { display: flex; flex-direction: column; gap: 8px; }
+  .opt { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: var(--radius-ctrl); padding: 10px 12px; font-size: 13.5px; cursor: pointer; transition: border-color .14s, background .14s; }
+  .opt:hover { border-color: var(--sage); }
+  .opt input { accent-color: var(--sage-deep); width: 16px; height: 16px; }
+  .opt.checked { border-color: var(--sage); background: var(--sage-tint); }
+  .scale { display: flex; gap: 6px; }
+  .scale button { flex: 1; border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 9px 0; font-weight: 700; font-size: 13px; color: var(--ink-soft); }
+  .scale button[aria-pressed="true"] { background: var(--sage-soft); border-color: var(--sage); color: var(--sage-deep); }
+  .consent { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; gap: 11px; align-items: flex-start; }
+  .consent + .consent { margin-top: 10px; }
+  .consent input { accent-color: var(--sage-deep); width: 17px; height: 17px; margin-top: 2px; flex: none; }
+  .consent .ct { font-size: 12.5px; }
+  .consent .ct b { font-size: 13.5px; display: block; margin-bottom: 2px; }
+  .quiz-actions { display: flex; align-items: center; gap: 10px; margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--line-soft); }
+  .quiz-actions .grow { flex: 1; }
+  .quiz-steps { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 22px; }
+  .qs { font-size: 11.5px; font-weight: 700; color: var(--ink-faint); display: flex; align-items: center; gap: 6px; }
+  .qs .n { width: 20px; height: 20px; border-radius: 999px; border: 2px solid var(--line); display: grid; place-items: center; background: var(--surface); }
+  .qs.done .n { background: var(--sage-deep); border-color: var(--sage-deep); color: #fff; }
+  .qs.current { color: var(--sage-deep); }
+  .qs.current .n { border-color: var(--sage-deep); }
+  .qs::after { content: ""; width: 14px; height: 2px; background: var(--line); }
+  .qs:last-child::after { display: none; }
+
+  /* ---------- auth ---------- */
+  .auth-wrap { display: grid; grid-template-columns: 0.9fr 1.1fr; min-height: 720px; }
+  .auth-brand { background: linear-gradient(160deg, var(--sage-deep), #3C5646); color: #fff; padding: 44px 40px; display: flex; flex-direction: column; }
+  .auth-brand .mark { width: 46px; height: 46px; border-radius: 14px; background: rgba(255,255,255,.14); display: grid; place-items: center; }
+  .auth-brand h2 { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 1.25; margin-top: auto; }
+  .auth-brand p { color: rgba(255,255,255,.8); font-size: 14px; margin-top: 12px; }
+  .auth-brand .foot { margin-top: 28px; font-size: 12px; color: rgba(255,255,255,.6); }
+  .auth-main { padding: 44px 44px; display: flex; flex-direction: column; justify-content: center; }
+  .auth-card { max-width: 360px; width: 100%; margin: 0 auto; }
+  .auth-switch { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; margin-bottom: 24px; }
+  .auth-switch button { border: 0; background: none; padding: 7px 15px; border-radius: 999px; font-weight: 600; font-size: 12.5px; color: var(--ink-soft); }
+  .auth-switch button[aria-pressed="true"] { background: var(--sage-soft); color: var(--sage-deep); }
+  .auth-card h1 { font-family: var(--font-display); font-weight: 700; font-size: 23px; }
+  .auth-card .lead { color: var(--ink-soft); font-size: 13px; margin: 6px 0 22px; }
+  .fld { margin-bottom: 14px; }
+  .fld label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-soft); margin-bottom: 6px; }
+  .fld input { width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius-ctrl); padding: 10px 12px; font-size: 13.5px; }
+  .fld input:focus { outline: 0; border-color: var(--sage); box-shadow: 0 0 0 3px var(--sage-tint); }
+  .fld .row { display: flex; justify-content: space-between; align-items: baseline; }
+  .fld .row .forgot { font-size: 11.5px; color: var(--sage-deep); border: 0; background: none; font-weight: 600; }
+  .auth-note { font-size: 11.5px; color: var(--ink-faint); margin-top: 14px; display: flex; gap: 7px; align-items: flex-start; }
+  .auth-note svg { flex: none; margin-top: 1px; color: var(--sage); }
+  .invite-from { display: flex; align-items: center; gap: 10px; background: var(--sage-tint); border: 1px solid var(--sage-soft); border-radius: 12px; padding: 11px 13px; margin-bottom: 20px; font-size: 12.5px; }
+  .pw-hint { font-size: 11.5px; color: var(--ink-faint); margin-top: 6px; }
+
+  .legend { margin-top: 18px; font-size: 12px; color: var(--ink-faint); display: flex; gap: 14px; flex-wrap: wrap; }
+  .legend b { color: var(--ink-soft); font-weight: 700; }
+
+  @media (max-width: 900px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .hero-appt { flex-wrap: wrap; }
+    .hero-appt .acts { margin-inline-start: 0; flex-direction: row; width: 100%; }
+    .auth-wrap { grid-template-columns: 1fr; }
+    .auth-brand { padding: 32px; }
+    .auth-brand h2 { margin-top: 24px; }
+  }
+</style>
+
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <symbol id="ic-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="2"/><rect x="13" y="3.5" width="7.5" height="7.5" rx="2"/><rect x="3.5" y="13" width="7.5" height="7.5" rx="2"/><rect x="13" y="13" width="7.5" height="7.5" rx="2"/></symbol>
+  <symbol id="ic-plan" viewBox="0 0 24 24"><rect x="6" y="4.6" width="12" height="15.8" rx="2.2"/><path d="M9 4.6a3 3 0 0 1 6 0"/><path d="M9.6 11h4.8M9.6 15h4.8"/></symbol>
+  <symbol id="ic-task" viewBox="0 0 24 24"><rect x="4.6" y="4.6" width="14.8" height="14.8" rx="3.4"/><path d="m8.6 12 2.4 2.4 4.4-4.9"/></symbol>
+  <symbol id="ic-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.6"/><path d="M3.5 9.7h17M8 3.3v3.4M16 3.3v3.4"/></symbol>
+  <symbol id="ic-chat" viewBox="0 0 24 24"><path d="M20.5 12a7.7 7.7 0 0 1-11.2 6.9L4 20.4l1.5-4.2A7.7 7.7 0 1 1 20.5 12Z"/></symbol>
+  <symbol id="ic-doc" viewBox="0 0 24 24"><path d="M13 3.5H7.2A2.2 2.2 0 0 0 5 5.7v12.6A2.2 2.2 0 0 0 7.2 20.5h9.6A2.2 2.2 0 0 0 19 18.3V9.5Z"/><path d="M13 3.5V9.5h6"/></symbol>
+  <symbol id="ic-leaf" viewBox="0 0 24 24"><path d="M20 4S7.8 4.2 5.3 11.6C3.9 15.8 6.7 19 10.6 18.6 18 17.2 20 4 20 4Z"/><path d="M13.2 10 7.6 16"/></symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7"/></symbol>
+  <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5.2v13.6M5.2 12h13.6"/></symbol>
+  <symbol id="ic-bell" viewBox="0 0 24 24"><path d="M18 9a6 6 0 1 0-12 0c0 5-2.1 6.6-2.1 6.6h16.2S18 14 18 9Z"/><path d="M10 19a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="ic-shield" viewBox="0 0 24 24"><path d="M12 3.5 5 6v5.5c0 4.6 3 7.7 7 9 4-1.3 7-4.4 7-9V6Z"/><path d="m9 12 2 2 4-4.5"/></symbol>
+  <symbol id="ic-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><path d="M12 11v5.5M12 7.7v.2"/></symbol>
+  <symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.6"/><path d="M12 7.6v4.7l3.2 2"/></symbol>
+</svg>
+
+<div class="viewer">
+  <div class="viewer-head">
+    <h1>נופר — מערכת ניהול מטפל–מטופל</h1>
+    <span class="meta">WP-D1 · מוקאפים · צד המטופל (מנה 3 מתוך 3)</span>
+  </div>
+  <p class="viewer-sub">כלל הזהב: כל מסך כאן מציג אך ורק את המידע של המטופלת עצמה — אין חיפוש, אין רשימת מטופלים, אין גישה למידע של אף אחד אחר.</p>
+
+  <div class="tabs" role="tablist" aria-label="מסכים">
+    <button class="tab" role="tab" aria-selected="true" data-screen="pdash">דשבורד מטופל</button>
+    <button class="tab" role="tab" aria-selected="false" data-screen="quiz">שאלון קליטה</button>
+    <button class="tab" role="tab" aria-selected="false" data-screen="auth">התחברות + הזמנה</button>
+  </div>
+
+  <div class="frame">
+    <!-- ============ SCREEN 6 · PATIENT DASHBOARD ============ -->
+    <section class="screen is-active" id="screen-pdash" role="tabpanel" aria-label="דשבורד מטופל">
+      <header class="ptop">
+        <div class="pbrand"><span class="mark"><svg class="i"><use href="#ic-leaf"/></svg></span><span class="name">נופר</span></div>
+        <nav class="pnav" aria-label="ניווט מטופל">
+          <a href="#" aria-current="page"><svg class="i i-sm"><use href="#ic-grid"/></svg> דשבורד</a>
+          <a href="#"><svg class="i i-sm"><use href="#ic-plan"/></svg> התוכנית שלי</a>
+          <a href="#"><svg class="i i-sm"><use href="#ic-task"/></svg> המשימות שלי</a>
+          <a href="#"><svg class="i i-sm"><use href="#ic-calendar"/></svg> הפגישות שלי</a>
+          <a href="#"><svg class="i i-sm"><use href="#ic-chat"/></svg> הודעות <span class="badge">1</span></a>
+          <a href="#"><svg class="i i-sm"><use href="#ic-doc"/></svg> מסמכים</a>
+        </nav>
+        <div class="pme"><span class="nm">מיכל</span><span class="avatar a-30">מא</span></div>
+      </header>
+
+      <div class="pmain">
+        <div class="p-greet">שלום מיכל 🌿</div>
+        <p>הנה מה שחשוב להיום. את בכיוון מצוין.</p>
+
+        <div class="hero-appt">
+          <div class="big-date"><div class="d">17</div><div class="m">ספטמבר</div></div>
+          <div>
+            <div class="lbl">הפגישה הבאה שלך</div>
+            <h2>נטורופתיה — מעקב</h2>
+            <div class="meta">יום רביעי · 10:30 · עם נופר · בקליניקה</div>
+          </div>
+          <div class="acts">
+            <button class="btn btn-sm">הוספה ליומן</button>
+            <button class="btn btn-sm btn-ghost">בקשת שינוי</button>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-hd"><h3>המשימות שלי</h3><button class="link">לכל המשימות</button></div>
+            <div class="card-pad">
+              <div class="ptask">
+                <span class="cb"><svg class="i i-sm"><use href="#ic-check"/></svg></span>
+                <span><div class="tt">מילוי יומן אכילה</div><div class="due">עד 3 בספטמבר</div></span>
+              </div>
+              <div class="ptask">
+                <span class="cb"><svg class="i i-sm"><use href="#ic-check"/></svg></span>
+                <span><div class="tt">שקילה שבועית</div><div class="due">כל יום ראשון</div></span>
+              </div>
+              <div class="ptask done">
+                <span class="cb"><svg class="i i-sm"><use href="#ic-check"/></svg></span>
+                <span><div class="tt">הליכה 30 דק׳ ×4</div><div class="due">הושלם השבוע</div></span>
+              </div>
+              <div style="margin-top:14px">
+                <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-soft);margin-bottom:6px"><span>ההתקדמות שלי השבוע</span><span>3 / 5</span></div>
+                <div class="progress"><i style="width:60%"></i></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-hd"><h3>עדכונים מנופר</h3></div>
+            <div class="card-pad">
+              <div class="update-item">
+                <span class="ic"><svg class="i i-sm"><use href="#ic-plan"/></svg></span>
+                <span>
+                  <div class="t">תוכנית הטיפול שלך עודכנה</div>
+                  <div class="m">גרסה 3 — נוסף פרוטוקול שינה. שווה לקרוא לפני הפגישה.</div>
+                  <div class="when">לפני 3 ימים</div>
+                  <button class="btn btn-sm btn-ghost" style="margin-top:8px">צפייה בתוכנית</button>
+                </span>
+              </div>
+              <div class="update-item">
+                <span class="ic b"><svg class="i i-sm"><use href="#ic-chat"/></svg></span>
+                <span>
+                  <div class="t">הודעה חדשה מנופר</div>
+                  <div class="m">"היי מיכל, ראיתי את יומן האכילה — נדבר על זה בפגישה 🙂"</div>
+                  <div class="when">אתמול · 16:20</div>
+                  <button class="btn btn-sm btn-ghost" style="margin-top:8px">מענה</button>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <div class="card-hd"><h3>התוכנית שלי — עיקרי הדברים</h3><button class="link">לתוכנית המלאה</button></div>
+          <div class="card-pad plan-mini">
+            <div style="font-size:12.5px;color:var(--ink-faint);font-weight:700">היעד שלי</div>
+            <div style="font-size:13.5px;margin-top:2px">ירידה של 6–8 ק״ג ב־4 חודשים, עם אנרגיה יציבה ושינה טובה — בלי לספור קלוריות.</div>
+            <ul>
+              <li>3 ארוחות מסודרות, בלי נשנושים בין הארוחות</li>
+              <li>חלבון בכל ארוחה</li>
+              <li>ארוחת ערב עד 20:00, דלת פחמימות</li>
+              <li>פרוטוקול שינה: ללא מסכים 40 דק׳ לפני, נשימה 4-7-8</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SCREEN 7 · INTAKE QUESTIONNAIRE ============ -->
+    <section class="screen" id="screen-quiz" role="tabpanel" aria-label="שאלון קליטה" hidden>
+      <header class="quiz-top">
+        <div class="pbrand"><span class="mark"><svg class="i"><use href="#ic-leaf"/></svg></span><span class="name">נופר · שאלון קליטה</span></div>
+        <div class="prog-wrap">
+          <div class="prog-lbl"><span>שלב 3 מתוך 5 · רקע רפואי</span><span>55%</span></div>
+          <div class="progress"><i style="width:55%"></i></div>
+        </div>
+      </header>
+
+      <div class="quiz-body">
+        <div class="quiz-steps" aria-hidden="true">
+          <span class="qs done"><span class="n"><svg class="i" style="width:11px;height:11px"><use href="#ic-check"/></svg></span> פרטים</span>
+          <span class="qs done"><span class="n"><svg class="i" style="width:11px;height:11px"><use href="#ic-check"/></svg></span> אורח חיים</span>
+          <span class="qs current"><span class="n">3</span> רקע רפואי</span>
+          <span class="qs"><span class="n">4</span> מטרות</span>
+          <span class="qs"><span class="n">5</span> הסכמות</span>
+        </div>
+
+        <div class="step-name">רקע רפואי</div>
+        <p class="step-help">המידע הזה עוזר לנופר לבנות תוכנית בטוחה ומדויקת עבורך. אפשר לשמור ולחזור בהמשך.</p>
+
+        <div class="q">
+          <label>האם קיימות מחלות רקע או מצבים רפואיים? <span class="sub">(אפשר לבחור כמה)</span></label>
+          <div class="opts">
+            <label class="opt checked"><input type="checkbox" checked> תת־פעילות של בלוטת התריס</label>
+            <label class="opt"><input type="checkbox"> סוכרת / טרום־סוכרת</label>
+            <label class="opt"><input type="checkbox"> יתר לחץ דם</label>
+            <label class="opt checked"><input type="checkbox" checked> אנמיה</label>
+            <label class="opt"><input type="checkbox"> אין / אף אחד מהנ״ל</label>
+          </div>
+        </div>
+
+        <div class="q">
+          <label>תרופות קבועות</label>
+          <textarea placeholder="שם התרופה, מינון ותדירות">אלטרוקסין 50 מק״ג — בבוקר על בטן ריקה</textarea>
+        </div>
+
+        <div class="q">
+          <label>אלרגיות או רגישויות ידועות</label>
+          <input type="text" value="לקטוז — רגישות קלה">
+        </div>
+
+        <div class="q">
+          <label>איך היית מדרגת את רמת האנרגיה שלך ביום־יום?</label>
+          <div class="scale" role="group" aria-label="דירוג 1 עד 10">
+            <button aria-pressed="false">1</button><button aria-pressed="false">2</button><button aria-pressed="false">3</button>
+            <button aria-pressed="false">4</button><button aria-pressed="true">5</button><button aria-pressed="false">6</button>
+            <button aria-pressed="false">7</button><button aria-pressed="false">8</button><button aria-pressed="false">9</button><button aria-pressed="false">10</button>
+          </div>
+        </div>
+
+        <div class="q">
+          <label>ניתוחים או אשפוזים בעבר</label>
+          <textarea placeholder="לא חובה"></textarea>
+        </div>
+
+        <div class="quiz-actions">
+          <button class="btn btn-sm">הקודם</button>
+          <span class="grow"></span>
+          <button class="btn btn-sm btn-ghost">שמירה והמשך אחר כך</button>
+          <button class="btn btn-sm btn-primary">שמירה והמשך</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SCREEN 8 · LOGIN + INVITE ============ -->
+    <section class="screen" id="screen-auth" role="tabpanel" aria-label="התחברות והזמנה" hidden>
+      <div class="auth-wrap">
+        <aside class="auth-brand">
+          <span class="mark"><svg class="i"><use href="#ic-leaf"/></svg></span>
+          <h2>המרחב הטיפולי שלך,<br>במקום אחד.</h2>
+          <p>תוכנית הטיפול, הפגישות, המשימות וההודעות עם נופר — מרוכזים ונגישים בכל זמן.</p>
+          <div class="foot">נופר כהן · נטורופתיה · רפלקסולוגיה · תזונה</div>
+        </aside>
+
+        <main class="auth-main">
+          <div class="auth-card">
+            <div class="auth-switch" role="group" aria-label="מצב">
+              <button data-auth="login" aria-pressed="true">התחברות</button>
+              <button data-auth="invite" aria-pressed="false">קיבלתי הזמנה</button>
+            </div>
+
+            <!-- login -->
+            <div data-auth-view="login">
+              <h1>התחברות למערכת</h1>
+              <p class="lead">הזינו את פרטי החשבון שלכם.</p>
+              <div class="fld">
+                <label>דוא״ל</label>
+                <input type="email" value="michal.a@example.co.il" autocomplete="username">
+              </div>
+              <div class="fld">
+                <div class="row"><label>סיסמה</label><button class="forgot">שכחתי סיסמה</button></div>
+                <input type="password" value="............" autocomplete="current-password">
+              </div>
+              <button class="btn btn-primary btn-block">התחברות</button>
+              <div class="auth-note">
+                <svg class="i i-sm"><use href="#ic-shield"/></svg>
+                <span>למטפלת: לאחר הסיסמה תתבקש הזנת קוד אימות דו־שלבי (TOTP) מאפליקציית האימות.</span>
+              </div>
+            </div>
+
+            <!-- invite -->
+            <div data-auth-view="invite" hidden>
+              <h1>ברוכה הבאה 🌿</h1>
+              <p class="lead">נותר רק להגדיר סיסמה לחשבון שלך.</p>
+              <div class="invite-from">
+                <span class="avatar a-36">נכ</span>
+                <span><b>נופר כהן</b> הזמינה אותך למרחב הטיפולי · <span style="color:var(--ink-faint)">michal.a@example.co.il</span></span>
+              </div>
+              <div class="fld">
+                <label>בחירת סיסמה</label>
+                <input type="password" value="............" autocomplete="new-password">
+                <div class="pw-hint">לפחות 10 תווים, אות גדולה וספרה.</div>
+              </div>
+              <div class="fld">
+                <label>אימות סיסמה</label>
+                <input type="password" value="............" autocomplete="new-password">
+              </div>
+              <button class="btn btn-primary btn-block">כניסה למרחב שלי</button>
+              <div class="auth-note">
+                <svg class="i i-sm"><use href="#ic-info"/></svg>
+                <span>קישור ההזמנה תקף ל־7 ימים ולשימוש חד־פעמי. לא צריך ליצור שם משתמש — הדוא״ל הוא החשבון.</span>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </section>
+  </div>
+
+  <div class="legend">
+    <span><b>מנה 1:</b> דשבורד מטפל · רשימת מטופלים · תיק מטופל + Timeline</span>
+    <span><b>מנה 2:</b> מסך פגישה טיפולית · עורך תוכנית טיפול</span>
+    <span><b>מנה 3 (כאן):</b> דשבורד מטופל · שאלון קליטה · התחברות + הזמנה</span>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var tabs = [].slice.call(document.querySelectorAll('.tab'));
+    var screens = {
+      pdash: document.getElementById('screen-pdash'),
+      quiz: document.getElementById('screen-quiz'),
+      auth: document.getElementById('screen-auth')
+    };
+    function show(name) {
+      Object.keys(screens).forEach(function (k) {
+        var on = k === name;
+        screens[k].classList.toggle('is-active', on);
+        screens[k].hidden = !on;
+      });
+      tabs.forEach(function (t) { t.setAttribute('aria-selected', String(t.dataset.screen === name)); });
+    }
+    tabs.forEach(function (t) { t.addEventListener('click', function () { show(t.dataset.screen); }); });
+
+    // patient task checkboxes
+    document.querySelectorAll('.ptask').forEach(function (row) {
+      row.addEventListener('click', function () { row.classList.toggle('done'); });
+    });
+
+    // questionnaire multi-select + scale
+    document.querySelectorAll('.opt').forEach(function (o) {
+      var cb = o.querySelector('input');
+      o.addEventListener('click', function (e) {
+        if (e.target !== cb) cb.checked = !cb.checked;
+        o.classList.toggle('checked', cb.checked);
+      });
+    });
+    document.querySelectorAll('.scale').forEach(function (s) {
+      s.querySelectorAll('button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          s.querySelectorAll('button').forEach(function (o) { o.setAttribute('aria-pressed', 'false'); });
+          b.setAttribute('aria-pressed', 'true');
+        });
+      });
+    });
+
+    // auth switch
+    var authBtns = [].slice.call(document.querySelectorAll('[data-auth]'));
+    authBtns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        authBtns.forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+        document.querySelectorAll('[data-auth-view]').forEach(function (v) {
+          v.hidden = v.getAttribute('data-auth-view') !== b.dataset.auth;
+        });
+      });
+    });
+  })();
+</script>

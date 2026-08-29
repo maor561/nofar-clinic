@@ -1,0 +1,846 @@
+<title>מוקאפים · מערכת נופר</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700&family=Frank+Ruhl+Libre:wght@500;700&display=swap">
+
+<style>
+  /* ============ Calm Wellness — light by design (ADR-012). Painted explicitly so it holds on any host ground. ============ */
+  :root {
+    --sage-deep: #4E6B58;
+    --sage: #7C9885;
+    --sage-soft: #E4EDE4;
+    --sage-tint: #F1F5F0;
+    --blush: #CE8A90;
+    --blush-soft: #F6E7E8;
+    --amber-ink: #9A6B33;
+    --amber-soft: #F6EBD9;
+    --brick-ink: #A9524A;
+    --brick-soft: #F4E2E0;
+
+    --ground: #FAF8F4;
+    --surface: #FFFFFF;
+    --surface-2: #FBFAF7;
+    --ink: #2C3630;
+    --ink-soft: #6C756E;
+    --ink-faint: #9AA29B;
+    --line: #EBE7DE;
+    --line-soft: #F2EFE8;
+
+    --shadow-sm: 0 1px 2px rgba(44,54,48,.05);
+    --shadow-md: 0 1px 2px rgba(44,54,48,.04), 0 10px 28px -14px rgba(44,54,48,.14);
+    --radius-card: 16px;
+    --radius-ctrl: 10px;
+
+    --font-body: "Assistant", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-display: "Frank Ruhl Libre", "Assistant", Georgia, serif;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    direction: rtl;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 { margin: 0; font-weight: 600; text-wrap: balance; }
+  p { margin: 0; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  svg { display: block; }
+  .i { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .i-sm { width: 16px; height: 16px; }
+
+  :focus-visible { outline: 2px solid var(--sage-deep); outline-offset: 2px; border-radius: 8px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  /* ============ Viewer chrome (not part of the product) ============ */
+  .viewer { max-width: 1200px; margin: 0 auto; padding: 28px 24px 56px; }
+  .viewer-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; margin-bottom: 6px; }
+  .viewer-head h1 { font-family: var(--font-display); font-weight: 700; font-size: 20px; letter-spacing: .01em; }
+  .viewer-head .meta { color: var(--ink-soft); font-size: 13px; }
+  .viewer-sub { color: var(--ink-soft); font-size: 13px; margin-bottom: 18px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .tab {
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft);
+    padding: 8px 16px; border-radius: 999px; font-weight: 600; font-size: 13.5px;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .tab:hover { color: var(--ink); border-color: #DEDACE; }
+  .tab[aria-selected="true"] { background: var(--sage-deep); border-color: var(--sage-deep); color: #fff; }
+
+  .frame {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 236px 1fr;
+    min-height: 760px;
+  }
+
+  /* ============ Nav rail ============ */
+  .rail {
+    background: var(--surface-2);
+    border-inline-start: 1px solid var(--line-soft);
+    padding: 20px 14px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 6px 8px 14px; }
+  .brand .mark {
+    width: 34px; height: 34px; border-radius: 11px; background: var(--sage-soft);
+    display: grid; place-items: center; color: var(--sage-deep); flex: none;
+  }
+  .brand .name { font-family: var(--font-display); font-weight: 700; font-size: 18px; }
+  .brand .role { font-size: 11.5px; color: var(--ink-faint); font-weight: 600; }
+  .nav-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--ink-faint); padding: 14px 10px 6px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 11px; width: 100%;
+    padding: 9px 10px; border: 0; border-radius: 10px; background: transparent;
+    color: var(--ink-soft); font-weight: 600; font-size: 14px; text-align: start;
+    transition: background .14s, color .14s;
+  }
+  .nav-item:hover { background: var(--sage-tint); color: var(--ink); }
+  .nav-item[aria-current="page"] { background: var(--sage-soft); color: var(--sage-deep); }
+  .nav-item .badge {
+    margin-inline-start: auto; background: var(--blush); color: #fff; font-size: 11.5px; font-weight: 700;
+    min-width: 19px; height: 19px; border-radius: 999px; display: grid; place-items: center; padding: 0 5px;
+  }
+  .rail .spacer { flex: 1; }
+  .rail .me {
+    display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px;
+    border: 1px solid var(--line-soft); background: var(--surface);
+  }
+  .avatar { border-radius: 999px; background: var(--sage-soft); color: var(--sage-deep);
+    display: grid; place-items: center; font-weight: 700; flex: none; font-size: 13px; }
+  .avatar.a-32 { width: 32px; height: 32px; }
+  .avatar.a-38 { width: 38px; height: 38px; font-size: 14px; }
+  .avatar.a-64 { width: 64px; height: 64px; font-size: 22px; font-family: var(--font-display); }
+
+  /* ============ Main ============ */
+  .main { padding: 26px 30px 34px; overflow: auto; }
+  .screen { display: none; }
+  .screen.is-active { display: block; animation: fade .18s ease both; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+  .page-head .greeting { font-family: var(--font-display); font-weight: 700; font-size: 24px; }
+  .page-head .date { color: var(--ink-soft); font-size: 13.5px; margin-top: 2px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; border-radius: var(--radius-ctrl);
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 600; font-size: 13.5px;
+    transition: background .14s, border-color .14s, box-shadow .14s;
+  }
+  .btn:hover { border-color: #DCD7CA; background: var(--surface-2); }
+  .btn-primary { background: var(--sage-deep); border-color: var(--sage-deep); color: #fff; }
+  .btn-primary:hover { background: #45604F; border-color: #45604F; }
+  .btn-sm { padding: 6px 11px; font-size: 12.5px; }
+  .btn-ghost { border-color: transparent; background: transparent; color: var(--sage-deep); }
+  .btn-ghost:hover { background: var(--sage-tint); }
+
+  /* stat cards */
+  .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); padding: 16px 16px 14px; }
+  .stat .lbl { font-size: 12.5px; color: var(--ink-soft); font-weight: 600; display: flex; align-items: center; gap: 7px; }
+  .stat .lbl .dot { width: 7px; height: 7px; border-radius: 999px; background: var(--sage); flex: none; }
+  .stat .num { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 1.15; margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .stat .sub { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+  .stat.accent .lbl .dot { background: var(--blush); }
+  .stat.accent .num { color: var(--blush); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); overflow: hidden; }
+  .card > .card-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 14px 16px; border-bottom: 1px solid var(--line-soft);
+  }
+  .card-head h3 { font-size: 14.5px; }
+  .card-head .link { font-size: 12.5px; font-weight: 600; color: var(--sage-deep); border: 0; background: none; }
+  .card-head .link:hover { text-decoration: underline; }
+  .card-body { padding: 6px 8px; }
+  .card-body.pad { padding: 14px 16px; }
+
+  /* schedule list */
+  .row-item { display: flex; align-items: center; gap: 12px; padding: 10px 10px; border-radius: 11px; }
+  .row-item + .row-item { border-top: 1px solid var(--line-soft); border-radius: 0; }
+  .row-item:hover { background: var(--surface-2); }
+  .time-chip { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 13px; color: var(--sage-deep);
+    background: var(--sage-soft); padding: 4px 9px; border-radius: 8px; flex: none; }
+  .row-item .who { font-weight: 600; font-size: 13.5px; }
+  .row-item .desc { font-size: 12.5px; color: var(--ink-soft); }
+  .row-item .trail { margin-inline-start: auto; }
+
+  .attn { display: flex; gap: 11px; padding: 11px 10px; align-items: flex-start; }
+  .attn + .attn { border-top: 1px solid var(--line-soft); }
+  .attn .ic {
+    width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; flex: none;
+    background: var(--sage-soft); color: var(--sage-deep);
+  }
+  .attn.b .ic { background: var(--blush-soft); color: var(--brick-ink); }
+  .attn.w .ic { background: var(--amber-soft); color: var(--amber-ink); }
+  .attn .t { font-weight: 600; font-size: 13.5px; }
+  .attn .m { font-size: 12.5px; color: var(--ink-soft); }
+  .attn .go { margin-inline-start: auto; }
+
+  /* tables */
+  .table-wrap { overflow-x: auto; }
+  table.data { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.data th {
+    text-align: start; font-weight: 700; font-size: 11.5px; letter-spacing: .04em; color: var(--ink-faint);
+    padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap;
+  }
+  table.data td { padding: 12px 14px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+  table.data tr:last-child td { border-bottom: 0; }
+  table.data tbody tr { transition: background .12s; }
+  table.data tbody tr[data-goto] { cursor: pointer; }
+  table.data tbody tr[data-goto]:hover { background: var(--sage-tint); }
+  .cell-name { display: flex; align-items: center; gap: 10px; font-weight: 600; white-space: nowrap; }
+  .muted { color: var(--ink-soft); }
+  .nowrap { white-space: nowrap; }
+  .tnum { font-variant-numeric: tabular-nums; }
+  td .chev { color: var(--ink-faint); }
+
+  /* pills & chips */
+  .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 999px; background: currentColor; opacity: .8; }
+  .pill.active { background: var(--sage-soft); color: var(--sage-deep); }
+  .pill.paused { background: var(--amber-soft); color: var(--amber-ink); }
+  .pill.done { background: var(--line-soft); color: var(--ink-soft); }
+  .pill.inactive { background: #F0EEE9; color: var(--ink-faint); }
+
+  .chip { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 7px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+  .chip.nat { background: var(--sage-soft); color: var(--sage-deep); }
+  .chip.ref { background: var(--blush-soft); color: var(--brick-ink); }
+  .chip.nut { background: var(--amber-soft); color: var(--amber-ink); }
+  .chips { display: inline-flex; gap: 5px; flex-wrap: wrap; }
+
+  /* filter bar */
+  .filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .search {
+    display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius-ctrl); padding: 8px 12px; min-width: 240px; color: var(--ink-faint);
+  }
+  .search input { border: 0; background: none; outline: 0; font: inherit; color: var(--ink); width: 100%; }
+  .seg { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+  .seg button { border: 0; background: none; padding: 6px 13px; border-radius: 999px; font-weight: 600; font-size: 12.5px; color: var(--ink-soft); }
+  .seg button[aria-pressed="true"] { background: var(--sage-soft); color: var(--sage-deep); }
+  .toggle-chip {
+    border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px;
+    font-weight: 600; font-size: 12.5px; color: var(--ink-soft);
+  }
+  .toggle-chip[aria-pressed="true"] { border-color: var(--sage); background: var(--sage-soft); color: var(--sage-deep); }
+  .filters .grow { flex: 1; }
+
+  /* ============ Patient file ============ */
+  .pf-head { display: flex; align-items: flex-start; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+  .pf-id h2 { font-family: var(--font-display); font-weight: 700; font-size: 23px; display: flex; align-items: center; gap: 10px; }
+  .pf-meta { color: var(--ink-soft); font-size: 13px; margin-top: 6px; }
+  .pf-meta b { color: var(--ink); font-weight: 600; }
+  .pf-actions { margin-inline-start: auto; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .back-link { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; color: var(--sage-deep); font-weight: 600; font-size: 13px; margin-bottom: 14px; }
+  .back-link:hover { text-decoration: underline; }
+
+  .pf-body { display: grid; grid-template-columns: 1fr 296px; gap: 22px; align-items: start; }
+
+  .tl-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .tl-month { font-size: 11.5px; font-weight: 700; letter-spacing: .06em; color: var(--ink-faint); margin: 18px 4px 10px; }
+  .tl-month:first-child { margin-top: 0; }
+  .timeline { position: relative; padding-inline-start: 26px; }
+  .timeline::before { content: ""; position: absolute; inset-block: 6px 6px; inset-inline-start: 9px; width: 2px; background: var(--line); }
+  .tl-item { position: relative; padding: 0 0 18px; }
+  .tl-item .node {
+    position: absolute; inset-inline-start: -26px; top: 1px; width: 20px; height: 20px; border-radius: 999px;
+    background: var(--sage-soft); color: var(--sage-deep); display: grid; place-items: center; border: 3px solid var(--surface);
+  }
+  .tl-item .node svg { width: 11px; height: 11px; stroke-width: 2; }
+  .tl-item.k-plan .node { background: var(--blush-soft); color: var(--brick-ink); }
+  .tl-item.k-task .node { background: var(--amber-soft); color: var(--amber-ink); }
+  .tl-item.k-doc .node, .tl-item.k-msg .node { background: var(--line-soft); color: var(--ink-soft); }
+  .tl-item .tl-top { display: flex; align-items: baseline; gap: 8px; }
+  .tl-item .tl-title { font-weight: 700; font-size: 13.5px; }
+  .tl-item .tl-date { font-size: 12px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .tl-item .tl-text { font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+  .tl-item .tl-by { font-size: 11.5px; color: var(--ink-faint); margin-top: 3px; }
+
+  .aside .card + .card { margin-top: 14px; }
+  .kv { padding: 12px 14px; }
+  .kv + .kv { border-top: 1px solid var(--line-soft); }
+  .kv .k { font-size: 11.5px; font-weight: 700; letter-spacing: .04em; color: var(--ink-faint); }
+  .kv .v { font-size: 13.5px; font-weight: 600; margin-top: 3px; }
+  .kv .v.row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .kv .line { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--ink); }
+  .kv .line + .line { margin-top: 6px; }
+  .kv .line svg { color: var(--ink-faint); }
+  .mini-task { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; }
+  .mini-task + .mini-task { margin-top: 8px; }
+  .mini-task .box { width: 15px; height: 15px; border: 1.6px solid var(--sage); border-radius: 5px; flex: none; margin-top: 2px; }
+  .mini-task .due { color: var(--ink-faint); font-size: 11.5px; }
+  .ok-tick { color: var(--sage-deep); }
+
+  .legend { margin-top: 18px; font-size: 12px; color: var(--ink-faint); display: flex; gap: 14px; flex-wrap: wrap; }
+  .legend b { color: var(--ink-soft); font-weight: 700; }
+
+  @media (max-width: 1080px) {
+    .frame { grid-template-columns: 1fr; }
+    .rail { flex-direction: row; flex-wrap: wrap; align-items: center; border-inline-start: 0; border-bottom: 1px solid var(--line-soft); }
+    .rail .nav-label, .rail .spacer, .rail .me { display: none; }
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+    .grid-2 { grid-template-columns: 1fr; }
+    .pf-body { grid-template-columns: 1fr; }
+  }
+</style>
+
+<!-- icon sprite -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <symbol id="ic-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="2"/><rect x="13" y="3.5" width="7.5" height="7.5" rx="2"/><rect x="3.5" y="13" width="7.5" height="7.5" rx="2"/><rect x="13" y="13" width="7.5" height="7.5" rx="2"/></symbol>
+  <symbol id="ic-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.3"/><path d="M3.6 19c.8-3 3-4.6 5.4-4.6S13.6 16 14.4 19"/><path d="M16 5.3a3 3 0 0 1 0 5.4"/><path d="M17.6 14.8c2 .6 3.3 2 3.9 4.2"/></symbol>
+  <symbol id="ic-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.6"/><path d="M3.5 9.7h17M8 3.3v3.4M16 3.3v3.4"/></symbol>
+  <symbol id="ic-chat" viewBox="0 0 24 24"><path d="M20.5 12a7.7 7.7 0 0 1-11.2 6.9L4 20.4l1.5-4.2A7.7 7.7 0 1 1 20.5 12Z"/></symbol>
+  <symbol id="ic-bell" viewBox="0 0 24 24"><path d="M18 9a6 6 0 1 0-12 0c0 5-2.1 6.6-2.1 6.6h16.2S18 14 18 9Z"/><path d="M10 19a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="ic-doc" viewBox="0 0 24 24"><path d="M13 3.5H7.2A2.2 2.2 0 0 0 5 5.7v12.6A2.2 2.2 0 0 0 7.2 20.5h9.6A2.2 2.2 0 0 0 19 18.3V9.5Z"/><path d="M13 3.5V9.5h6"/></symbol>
+  <symbol id="ic-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 3.6v2.3M12 18.1v2.3M20.4 12h-2.3M5.9 12H3.6M17.7 6.3l-1.6 1.6M7.9 16.1l-1.6 1.6M17.7 17.7l-1.6-1.6M7.9 7.9 6.3 6.3"/></symbol>
+  <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.4"/><path d="m20 20-4.4-4.4"/></symbol>
+  <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5.2v13.6M5.2 12h13.6"/></symbol>
+  <symbol id="ic-leaf" viewBox="0 0 24 24"><path d="M20 4S7.8 4.2 5.3 11.6C3.9 15.8 6.7 19 10.6 18.6 18 17.2 20 4 20 4Z"/><path d="M13.2 10 7.6 16"/></symbol>
+  <symbol id="ic-session" viewBox="0 0 24 24"><path d="M20 4S7.8 4.2 5.3 11.6C3.9 15.8 6.7 19 10.6 18.6 18 17.2 20 4 20 4Z"/><path d="M13.2 10 7.6 16"/></symbol>
+  <symbol id="ic-appt" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.6"/><path d="M12 7.6v4.7l3.2 2"/></symbol>
+  <symbol id="ic-plan" viewBox="0 0 24 24"><rect x="6" y="4.6" width="12" height="15.8" rx="2.2"/><path d="M9 4.6a3 3 0 0 1 6 0"/><path d="M9.6 11h4.8M9.6 15h4.8"/></symbol>
+  <symbol id="ic-task" viewBox="0 0 24 24"><rect x="4.6" y="4.6" width="14.8" height="14.8" rx="3.4"/></symbol>
+  <symbol id="ic-task-done" viewBox="0 0 24 24"><rect x="4.6" y="4.6" width="14.8" height="14.8" rx="3.4"/><path d="m8.6 12 2.4 2.4 4.4-4.9"/></symbol>
+  <symbol id="ic-form" viewBox="0 0 24 24"><rect x="4.6" y="3.5" width="14.8" height="17" rx="2.5"/><path d="M8 8h8M8 12h8M8 16h5"/></symbol>
+  <symbol id="ic-status" viewBox="0 0 24 24"><path d="M4 8.5h11l-3-3M20 15.5H9l3 3"/></symbol>
+  <symbol id="ic-chevron" viewBox="0 0 24 24"><path d="m14.5 6-6 6 6 6"/></symbol>
+  <symbol id="ic-phone" viewBox="0 0 24 24"><path d="M6.6 4.6c1 0 1.8.7 2 1.6l.6 2.5a2 2 0 0 1-.6 1.9L7.4 11.7a12 12 0 0 0 4.9 4.9l1.1-1.2a2 2 0 0 1 1.9-.6l2.5.6c.9.2 1.6 1 1.6 2v2.2c0 1.2-1 2.1-2.2 2A16 16 0 0 1 4.6 6.8 2 2 0 0 1 6.6 4.6Z"/></symbol>
+  <symbol id="ic-mail" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><path d="m4.2 7 7.8 5.8L19.8 7"/></symbol>
+</svg>
+
+<div class="viewer">
+  <div class="viewer-head">
+    <h1>נופר — מערכת ניהול מטפל–מטופל</h1>
+    <span class="meta">WP-D1 · מוקאפים · צד המטפל (מנה 1 מתוך 3)</span>
+  </div>
+  <p class="viewer-sub">שפה ויזואלית «Calm Wellness» · עברית RTL · Desktop-first · Light בלבד (החלטה מכוונת, ADR-012). פלטה זמנית עד לקבלת לוגו/צבעים מנופר.</p>
+
+  <div class="tabs" role="tablist" aria-label="מסכים">
+    <button class="tab" role="tab" aria-selected="true" data-screen="dashboard">דשבורד מטפל</button>
+    <button class="tab" role="tab" aria-selected="false" data-screen="patients">רשימת מטופלים</button>
+    <button class="tab" role="tab" aria-selected="false" data-screen="file">תיק מטופל + Timeline</button>
+  </div>
+
+  <div class="frame">
+    <!-- ===================== NAV RAIL ===================== -->
+    <nav class="rail" aria-label="ניווט ראשי">
+      <div class="brand">
+        <span class="mark"><svg class="i"><use href="#ic-leaf"/></svg></span>
+        <span>
+          <span class="name">נופר</span><br>
+          <span class="role">ניהול קליניקה</span>
+        </span>
+      </div>
+
+      <span class="nav-label">ניהול</span>
+      <button class="nav-item" data-nav="dashboard" aria-current="page"><svg class="i"><use href="#ic-grid"/></svg> דשבורד</button>
+      <button class="nav-item" data-nav="patients"><svg class="i"><use href="#ic-users"/></svg> מטופלים</button>
+      <button class="nav-item"><svg class="i"><use href="#ic-calendar"/></svg> יומן</button>
+      <button class="nav-item"><svg class="i"><use href="#ic-chat"/></svg> הודעות <span class="badge">3</span></button>
+
+      <span class="nav-label">כללי</span>
+      <button class="nav-item"><svg class="i"><use href="#ic-doc"/></svg> מסמכים</button>
+      <button class="nav-item"><svg class="i"><use href="#ic-bell"/></svg> התראות <span class="badge">5</span></button>
+      <button class="nav-item"><svg class="i"><use href="#ic-settings"/></svg> הגדרות</button>
+
+      <span class="spacer"></span>
+      <div class="me">
+        <span class="avatar a-38">נכ</span>
+        <span>
+          <div style="font-weight:700;font-size:13.5px">נופר כהן</div>
+          <div style="font-size:11.5px;color:var(--ink-faint)">נטורופתית · מנהלת</div>
+        </span>
+      </div>
+    </nav>
+
+    <!-- ===================== MAIN ===================== -->
+    <main class="main">
+
+      <!-- ---------- SCREEN 1 · DASHBOARD ---------- -->
+      <section class="screen is-active" id="screen-dashboard" role="tabpanel" aria-label="דשבורד מטפל">
+        <div class="page-head">
+          <div>
+            <div class="greeting">בוקר טוב, נופר</div>
+            <div class="date">יום חמישי · 27 באוגוסט 2026</div>
+          </div>
+          <button class="btn btn-primary"><svg class="i i-sm"><use href="#ic-plus"/></svg> מטופל חדש</button>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat">
+            <div class="lbl"><span class="dot"></span> מטופלים פעילים</div>
+            <div class="num">34</div>
+            <div class="sub">+2 החודש</div>
+          </div>
+          <div class="stat">
+            <div class="lbl"><span class="dot"></span> פגישות היום</div>
+            <div class="num">5</div>
+            <div class="sub">הבאה ב־09:00</div>
+          </div>
+          <div class="stat accent">
+            <div class="lbl"><span class="dot"></span> הודעות שלא נקראו</div>
+            <div class="num">3</div>
+            <div class="sub">משתי מטופלות</div>
+          </div>
+          <div class="stat">
+            <div class="lbl"><span class="dot"></span> משימות פתוחות</div>
+            <div class="num">12</div>
+            <div class="sub">2 באיחור</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head"><h3>פגישות היום</h3><button class="link">ליומן המלא</button></div>
+            <div class="card-body">
+              <div class="row-item">
+                <span class="time-chip">09:00</span>
+                <span><span class="who">מיכל אברהם</span><br><span class="desc">פגישת מעקב · נטורופתיה</span></span>
+                <span class="chip nat trail">נטורופתיה</span>
+              </div>
+              <div class="row-item">
+                <span class="time-chip">10:30</span>
+                <span><span class="who">רותם לוי</span><br><span class="desc">רפלקסולוגיה · טיפול 4</span></span>
+                <span class="chip ref trail">רפלקסולוגיה</span>
+              </div>
+              <div class="row-item">
+                <span class="time-chip">12:00</span>
+                <span><span class="who">דנה פרץ</span><br><span class="desc">ליווי תזונתי · בנייה של תפריט</span></span>
+                <span class="chip nut trail">תזונה</span>
+              </div>
+              <div class="row-item">
+                <span class="time-chip">14:00</span>
+                <span><span class="who">יעל בן־דוד</span><br><span class="desc">פגישת פתיחה · לאחר שאלון קליטה</span></span>
+                <span class="chip nat trail">נטורופתיה</span>
+              </div>
+              <div class="row-item">
+                <span class="time-chip">16:30</span>
+                <span><span class="who">טל אזולאי</span><br><span class="desc">ליווי תזונתי · מעקב שבועי</span></span>
+                <span class="chip nut trail">תזונה</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h3>דורש התייחסות</h3></div>
+            <div class="card-body">
+              <div class="attn">
+                <span class="ic"><svg class="i i-sm"><use href="#ic-form"/></svg></span>
+                <span><div class="t">שאלון קליטה חדש — מיכל אברהם</div><div class="m">הוגש לפני שעתיים · טרם נצפה</div></span>
+                <button class="btn btn-sm go">צפייה</button>
+              </div>
+              <div class="attn b">
+                <span class="ic"><svg class="i i-sm"><use href="#ic-chat"/></svg></span>
+                <span><div class="t">2 הודעות חדשות — רותם לוי</div><div class="m">האחרונה לפני 40 דק׳</div></span>
+                <button class="btn btn-sm go">פתיחה</button>
+              </div>
+              <div class="attn b">
+                <span class="ic"><svg class="i i-sm"><use href="#ic-chat"/></svg></span>
+                <span><div class="t">הודעה חדשה — נועה שרון</div><div class="m">אתמול · 18:20</div></span>
+                <button class="btn btn-sm go">פתיחה</button>
+              </div>
+              <div class="attn w">
+                <span class="ic"><svg class="i i-sm"><use href="#ic-task"/></svg></span>
+                <span><div class="t">משימה באיחור — טל אזולאי</div><div class="m">«מילוי יומן אכילה» · באיחור 3 ימים</div></span>
+                <button class="btn btn-sm go">תזכורת</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>מטופלים אחרונים</h3><button class="link" data-nav="patients">לכל המטופלים</button></div>
+          <div class="table-wrap">
+            <table class="data">
+              <thead>
+                <tr><th>שם</th><th>סטטוס</th><th>פגישה אחרונה</th><th>פגישה הבאה</th><th></th></tr>
+              </thead>
+              <tbody>
+                <tr data-goto="file">
+                  <td><span class="cell-name"><span class="avatar a-32">מא</span> מיכל אברהם</span></td>
+                  <td><span class="pill active">פעיל</span></td>
+                  <td class="muted tnum nowrap">14 אוג׳ 2026</td>
+                  <td class="tnum nowrap">היום · 09:00</td>
+                  <td><svg class="i i-sm chev"><use href="#ic-chevron"/></svg></td>
+                </tr>
+                <tr data-goto="file">
+                  <td><span class="cell-name"><span class="avatar a-32">רל</span> רותם לוי</span></td>
+                  <td><span class="pill active">פעיל</span></td>
+                  <td class="muted tnum nowrap">21 אוג׳ 2026</td>
+                  <td class="tnum nowrap">היום · 10:30</td>
+                  <td><svg class="i i-sm chev"><use href="#ic-chevron"/></svg></td>
+                </tr>
+                <tr data-goto="file">
+                  <td><span class="cell-name"><span class="avatar a-32">שכ</span> שירה כהן</span></td>
+                  <td><span class="pill paused">מושהה</span></td>
+                  <td class="muted tnum nowrap">3 יולי 2026</td>
+                  <td class="muted nowrap">—</td>
+                  <td><svg class="i i-sm chev"><use href="#ic-chevron"/></svg></td>
+                </tr>
+                <tr data-goto="file">
+                  <td><span class="cell-name"><span class="avatar a-32">דפ</span> דנה פרץ</span></td>
+                  <td><span class="pill active">פעיל</span></td>
+                  <td class="muted tnum nowrap">19 אוג׳ 2026</td>
+                  <td class="tnum nowrap">היום · 12:00</td>
+                  <td><svg class="i i-sm chev"><use href="#ic-chevron"/></svg></td>
+                </tr>
+                <tr data-goto="file">
+                  <td><span class="cell-name"><span class="avatar a-32">שב</span> שני ברקוביץ׳</span></td>
+                  <td><span class="pill done">הושלם</span></td>
+                  <td class="muted tnum nowrap">28 מאי 2026</td>
+                  <td class="muted nowrap">—</td>
+                  <td><svg class="i i-sm chev"><use href="#ic-chevron"/></svg></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- SCREEN 2 · PATIENTS LIST ---------- -->
+      <section class="screen" id="screen-patients" role="tabpanel" aria-label="רשימת מטופלים" hidden>
+        <div class="page-head">
+          <div>
+            <div class="greeting">מטופלים</div>
+            <div class="date">38 מטופלים · 34 פעילים</div>
+          </div>
+          <button class="btn btn-primary"><svg class="i i-sm"><use href="#ic-plus"/></svg> מטופל חדש</button>
+        </div>
+
+        <div class="filters">
+          <label class="search">
+            <svg class="i i-sm"><use href="#ic-search"/></svg>
+            <input type="text" placeholder="חיפוש לפי שם, טלפון או דוא״ל" aria-label="חיפוש מטופלים">
+          </label>
+          <div class="seg" role="group" aria-label="סינון לפי סטטוס">
+            <button aria-pressed="true">הכל</button>
+            <button aria-pressed="false">פעיל</button>
+            <button aria-pressed="false">מושהה</button>
+            <button aria-pressed="false">הושלם</button>
+            <button aria-pressed="false">לא פעיל</button>
+          </div>
+          <span class="grow"></span>
+          <button class="toggle-chip" aria-pressed="false">נטורופתיה</button>
+          <button class="toggle-chip" aria-pressed="false">רפלקסולוגיה</button>
+          <button class="toggle-chip" aria-pressed="false">תזונה</button>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap">
+            <table class="data">
+              <thead>
+                <tr>
+                  <th>שם</th><th>סוגי טיפול</th><th>סטטוס</th>
+                  <th>הצטרפ/ה</th><th>פגישה אחרונה</th><th>פגישה הבאה</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-goto="file">
+                  <td><span class="cell-name"><span class="avatar a-32">מא</span> מיכל אברהם</span></td>
+                  <td><span class="chips"><span class="chip nat">נטורופתיה</span><span class="chip nut">תזונה</span></span></td>
+                  <td><span class="pill active">פעיל</span></td>
+                  <td class="muted tnum nowrap">12 מרץ 2026</td>
+                  <td class="muted tnum nowrap">14 אוג׳ 2026</td>
+                  <td class="tnum nowrap">היום · 09:00</td>
+                  <td><svg class="i i-sm chev"><use href="#ic-chevron"/></svg></td>
+                </tr>
+                <tr data-goto="file">
+                  <td><span class="cell-name"><span class="avatar a-32">רל</span> רותם לוי</span></td>
+                  <td><span class="chips"><span class="chip ref">רפלקסולוגיה</span></span></td>
+                  <td><span class="pill active">פעיל</span></td>
+                  <td class="muted tnum nowrap">2 פבר׳ 2026</td>
+                  <td class="muted tnum nowrap">21 אוג׳ 2026</td>
+                  <td class="tnum nowrap">היום · 10:30</td>
+                  <td><svg class="i i-sm chev"><use href="#ic-chevron"/></svg></td>
+                </tr>
+                <tr data-goto="file">
+                  <td><span class="cell-name"><span class="avatar a-32">דפ</span> דנה פרץ</span></td>
+                  <td><span class="chips"><span class="chip nut">תזונה</span></span></td>
+                  <td><span class="pill active">פעיל</span></td>
+                  <td class="muted tnum nowrap">28 אפר׳ 2026</td>
+                  <td class="muted tnum nowrap">19 אוג׳ 2026</td>
+                  <td class="tnum nowrap">היום · 12:00</td>
+                  <td><svg class="i i-sm chev"><use href="#ic-chevron"/></svg></td>
+                </tr>
+                <tr data-goto="file">
+                  <td><span class="cell-name"><span class="avatar a-32">יב</span> יעל בן־דוד</span></td>
+                  <td><span class="chips"><span class="chip nat">נטורופתיה</span></span></td>
+                  <td><span class="pill active">פעיל</span></td>
+                  <td class="muted tnum nowrap">20 אוג׳ 2026</td>
+                  <td class="muted nowrap">—</td>
+                  <td class="tnum nowrap">היום · 14:00</td>
+                  <td><svg class="i i-sm chev"><use href="#ic-chevron"/></svg></td>
+                </tr>
+                <tr data-goto="file">
+                  <td><span class="cell-name"><span class="avatar a-32">טא</span> טל אזולאי</span></td>
+                  <td><span class="chips"><span class="chip nut">תזונה</span><span class="chip ref">רפלקסולוגיה</span></span></td>
+                  <td><span class="pill active">פעיל</span></td>
+                  <td class="muted tnum nowrap">15 ינו׳ 2026</td>
+                  <td class="muted tnum nowrap">20 אוג׳ 2026</td>
+                  <td class="tnum nowrap">היום · 16:30</td>
+                  <td><svg class="i i-sm chev"><use href="#ic-chevron"/></svg></td>
+                </tr>
+                <tr data-goto="file">
+                  <td><span class="cell-name"><span class="avatar a-32">שכ</span> שירה כהן</span></td>
+                  <td><span class="chips"><span class="chip nat">נטורופתיה</span></span></td>
+                  <td><span class="pill paused">מושהה</span></td>
+                  <td class="muted tnum nowrap">9 דצמ׳ 2025</td>
+                  <td class="muted tnum nowrap">3 יולי 2026</td>
+                  <td class="muted nowrap">—</td>
+                  <td><svg class="i i-sm chev"><use href="#ic-chevron"/></svg></td>
+                </tr>
+                <tr data-goto="file">
+                  <td><span class="cell-name"><span class="avatar a-32">נש</span> נועה שרון</span></td>
+                  <td><span class="chips"><span class="chip nut">תזונה</span></span></td>
+                  <td><span class="pill active">פעיל</span></td>
+                  <td class="muted tnum nowrap">6 יוני 2026</td>
+                  <td class="muted tnum nowrap">18 אוג׳ 2026</td>
+                  <td class="tnum nowrap">1 ספט׳ · 11:00</td>
+                  <td><svg class="i i-sm chev"><use href="#ic-chevron"/></svg></td>
+                </tr>
+                <tr data-goto="file">
+                  <td><span class="cell-name"><span class="avatar a-32">שב</span> שני ברקוביץ׳</span></td>
+                  <td><span class="chips"><span class="chip nat">נטורופתיה</span><span class="chip nut">תזונה</span></span></td>
+                  <td><span class="pill done">הושלם</span></td>
+                  <td class="muted tnum nowrap">4 נוב׳ 2025</td>
+                  <td class="muted tnum nowrap">28 מאי 2026</td>
+                  <td class="muted nowrap">—</td>
+                  <td><svg class="i i-sm chev"><use href="#ic-chevron"/></svg></td>
+                </tr>
+                <tr data-goto="file">
+                  <td><span class="cell-name"><span class="avatar a-32">למ</span> ליאת מזרחי</span></td>
+                  <td><span class="chips"><span class="chip ref">רפלקסולוגיה</span></span></td>
+                  <td><span class="pill inactive">לא פעיל</span></td>
+                  <td class="muted tnum nowrap">17 ספט׳ 2025</td>
+                  <td class="muted tnum nowrap">11 פבר׳ 2026</td>
+                  <td class="muted nowrap">—</td>
+                  <td><svg class="i i-sm chev"><use href="#ic-chevron"/></svg></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- SCREEN 3 · PATIENT FILE ---------- -->
+      <section class="screen" id="screen-file" role="tabpanel" aria-label="תיק מטופל" hidden>
+        <button class="back-link" data-nav="patients"><svg class="i i-sm"><use href="#ic-chevron"/></svg> חזרה לרשימת המטופלים</button>
+
+        <div class="pf-head">
+          <span class="avatar a-64">מא</span>
+          <div class="pf-id">
+            <h2>מיכל אברהם <span class="pill active">פעיל</span></h2>
+            <div class="chips" style="margin-top:8px">
+              <span class="chip nat">נטורופתיה</span><span class="chip nut">תזונה</span>
+            </div>
+            <div class="pf-meta">בת <b>41</b> · הצטרפה ב־<b>12.3.2026</b> · יעד טיפול: <b>ירידה במשקל וייצוב רמות אנרגיה</b></div>
+          </div>
+          <div class="pf-actions">
+            <button class="btn"><svg class="i i-sm"><use href="#ic-chat"/></svg> הודעה</button>
+            <button class="btn"><svg class="i i-sm"><use href="#ic-calendar"/></svg> קבע פגישה</button>
+            <button class="btn btn-primary"><svg class="i i-sm"><use href="#ic-session"/></svg> פגישה טיפולית</button>
+          </div>
+        </div>
+
+        <div class="pf-body">
+          <div class="pf-main">
+            <div class="tl-filters" role="group" aria-label="סינון ציר הזמן">
+              <button class="toggle-chip" aria-pressed="true">הכל</button>
+              <button class="toggle-chip" aria-pressed="false">פגישות</button>
+              <button class="toggle-chip" aria-pressed="false">תוכנית</button>
+              <button class="toggle-chip" aria-pressed="false">משימות</button>
+              <button class="toggle-chip" aria-pressed="false">מסמכים</button>
+              <button class="toggle-chip" aria-pressed="false">הודעות</button>
+            </div>
+
+            <div class="tl-month">אוגוסט 2026</div>
+            <div class="timeline">
+              <div class="tl-item k-session">
+                <span class="node"><svg><use href="#ic-session"/></svg></span>
+                <div class="tl-top"><span class="tl-title">פגישה טיפולית</span><span class="tl-date">27 אוג׳</span></div>
+                <div class="tl-text">דיווח על שיפור באנרגיה בשעות הבוקר. הותאמה תוספת מגנזיום לפני השינה; הומלץ להפחית קפאין אחרי 15:00.</div>
+                <div class="tl-by">נופר כהן</div>
+              </div>
+              <div class="tl-item k-task">
+                <span class="node"><svg><use href="#ic-task"/></svg></span>
+                <div class="tl-top"><span class="tl-title">משימה נוצרה — יומן אכילה שבועי</span><span class="tl-date">27 אוג׳</span></div>
+                <div class="tl-text">מילוי יומן אכילה מלא למשך שבוע. יעד סיום: 3 בספטמבר.</div>
+                <div class="tl-by">נופר כהן</div>
+              </div>
+              <div class="tl-item k-plan">
+                <span class="node"><svg><use href="#ic-plan"/></svg></span>
+                <div class="tl-top"><span class="tl-title">תוכנית טיפול עודכנה — גרסה 3</span><span class="tl-date">20 אוג׳</span></div>
+                <div class="tl-text">נוסף פרוטוקול שינה. המטופלת קיבלה התראה על העדכון.</div>
+                <div class="tl-by">נופר כהן</div>
+              </div>
+              <div class="tl-item k-msg">
+                <span class="node"><svg><use href="#ic-chat"/></svg></span>
+                <div class="tl-top"><span class="tl-title">הודעה מהמטופלת</span><span class="tl-date">14 אוג׳</span></div>
+                <div class="tl-text">«האם מותר קפה נטול אחרי הצהריים?» — נענתה באותו יום.</div>
+              </div>
+              <div class="tl-item k-task">
+                <span class="node"><svg><use href="#ic-task-done"/></svg></span>
+                <div class="tl-top"><span class="tl-title">משימה הושלמה — הליכה 30 דק׳ ×4 בשבוע</span><span class="tl-date">6 אוג׳</span></div>
+                <div class="tl-by">סומן ע״י מיכל אברהם</div>
+              </div>
+            </div>
+
+            <div class="tl-month">יולי 2026</div>
+            <div class="timeline">
+              <div class="tl-item k-appt">
+                <span class="node"><svg><use href="#ic-appt"/></svg></span>
+                <div class="tl-top"><span class="tl-title">תור נקבע — פגישת מעקב</span><span class="tl-date">30 יולי</span></div>
+                <div class="tl-text">27 באוגוסט, 10:30 · נטורופתיה.</div>
+              </div>
+              <div class="tl-item k-doc">
+                <span class="node"><svg><use href="#ic-doc"/></svg></span>
+                <div class="tl-top"><span class="tl-title">מסמך נוסף — בדיקות דם, יולי 2026</span><span class="tl-date">12 יולי</span></div>
+                <div class="tl-text">גלוי למטפל בלבד.</div>
+                <div class="tl-by">הועלה ע״י מיכל אברהם</div>
+              </div>
+              <div class="tl-item k-doc">
+                <span class="node"><svg><use href="#ic-form"/></svg></span>
+                <div class="tl-top"><span class="tl-title">שאלון קליטה הוגש</span><span class="tl-date">12 יולי</span></div>
+                <div class="tl-text">נצפה ע״י נופר ב־13 ביולי.</div>
+              </div>
+              <div class="tl-item k-doc">
+                <span class="node"><svg><use href="#ic-status"/></svg></span>
+                <div class="tl-top"><span class="tl-title">סטטוס שונה — ליד ← פעיל</span><span class="tl-date">12 יולי</span></div>
+              </div>
+            </div>
+          </div>
+
+          <aside class="aside">
+            <div class="card">
+              <div class="card-head"><h3>פגישה הבאה</h3></div>
+              <div class="kv">
+                <div class="v row"><span>27 אוג׳ · 10:30</span><button class="btn btn-sm btn-ghost">שינוי</button></div>
+                <div class="k" style="margin-top:6px">נטורופתיה · פגישת מעקב</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head"><h3>משימות פתוחות</h3><span class="pill done">2</span></div>
+              <div class="kv">
+                <div class="mini-task"><span class="box"></span><span>יומן אכילה שבועי<br><span class="due">עד 3 ספט׳</span></span></div>
+                <div class="mini-task"><span class="box"></span><span>שקילה שבועית<br><span class="due">חוזר · כל יום ראשון</span></span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head"><h3>תוכנית פעילה</h3></div>
+              <div class="kv">
+                <div class="v row"><span>גרסה 3</span><button class="btn btn-sm btn-ghost">צפייה</button></div>
+                <div class="k" style="margin-top:6px">עודכנה 20 אוג׳ · נופר כהן</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head"><h3>יצירת קשר</h3></div>
+              <div class="kv">
+                <div class="line"><svg class="i i-sm"><use href="#ic-phone"/></svg> 054-8213907</div>
+                <div class="line"><svg class="i i-sm"><use href="#ic-mail"/></svg> michal.a@example.co.il</div>
+              </div>
+              <div class="kv">
+                <div class="k">הסכמות</div>
+                <div class="line ok-tick"><svg class="i i-sm"><use href="#ic-task-done"/></svg> עיבוד מידע רפואי</div>
+                <div class="line ok-tick"><svg class="i i-sm"><use href="#ic-task-done"/></svg> העברת מידע לחו״ל (EU)</div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <div class="legend">
+    <span><b>מנה 1:</b> דשבורד מטפל · רשימת מטופלים · תיק מטופל + Timeline</span>
+    <span><b>מנה 2 (הבאה):</b> מסך פגישה טיפולית · עורך תוכנית טיפול</span>
+    <span><b>מנה 3:</b> דשבורד מטופל · שאלון קליטה · התחברות + הזמנה</span>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+    var screens = {
+      dashboard: document.getElementById('screen-dashboard'),
+      patients: document.getElementById('screen-patients'),
+      file: document.getElementById('screen-file')
+    };
+    var navItems = Array.prototype.slice.call(document.querySelectorAll('.nav-item[data-nav]'));
+    var navForScreen = { dashboard: 'dashboard', patients: 'patients', file: 'patients' };
+
+    function show(name) {
+      Object.keys(screens).forEach(function (k) {
+        var active = k === name;
+        screens[k].classList.toggle('is-active', active);
+        screens[k].hidden = !active;
+      });
+      tabs.forEach(function (t) {
+        t.setAttribute('aria-selected', String(t.dataset.screen === name));
+      });
+      navItems.forEach(function (n) {
+        if (navForScreen[name] === n.dataset.nav) n.setAttribute('aria-current', 'page');
+        else n.removeAttribute('aria-current');
+      });
+      screens[name].parentElement.scrollTop = 0;
+    }
+
+    tabs.forEach(function (t) {
+      t.addEventListener('click', function () { show(t.dataset.screen); });
+    });
+    navItems.forEach(function (n) {
+      n.addEventListener('click', function () { show(n.dataset.nav); });
+    });
+    document.querySelectorAll('[data-nav="patients"].link, .back-link[data-nav]').forEach(function (el) {
+      el.addEventListener('click', function () { show('patients'); });
+    });
+
+    // rows → patient file
+    document.querySelectorAll('tr[data-goto]').forEach(function (tr) {
+      tr.setAttribute('tabindex', '0');
+      tr.setAttribute('role', 'link');
+      tr.addEventListener('click', function () { show(tr.dataset.goto); });
+      tr.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(tr.dataset.goto); }
+      });
+    });
+
+    // local pressable toggles (visual only, for the mockup)
+    document.querySelectorAll('.toggle-chip, .seg button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (b.parentElement.classList.contains('seg')) {
+          b.parentElement.querySelectorAll('button').forEach(function (s) { s.setAttribute('aria-pressed', 'false'); });
+          b.setAttribute('aria-pressed', 'true');
+        } else if (b.closest('.tl-filters')) {
+          if (b.textContent.trim() === 'הכל') {
+            b.closest('.tl-filters').querySelectorAll('button').forEach(function (s) { s.setAttribute('aria-pressed', 'false'); });
+            b.setAttribute('aria-pressed', 'true');
+          } else {
+            b.closest('.tl-filters').querySelector('button').setAttribute('aria-pressed', 'false');
+            b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+          }
+        } else {
+          b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+        }
+      });
+    });
+  })();
+</script>

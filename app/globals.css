@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+/*
+ * Calm Wellness — light by design (ADR-012). Derived from docs/DESIGN_SYSTEM.md.
+ * Palette is provisional until Nofar's logo / brand colours are supplied.
+ */
+
+@theme {
+  /* brand — sage */
+  --color-sage-deep: #4e6b58;
+  --color-sage: #7c9885;
+  --color-sage-soft: #e4ede4;
+  --color-sage-tint: #f1f5f0;
+
+  /* accent — blush (use sparingly) */
+  --color-blush: #ce8a90;
+  --color-blush-soft: #f6e7e8;
+
+  /* semantic — warm */
+  --color-amber-ink: #9a6b33;
+  --color-amber-soft: #f6ebd9;
+  --color-brick-ink: #a9524a;
+
+  /* neutrals — warm, biased toward the sage accent */
+  --color-ground: #faf8f4;
+  --color-surface: #ffffff;
+  --color-surface-2: #fbfaf7;
+  --color-ink: #2c3630;
+  --color-ink-soft: #6c756e;
+  --color-ink-faint: #9aa29b;
+  --color-line: #ebe7de;
+  --color-line-soft: #f2efe8;
+
+  /* type */
+  --font-sans: var(--font-assistant), "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--font-frank-ruhl), "Frank Ruhl Libre", Georgia, serif;
+
+  /* radius */
+  --radius-card: 16px;
+  --radius-control: 10px;
+
+  /* shadow */
+  --shadow-card: 0 1px 2px rgba(44, 54, 48, 0.04), 0 10px 28px -14px rgba(44, 54, 48, 0.14);
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-sage-deep);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
