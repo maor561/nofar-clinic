@@ -93,3 +93,14 @@ Patients · Patient File + Timeline · Treatment Sessions · Appointments (יו�
 פורטל מטופל: צפייה בתוכנית/פגישות/משימות/מסמכים + הודעות + שאלון קליטה אחד.
 **שלב 2:** מעקב מדדים + הזנה יומית של המטופל + תזונה + מנוע שאלונים מלא + Google Calendar + תבניות טיפול.
 **למה:** ~25 מודולים זה roadmap, לא MVP. מוכיחים את הליבה והבידוד על שלד קטן, כל מודול נוסף מתחבר לערובה שכבר עובדת.
+
+## ADR-014 — מימוש Design System: shadcn/ui (radix) ממופה ל-Calm Wellness
+**תאריך:** 2026-08-30 · **סטטוס:** נעול · **מרחיב את ADR-012**
+- **shadcn/ui** אותחל עם `--base radix --rtl --css-variables` (סגנון radix-nova). הפרימיטיבים יושבים ב-`components/ui/*` ומטופלים כ-vendored (כמו תלות).
+- **גבול ייבוא:** קוד אפליקציה ומודולים מייבאים UI רק מ-`@/modules/core/design-system` (index.ts), לא מ-`@/components/ui/*` ישירות. אכיפת lint — ב-WP-03. עד אז קונבנציה (עקבי עם ARCHITECTURE §4.4).
+- **Tokens:** שמות ה-tokens הסמנטיים של shadcn (`--primary`, `--card`, `--muted`, `--sidebar-*`...) ממופים בפלטת Calm Wellness ב-`app/globals.css`. בנוסף חשופים utilities `bg-sage-*`, `text-ink-*`, `bg-warn-*` וכו'.
+- **Light בלבד:** בלוק `.dark` לא הוגדר; `color-scheme: light` נעול. `sonner` פושט מ-`next-themes`.
+- **אייקונים:** סט stroke משלנו (`Icon` ב-design-system) למשטחי מוצר, במקום lucide, לשמירת השפה הוויזואלית. lucide נשאר זמין לרכיבי shadcn פנימיים.
+- **RTL:** `Direction.Provider` של radix ב-`app/providers.tsx` (מיקום נכון של popovers/menus), בנוסף ל-`<html dir="rtl">`.
+- **DoD של WP-01:** דף `/design` מרנדר כל token/רכיב/shell/מצב. נבדק בדפדפן — RTL, פונטים, פלטה, שני ה-shells תקינים.
+**נדחו:** רכיב `sidebar` של shadcn — כבד ואטום; נבנה shell פשוט משלנו. Prisma-style theme — לא רלוונטי. פלטת ברירת המחדל (neutral OKLCH) — הוחלפה במיפוי Calm Wellness.

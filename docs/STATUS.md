@@ -6,9 +6,10 @@
 
 ## מצב נוכחי
 
-שלב **תשתית**. WP-D1 הושלם ואושר כיוונית. **WP-00 (Scaffold + CI) הושלם** — Next.js 16 App Router + TS + Tailwind v4
-(פלטת Calm Wellness) + Vitest + ESLint/Prettier + GitHub Actions. RTL shell עולה, כל הבדיקות ירוקות מקומית.
-הבא: WP-01 — Design System מהמוקאפים.
+שלב **תשתית**. WP-D1 ✓ · WP-00 (Scaffold + CI) ✓ · **WP-01 (Design System) ✓** —
+shadcn/ui (radix, RTL) ממופה ל-Calm Wellness, ~20 רכיבים, שני shells, מצבי ריק/טעינה/שגיאה,
+סט אייקונים, ודף `/design` שמרכז הכול. כל הבדיקות ירוקות, נבדק בדפדפן.
+הבא: WP-02 — Auth + Session.
 
 ## קישורים
 
@@ -25,7 +26,7 @@
 
 ## בעבודה
 
-- **WP-01 — Design System** (הבא). מימוש רכיבי `docs/DESIGN_SYSTEM.md` + shadcn/ui RTL + שני shells.
+- **WP-02 — Auth + Session** (הבא). Auth.js credentials, session ב-DB, הזמנת מטופל magic-link, TOTP למטפל, נעילה + rate-limit.
 - **דיוקי תוכן במוקאפים** — טראק מקביל מול הלקוח, לא חוסם.
 
 ## ✅ הושלם
@@ -39,8 +40,13 @@
   (tokens ב-`app/globals.css`) · `next/font` Assistant + Frank Ruhl Libre · Vitest + Testing Library (2 בדיקות) ·
   ESLint (next) + Prettier · `.github/workflows/ci.yml` (lint/format/typecheck/test/build) ·
   שלד `/modules` מלא (core + דומיין, stubs) · `lib/strings.ts` · `tests/isolation/`.
-  DoD: `pnpm dev` עולה RTL ✓ · typecheck/lint/format/test/build ירוקים מקומית ✓ · CI ירוץ עם ה-push הראשון.
   **פתוח:** pnpm הותקן דרך `npm i -g` (corepack חסום בהרשאות ב-Program Files).
+- **WP-01 — Design System.** ADR-014. shadcn/ui (`--base radix --rtl`) → tokens ממופים ל-Calm Wellness ב-`app/globals.css`, Light בלבד ·
+  פרימיטיבים ב-`components/ui/*` (vendored), נחשפים דרך `modules/core/design-system/index.ts` = גבול הייבוא ·
+  composed: `Icon` (סט stroke משלנו), `Logo`, `TherapistShell` (side rail RTL), `PatientShell` (top nav), `EmptyState`/`ErrorState`/`LoadingRows`/`LoadingCards` ·
+  `app/providers.tsx` (Direction + Tooltip + Toaster) · `app/design/page.tsx` = דף ה-DoD (יסודות/רכיבים/shells/מצבים).
+  DoD: כל הרכיבים והמצבים מרונדרים · שני ה-shells עומדים (נבדק בדפדפן, desktop + mobile) · typecheck/lint/format/test/build ירוקים.
+  **הערת ניגודיות:** `ink-faint` (#9AA29B) על surface ≈ 2.4:1 — לשימוש בטקסט ≥16px bold / דקורטיבי בלבד, לא בטקסט גוף.
 
 ## מיתוג (מ-Instagram @nofar_naturopathy — ravpage/FB חסומים ב-Cloudflare)
 
@@ -78,7 +84,12 @@
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
 
-### 2026-08-29 — WP-00 Scaffold + CI
+### 2026-08-30 — WP-01 Design System
+shadcn init (`--base radix --rtl`, סגנון radix-nova) דרך `npx` (dlx שבור על zod) · `globals.css` נכתב מחדש: `@theme` Calm Wellness + מיפוי tokens סמנטיים של shadcn · `.dark` הוסר, `next-themes` הוסר מ-sonner ·
+15 רכיבי shadcn נוספו (input/textarea/label/card/badge/table/checkbox/select/dialog/sonner/separator/avatar/skeleton/tabs/tooltip) + button מה-init ·
+`modules/core/design-system/`: `icon.tsx` (סט מ-32 אייקוני stroke, פורט מהמוקאפים), `logo.tsx`, `shells/{therapist,patient}-shell.tsx`, `states/{empty,error,loading}-state.tsx`, `index.ts` (חוזה ציבורי), `README.md` ·
+`app/providers.tsx` + חיווט ב-layout · `app/design/page.tsx` (4 טאבים) · home מפנה ל-`/design` ·
+ADR-014 נכתב · build: 3 routes (/, /_not-found, /design) · נבדק בדפדפן ב-1440 ו-800 (side rail RTL תקין; מובייל = נאב אופקי) · console נקי (רק HMR ws של הפריוויו).
 `git init` נפרד בתיקיית הפרויקט (יושבת בתוך repo `C:\cluade` — לא קשור). `create-next-app` (Next 16.3, App Router, Turbopack, TS, Tailwind v4, no-src) בתיקיית scratch ואז מוזג לשורש עם שמירת `CLAUDE.md`/`docs/` ·
 `app/globals.css` = tokens של Calm Wellness (light-only) · `app/layout.tsx` = `lang=he dir=rtl` + `next/font` (Assistant + Frank Ruhl Libre) · `app/page.tsx` = דף בדיקת shell ·
 שלד `/modules` (10 core + 9 דומיין, כל אחד `index.ts` stub + `internal/`) · `modules/README.md` · `lib/strings.ts` · `tests/isolation/README.md` ·
