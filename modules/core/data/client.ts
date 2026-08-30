@@ -26,8 +26,16 @@ export class DbNotConfiguredError extends Error {
   }
 }
 
-function isPostgresUrl(url: string | undefined): url is string {
-  return !!url && (url.startsWith("postgres://") || url.startsWith("postgresql://"));
+/** The Postgres URL, whatever the Vercel integration named it. */
+function postgresUrl(): string | undefined {
+  const candidates = [
+    process.env.DATABASE_URL,
+    process.env.POSTGRES_URL,
+    process.env.POSTGRES_PRISMA_URL,
+    process.env.DATABASE_URL_UNPOOLED,
+    process.env.POSTGRES_URL_NON_POOLING,
+  ];
+  return candidates.find((u) => u?.startsWith("postgres://") || u?.startsWith("postgresql://"));
 }
 
 const globalForDb = globalThis as unknown as {
@@ -62,8 +70,8 @@ function makePglite(): Db {
 
 export function getDb(): Db {
   if (!globalForDb.__nofarDb) {
-    const url = process.env.DATABASE_URL;
-    globalForDb.__nofarDb = isPostgresUrl(url) ? makePostgres(url) : makePglite();
+    const pg = postgresUrl();
+    globalForDb.__nofarDb = pg ? makePostgres(pg) : makePglite();
   }
   return globalForDb.__nofarDb;
 }
