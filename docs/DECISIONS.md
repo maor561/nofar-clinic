@@ -124,3 +124,19 @@ Patients · Patient File + Timeline · Treatment Sessions · Appointments (יו�
 
 **שלב ב' (הבא):** route handlers / server actions · middleware → request context (התפר שאליו נכנס ה-guard ב-WP-03) · מסכי התחברות/הזמנה/איפוס/TOTP מהמוקאפים · `import "server-only"` בשכבת ה-routes.
 **נדחו:** Auth.js עם עקיפת DB-sessions — שביר; Lucia — בארכיון; JWT-only sessions — מתנגש עם ADR-003 ועם דרישת ה-revocation.
+
+## ADR-016 — Scoping Guard: ScopedDb מטופס, ללא raw handle
+**תאריך:** 2026-08-30 · **סטטוס:** נעול · **מממש את ARCHITECTURE §5 ואת הדרישה הקריטית**
+`modules/core/authz` הוא נקודת האכיפה היחידה. אין נתיב לגיטימי ל-DB בלי scope.
+
+**מבנה:**
+- `internal/scoped-db.ts` — `TherapistDb` / `PatientDb`. ה-Drizzle handle ב-field `protected` בלי accessor ציבורי.
+  כל `findMany`/`findOne`/`count`/`insert`/`update`/`delete` מוסיף `AND therapist_id = <scope>` (ובצד מטופל גם `patient_id`).
+  `PatientDb.self()` לשורת ה-`patient` השורשית (שאין לה `patient_id` משלה). `scopeWhere(table, extra?)` כ-escape hatch בטוח לשאילתות מורכבות.
+- `index.ts` — `scopedDbFor(db, session)` (טהור, נבדק). `server.ts` — `getTherapistDb()`/`getPatientDb()` (`server-only`): מאמת session + role + מחזיר scoped handle.
+- **טיפוסים:** מתודות דורשות שהטבלה תישא את עמודות ה-scope. `PatientDb` לא יכול אפילו לנקוב בטבלה בלי `patient_id`.
+- **Lint:** `no-restricted-imports` ב-`eslint.config.mjs` חוסם `@/modules/core/data/client` ו-`getDb` בכל `app/**` ו-`modules/**` פרט ל-`core/{data,authz,auth}` ולבדיקות. (`DbNotConfiguredError` מותר, נחשף מ-`authz`.)
+- **בדיקות:** `tests/isolation/patient-isolation.test.ts` — 11 מקרים על `patient` + `timeline_event`: קריאה, כתיבה חוצת-גבול = 0 שורות, insert מאלץ scope, ניסיון bypass נכשל. רץ ב-CI.
+- נוספה טבלת `timeline_event` מינימלית (`modules/patient-file/schema.ts`, מיגרציה `0001`) כטבלה שנייה אמיתית ל-suite; WP-11 ירחיב.
+
+**נדחו:** wrapper שמסתמך על משמעת (domain dev זוכר להוסיף `WHERE`) — לא "בלתי ניתן לעקיפה". RLS כשכבה יחידה — WP-04 spike, בינתיים ה-guard נושא לבד.

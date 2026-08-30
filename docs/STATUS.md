@@ -6,8 +6,8 @@
 
 ## מצב נוכחי
 
-שלב **תשתית**. WP-D1 ✓ · WP-00 ✓ · WP-01 ✓ · **WP-02 ✓ (שלב א' + ב')** · הפריסה חיה (`nofar-clinic.vercel.app`).
-התחברות/יציאה/קבלת-הזמנה/איפוס עובדים מקצה לקצה מקומית (PGlite). **הבא: WP-03 — Scoping Guard.**
+שלב **תשתית**. WP-D1 ✓ · WP-00 ✓ · WP-01 ✓ · WP-02 ✓ · **WP-03 ✓ (Scoping Guard)** · הפריסה חיה.
+`core/authz` — ScopedDb מטופס בלי raw handle, lint חוסם עקיפה, 11 בדיקות בידוד ירוקות. **הבא: WP-04 — Data Layer + RLS spike (Neon).**
 
 ## קישורים
 
@@ -26,10 +26,12 @@
 
 ## בעבודה
 
-- **WP-03 — Scoping Guard** (הבא). נקודת האכיפה היחידה: אין DB handle בלי scope. `getCurrentSession` (ב-`auth/server.ts`) הוא התפר.
+- **WP-04 — Data Layer + RLS spike** (הבא). להקים Postgres/Neon בפרויקט Vercel (פרנקפורט), להעביר את `client.ts` מ-PGlite ל-Neon,
+  spike ל-`SET LOCAL`/`set_config` + RLS מול transaction-pooler, seed בפרודקשן, החלטה מתועדת אם RLS load-bearing או הגנה-בעומק.
+  **דרוש מהלקוח:** יצירת ה-DB ב-Vercel + connection string / env.
 - **דיוקי תוכן במוקאפים** — טראק מקביל מול הלקוח, לא חוסם.
-- **DB פרודקשן:** Neon בפרויקט Vercel — WP-04. כרגע PGlite מקומית; הפריסה מריצה רק את העמודים הסטטיים + מסכי auth (שנכשלים בחן — "אין DB").
-- **TOTP enrollment UI** + change-password UI — נדחו ל-WP-02 המשך / הגדרות (WP-20). הליבה + בדיקות קיימות.
+- **TOTP enrollment UI** + change-password UI — נדחו למסך הגדרות (WP-20). הליבה + בדיקות קיימות.
+- **מהירות בדיקות:** ~90ש' (migrate-per-test ב-PGlite). לשקול template DB משותף בהמשך.
 
 ## ✅ הושלם
 
@@ -60,6 +62,11 @@
   מסכי auth (design-system, RTL): `/login` (+שלב TOTP) · `/invite/[token]` (one-click) · `/forgot` · `/reset/[token]` · route groups `(auth)`/`(therapist)`/`(patient)` + placeholder dashboards ·
   `serverExternalPackages: [pglite, argon2]` ב-`next.config` (ה-bundler שבר את PGlite) · `DbNotConfiguredError` — auth על Vercel בלי DB מטופל בחן ולא קורס ·
   **19 בדיקות** (+2: display-name, invite→session) · **נבדק בדפדפן מקומית:** login מטפל→`/t` · logout→`/login` · invite→סיסמה→`/p` · middleware redirect. build + כל הבדיקות ירוקים.
+- **WP-03 — Scoping Guard.** ADR-016. `modules/core/authz`: `internal/scoped-db.ts` (`TherapistDb`/`PatientDb` — raw handle ב-`protected` ללא accessor;
+  כל פעולה מוסיפה `therapist_id`/`patient_id` ל-WHERE; `PatientDb.self()` לשורש; `scopeWhere` escape hatch) · `index.ts` `scopedDbFor` · `server.ts` `getTherapistDb`/`getPatientDb` ·
+  טיפוסים דורשים עמודות scope (PatientDb לא יכול לנקוב בטבלה בלי `patient_id`) · **lint** `no-restricted-imports` חוסם `getDb`/`client` ב-app+domain (נבדק — נופל על bypass) ·
+  טבלת `timeline_event` מינימלית (`patient-file/schema.ts`, מיגרציה `0001`) · **11 בדיקות בידוד** (`tests/isolation/patient-isolation.test.ts`) · `/p` דשבורד משתמש ב-`getPatientDb().self()` (הוכחה חיה) ·
+  **30 בדיקות סה"כ** · build ירוק · נבדק בדפדפן: invite→`/p` עם שם מה-guard.
 
 ## מיתוג (מ-Instagram @nofar_naturopathy — ravpage/FB חסומים ב-Cloudflare)
 
@@ -96,6 +103,12 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-30 — WP-03 Scoping Guard
+`core/authz` נבנה (ADR-016): `ScopedDb` (Therapist/Patient) מטופס, raw handle `protected` ללא accessor · `getTherapistDb`/`getPatientDb` ב-`server.ts` ·
+טבלת `timeline_event` מינימלית + מיגרציה `0001` כטבלה שנייה ל-suite · lint `no-restricted-imports` חוסם `getDb` מחוץ ל-`core/{data,authz,auth}` (נבדק שנופל על bypass) ·
+`DbNotConfiguredError` הועבר להיחשף מ-`authz` · 11 בדיקות בידוד ב-`tests/isolation/` · `/p` הומר ל-`getPatientDb().self()` · 30 בדיקות ירוקות · נבדק בדפדפן.
+תיקון טיפוסים: `patient` (אין לו `patient_id` משלו) → `PatientDb.self()`; `InferInsertModel<T>` נמחק ל-`{}` בגנרי → `values: Record<string,unknown>`.
 
 ### 2026-08-30 — פריסת Vercel + WP-02 שלב ב'
 **פריסה:** האתר החזיר 404 — Framework Preset ב-Vercel היה "Other" (הגיש `public/` סטטית; `/next.svg`→200, `/`→404).

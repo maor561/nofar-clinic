@@ -5,3 +5,4 @@
  */
 export * from "@/modules/core/auth/schema";
 export * from "@/modules/patients/schema";
+export * from "@/modules/patient-file/schema";

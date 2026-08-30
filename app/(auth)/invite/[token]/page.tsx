@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { peekInvite } from "@/modules/core/auth";
-import { DbNotConfiguredError } from "@/modules/core/data/client";
+import { DbNotConfiguredError } from "@/modules/core/authz";
 import { Button } from "@/modules/core/design-system";
 import { InviteForm } from "./invite-form";
 

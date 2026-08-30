@@ -2,7 +2,7 @@
 
 import { startPasswordReset } from "@/modules/core/auth";
 import { requestContext } from "@/modules/core/auth/server";
-import { DbNotConfiguredError } from "@/modules/core/data/client";
+import { DbNotConfiguredError } from "@/modules/core/authz";
 
 export type ForgotState = { sent?: boolean; error?: string };
 

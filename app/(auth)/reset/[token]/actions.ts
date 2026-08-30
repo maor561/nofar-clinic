@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { completePasswordReset, passwordSchema } from "@/modules/core/auth";
-import { DbNotConfiguredError } from "@/modules/core/data/client";
+import { DbNotConfiguredError } from "@/modules/core/authz";
 
 export type ResetState = { error?: string };
 
