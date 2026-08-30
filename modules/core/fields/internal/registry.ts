@@ -77,6 +77,39 @@ export const FIELD_REGISTRY: RegistryDef[] = [
     schema: { type: "scale", min: 1, max: 10 },
     order: 30,
   },
+  // --- treatment plan version, structured content ---
+  {
+    entity: "plan_version",
+    key: "nutrition",
+    labelHe: "המלצות תזונה",
+    type: "text",
+    schema: { type: "text", maxLength: 4000 },
+    order: 10,
+  },
+  {
+    entity: "plan_version",
+    key: "supplements",
+    labelHe: "תוספי תזונה וצמחי מרפא",
+    type: "text",
+    schema: { type: "text", maxLength: 4000 },
+    order: 20,
+  },
+  {
+    entity: "plan_version",
+    key: "lifestyle",
+    labelHe: "אורח חיים ופעילות",
+    type: "text",
+    schema: { type: "text", maxLength: 4000 },
+    order: 30,
+  },
+  {
+    entity: "plan_version",
+    key: "goals",
+    labelHe: "יעדים לתקופה",
+    type: "text",
+    schema: { type: "text", maxLength: 2000 },
+    order: 40,
+  },
 ];
 
 /** Compile every schema + check the charted rule. Throws on the first problem. */

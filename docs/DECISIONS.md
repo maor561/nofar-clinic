@@ -267,3 +267,16 @@ Spike מול Neon (endpoint pooled, פרנקפורט) — `modules/core/data/scr
 - **נבדק בדפדפן מול Neon:** מפגש ל"דנה פרץ" — מדדים (אנרגיה 8 / שינה 7 / משקל 68.4) נשמרו, אומתו, והוצגו · timeline "תיעוד מפגש" (מפגש טיפולי) · `/t/audit`: create(treatment_session) + create(timeline_event) + view(treatment_session).
 
 **נדחו:** מסך מפגש למטופל · חיווט יצירת משימות בתוך הזרימה (עד WP-15) · אירוע Timeline על עריכת מפגש.
+
+## ADR-026 — Treatment Plans: append-only versions, content via `plan_version` Registry
+**תאריך:** 2026-08-30 · **סטטוס:** נעול · **מממש WP-14**
+
+- **schema:** `treatment_plan` (unique על `patient_id` — תוכנית פעילה אחת) + `treatment_plan_version` (`plan_id`, `version_no`, `note`, `created_by`; unique על `plan_id+version_no`). מיגרציה `0008`. שני הר0-ows נושאים `therapist_id` + `patient_id` כדי ש-`PatientDb` יקרא את הגרסה הנוכחית שלו דרך ה-guard. `treatment_plan.current_version_id` מצביע על הגרסה האחרונה.
+- **תוכן מובנה** דרך ה-Field Registry: נוספו 4 הגדרות `entity='plan_version'` ל-`FIELD_REGISTRY` — `nutrition` / `supplements` / `lifestyle` / `goals` (הכול `text`). המבנה **לא מקובע** — ניתן להרחיב/לשנות בלי מיגרציה (CLAUDE.md "לא מקבעים מבנים שלא סופקו סופית"). `pnpm db:registry` הורץ מחדש מול Neon.
+- **append-only:** `savePlanVersion` — קריאה ראשונה יוצרת את ה-plan; כל קריאה מוסיפה `version_no+1`, כותבת את ערכי השדות מול **מזהה הגרסה החדש** (unique `entity+entity_id+definition_id` → תמיד insert, גרסאות קודמות אף פעם לא נדרסות), מעדכנת `current_version_id`, ומפילה `timeline_event('plan_changed')`. ה-action מתריע למטופל (`plan_changed` — סוג critical, `notify` גם שולח אימייל).
+- **`field_value.value` NOT NULL — תיקון ב-`core/fields/store.ts`:** כתיבה ריקה (`null`/`undefined`/`""`/`[]`) לא כותבת row null (היה קורס 23502) — מוחקת row קיים ולא מוסיפה כלום. `false`/`0` נשמרים כתשובה אמיתית. חל גם על מפגשים (WP-13).
+- **מסכים:** `/t/patients/[id]/plan` (תוכנית נוכחית + היסטוריית גרסאות + `audit("view","treatment_plan")`) · `/plan/edit` (טופס שדות-Registry + `<FieldInput>`, מאותחל מהגרסה הנוכחית — עריכה נושאת תוכן קדימה) · `/plan/v/[versionId]` (גרסה היסטורית, קריאה בלבד) · `/p/plan` (מטופל — הגרסה הנוכחית בלבד, דרך `getPatientDb()`). כפתור "תוכנית" בתיק.
+- **בדיקות:** `tests/isolation/plans-module.test.ts` (6) — cross-therapist (get/list/write) · מטופל קורא רק את הגרסה הנוכחית שלו · כל save = גרסה חדשה, תוכן קודם נשמר · שני `plan_changed` ב-Timeline · ערך מחוץ לסכימה נדחה · שדה ריק מדולג ומנקה ערך קודם. 87 סה"כ.
+- **נבדק בדפדפן מול Neon:** "דנה פרץ" — גרסה 1 (תזונה+יעדים) → גרסה 2 (הוספת תוספים, note) · היסטוריה מציגה 2→1 · גרסה 1 ההיסטורית נשארה בלי התוספים · Timeline: "תוכנית טיפול נוצרה" + "עודכנה — גרסה 2 · <note>".
+
+**נדחו:** מחיקת/שחזור גרסה · diff ויזואלי בין גרסאות · יותר מתוכנית פעילה אחת למטופל · תבנית `plan_version` גרפית (Field Registry code-defined ב-v1).

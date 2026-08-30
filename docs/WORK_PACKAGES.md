@@ -104,10 +104,12 @@ Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפ
 **DoD:** תיעוד מלא כזרימה אחת ✓ · מקושר ל-appointment אופציונלי (מאומת ב-guard) ✓ · אירוע Timeline ✓ · 6 בדיקות isolation ✓ · נבדק בדפדפן מול Neon ✓. *שלב "משימות" יחווט ב-WP-15.*
 **תלוי:** WP-11, WP-09 · **הבא:** WP-14 (Treatment Plans + גרסאות)
 
-### WP-14 · Treatment Plans + גרסאות ⬜
-תוכנית פעילה + היסטוריית גרסאות; שינוי = גרסה חדשה + Timeline + התראה; המטופל רואה נוכחית.
-**DoD:** גרסאות נשמרות ונצפות; הוספה מאוחרת = אירוע חדש, לא דריסה; בדיקת בידוד.
-**תלוי:** WP-11, WP-09
+### WP-14 · Treatment Plans + גרסאות ✅
+`modules/plans` (ADR-026): `treatment_plan` (unique patient) + `treatment_plan_version` (append-only, מיגרציה `0008`) · `savePlanVersion` — גרסה חדשה בכל save, ערכי שדות מול מזהה הגרסה החדש, `current_version_id` מתעדכן, `plan_changed` ל-Timeline + התראה למטופל ·
+תוכן דרך Field Registry (`entity=plan_version`: nutrition/supplements/lifestyle/goals — code-defined) · תיקון `core/fields`: כתיבה ריקה מדלגת/מנקה row במקום לקרוס על `value` NOT NULL ·
+מסכים `/t/patients/[id]/plan` (+ `/edit` `/v/[versionId]`) · `/p/plan` למטופל (נוכחית בלבד).
+**DoD:** גרסאות נשמרות ונצפות ✓ · הוספה מאוחרת = גרסה חדשה, לא דריסה ✓ (נבדק בדפדפן מול Neon) · 6 בדיקות isolation ✓.
+**תלוי:** WP-11, WP-09 · **הבא:** WP-15 (Tasks)
 
 ### WP-15 · Tasks ⬜
 יצירת משימה (שם/תיאור/תאריכים/תדירות), המטופל מסמן בוצע/לא בוצע.

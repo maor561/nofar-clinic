@@ -55,13 +55,23 @@ export async function setFieldValues(
       )
       .limit(1);
 
+    // `field_value.value` is NOT NULL: "no value" means "no row". An empty
+    // write (null / undefined / "" / []) clears any existing row and inserts
+    // nothing. `false` and `0` are real answers and are kept.
+    const isEmpty =
+      parsed == null || parsed === "" || (Array.isArray(parsed) && parsed.length === 0);
+    if (isEmpty) {
+      if (existing[0]) await db.delete(fieldValue).where(eq(fieldValue.id, existing[0].id));
+      continue;
+    }
+
     const row = {
       therapistId: scope.therapistId,
       patientId: scope.patientId,
       entity,
       entityId,
       definitionId: w.definitionId,
-      value: parsed ?? null,
+      value: parsed,
       recordedAt: new Date(),
     };
     if (existing[0]) {

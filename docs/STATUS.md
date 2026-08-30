@@ -6,9 +6,9 @@
 
 ## מצב נוכחי
 
-שלב **דומיין**. Core: WP-00..09 ✓ (למעט WP-08). **WP-10 Patients ✓ · WP-11 Timeline ✓ · WP-12 Appointments ✓ · WP-13 Treatment Sessions ✓**.
-81 בדיקות ירוקות, הפריסה חיה, Neon + Resend מחוברים.
-**הבא: WP-14 — Treatment Plans + היסטוריית גרסאות.**
+שלב **דומיין**. Core: WP-00..09 ✓ (למעט WP-08). **WP-10 Patients · WP-11 Timeline · WP-12 Appointments · WP-13 Sessions · WP-14 Plans — הכול ✓**.
+87 בדיקות ירוקות, הפריסה חיה, Neon + Resend מחוברים.
+**הבא: WP-15 — Tasks (משימות למטופל).**
 
 ## קישורים
 
@@ -27,8 +27,9 @@
 
 ## בעבודה
 
-- **WP-14 — Treatment Plans + גרסאות** (הבא). תוכנית פעילה + היסטוריית גרסאות (append, לא דריסה); שינוי = גרסה חדשה + `timeline_event('plan_changed')` + התראה; המטופל רואה נוכחית. בדיקת בידוד.
-- **WP-13 — Treatment Sessions** ✓ — `treatment_session` (מיגרציה 0007) + מסך "זרימה אחת" (3 חלקים ממוספרים, מדדי Registry משובצים) + קישור אופציונלי ל-appointment (מאומת). שלב "משימות" מהזרימה — יחווט ב-WP-15.
+- **WP-15 — Tasks** (הבא). משימות למטופל: כותרת/תיאור/טווח תאריכים/תדירות/סטטוס; המטופל מסמן "בוצע"; אירוע Timeline + התראה; חיווט לשלב "משימות" בזרימת המפגש (WP-13). בדיקת בידוד.
+- **WP-14 — Treatment Plans** ✓ — `treatment_plan` + `treatment_plan_version` append-only (מיגרציה 0008); תוכן דרך Field Registry (`plan_version`); `/p/plan` למטופל. תיקון `core/fields`: כתיבה ריקה לא קורסת על `value` NOT NULL.
+- **WP-13 — Treatment Sessions** ✓ — `treatment_session` (מיגרציה 0007) + מסך "זרימה אחת". שלב "משימות" מהזרימה — יחווט ב-WP-15.
 - **WP-12 — Appointments** ✓ — יומן שבועי (agenda) + CRUD + סטטוסים + `/p/appointments` לקריאה. `lib/tz.ts` שעון-קיר `Asia/Jerusalem`.
 - **WP-11 — Patient File + Timeline** ✓ — `listTimeline`/`countTimeline` (scoped, סינון בשאילתה) + כרטיס ציר זמן במסך התיק.
 - **WP-08 — File Storage** (Vercel Blob). פעולה קטנה מהלקוח: יצירת Blob store ב-Vercel → `BLOB_READ_WRITE_TOKEN` מוזרק אוטומטית.
@@ -120,6 +121,14 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-30 — WP-14 Treatment Plans + גרסאות
+`modules/plans` (ADR-026): `treatment_plan` (unique patient) + `treatment_plan_version` append-only (מיגרציה `0008`, הוחלה על Neon; שני הrows scoped therapist+patient). `savePlanVersion` — כל save = `version_no+1`, ערכי שדות מול מזהה הגרסה החדש (גרסאות קודמות לא נדרסות), `current_version_id` מתעדכן, `plan_changed` ל-Timeline + `notify` למטופל (critical → גם אימייל).
+תוכן דרך Field Registry: נוספו 4 הגדרות `entity=plan_version` (`nutrition`/`supplements`/`lifestyle`/`goals`, code-defined); `pnpm db:registry` הורץ מול Neon.
+**תיקון `core/fields/store.ts`:** כתיבה ריקה (`null`/`""`/`[]`) מדלגת/מוחקת row במקום לכתוב null ולקרוס על `value` NOT NULL (23502). חל גם על מפגשים (WP-13). נוספה בדיקת רגרסיה.
+מסכים: `/t/patients/[id]/plan` (נוכחית + היסטוריה + audit view) · `/plan/edit` (`<FieldInput>`, מאותחל מהגרסה הנוכחית) · `/plan/v/[versionId]` (היסטורית, קריאה) · `/p/plan` (מטופל, נוכחית בלבד) · כפתור "תוכנית" בתיק.
+6 בדיקות isolation → 87 סה"כ. lint/typecheck/build ירוקים (כולל build ללא env).
+**נבדק בדפדפן מול Neon:** "דנה פרץ" — גרסה 1 (תזונה+יעדים) → גרסה 2 (תוספים + note "הוספת תוספי מגנזיום ואומגה 3"); היסטוריה 2→1; גרסה 1 ההיסטורית ללא התוספים; Timeline: "נוצרה" + "עודכנה — גרסה 2 · <note>". console נקי.
 
 ### 2026-08-30 — WP-13 Treatment Sessions
 `modules/sessions` (ADR-025): `treatment_session` (מיגרציה `0007`, הוחל על Neon) — `appointment_id` nullable + 7 עמודות טקסט חופשי · service `listSessions`/`getSession`/`createSession`/`updateSession` (מקבלים `TherapistDb`) · `assertAppointment` (guard) · מדדים דרך Field Registry (`entity=treatment_session`).
