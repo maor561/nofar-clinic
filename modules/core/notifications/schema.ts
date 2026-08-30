@@ -14,6 +14,7 @@ export const notificationType = [
   "appointment_cancelled",
   "plan_changed",
   "task_assigned",
+  "task_completed",
   "message_received",
   "questionnaire_submitted",
   "generic",

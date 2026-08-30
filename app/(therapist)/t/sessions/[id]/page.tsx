@@ -69,11 +69,18 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
             )}
           </p>
         </div>
-        <Button asChild variant="outline" size="sm">
-          <Link href={`/t/sessions/${id}/edit`}>
-            <Icon name="settings" size={16} /> עריכה
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/t/patients/${s.patientId}/tasks/new`}>
+              <Icon name="task-done" size={16} /> משימה מהמפגש
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/t/sessions/${id}/edit`}>
+              <Icon name="settings" size={16} /> עריכה
+            </Link>
+          </Button>
+        </div>
       </header>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_260px]">

@@ -111,10 +111,11 @@ Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפ
 **DoD:** גרסאות נשמרות ונצפות ✓ · הוספה מאוחרת = גרסה חדשה, לא דריסה ✓ (נבדק בדפדפן מול Neon) · 6 בדיקות isolation ✓.
 **תלוי:** WP-11, WP-09 · **הבא:** WP-15 (Tasks)
 
-### WP-15 · Tasks ⬜
-יצירת משימה (שם/תיאור/תאריכים/תדירות), המטופל מסמן בוצע/לא בוצע.
-**DoD:** מטפל יוצר, מטופל מעדכן סטטוס; אירועי Timeline; התראות; בדיקת בידוד.
-**תלוי:** WP-11
+### WP-15 · Tasks ✅
+`modules/tasks` (ADR-027): `task` (מיגרציה `0009`, dual-scoped) + service `listTasks`/`listTaskRows`/`getTask`/`createTask`/`updateTask`/`deleteTask` · **`setTaskStatus` מקבל TherapistDb|PatientDb** (המטופל מסמן "בוצע") · `task_created`/`task_completed` ל-Timeline · `labels.ts` טהור ל-client ·
+פעולה אחת לשני הצדדים (`setTaskStatusAction` + `getScopedDb()`) — מטופל מסיים → התראת `task_completed` למטפל · מסכים `/t/patients/[id]/tasks` (+ `/new` `/[taskId]/edit`) · `/p/tasks` (checkbox server-action) · כפתור "משימות" בתיק ו-"משימה מהמפגש" במסך המפגש.
+**DoD:** מטפל יוצר · מטופל מעדכן סטטוס · אירועי Timeline · התראות · 6 בדיקות isolation — הכול ✓ (נבדק בדפדפן מול Neon: מטופל השלים → התראה למטפל).
+**תלוי:** WP-11 · **הבא:** WP-16 (Messaging)
 
 ### WP-16 · Messaging ⬜
 שיחה מטפל↔מטופל, polling, נקרא/לא נקרא, היסטוריה.

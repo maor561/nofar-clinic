@@ -111,6 +111,11 @@ export default async function PatientPage({
             </Link>
           </Button>
           <Button asChild variant="outline" size="sm">
+            <Link href={`/t/patients/${id}/tasks`}>
+              <Icon name="task-done" size={16} /> משימות
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
             <Link href={`/t/sessions/new?patient=${id}`}>
               <Icon name="leaf" size={16} /> מפגש
             </Link>

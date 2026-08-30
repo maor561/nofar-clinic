@@ -280,3 +280,16 @@ Spike מול Neon (endpoint pooled, פרנקפורט) — `modules/core/data/scr
 - **נבדק בדפדפן מול Neon:** "דנה פרץ" — גרסה 1 (תזונה+יעדים) → גרסה 2 (הוספת תוספים, note) · היסטוריה מציגה 2→1 · גרסה 1 ההיסטורית נשארה בלי התוספים · Timeline: "תוכנית טיפול נוצרה" + "עודכנה — גרסה 2 · <note>".
 
 **נדחו:** מחיקת/שחזור גרסה · diff ויזואלי בין גרסאות · יותר מתוכנית פעילה אחת למטופל · תבנית `plan_version` גרפית (Field Registry code-defined ב-v1).
+
+## ADR-027 — Tasks: dual-scoped, one status action for both roles
+**תאריך:** 2026-08-30 · **סטטוס:** נעול · **מממש WP-15**
+
+- **schema:** `task` (מיגרציה `0009`) לפי DATA_MODEL — `title`/`description`/`start_date`/`end_date`/`frequency` (`once`/`daily`/`weekly`/`custom`)/`status` (`open`/`done`)/`completed_at`/`created_by`. dual-scoped (therapist+patient) כדי שהמטופל יקרא ויעדכן סטטוס של המשימות שלו דרך ה-guard.
+- **service** (`modules/tasks`): `listTaskRows`(שני scopes) / `listTasks`(TherapistDb, +שם) / `getTask` / `createTask` / `updateTask` / `deleteTask` (TherapistDb) · **`setTaskStatus(db, id, status)` מקבל `TherapistDb | PatientDb`** — המטופל מסמן "בוצע". מחזיר `{patientId, therapistId, title, changed}`. `completed_at` נחתם/מתאפס. אירוע Timeline: `task_created` ביצירה, `task_completed` במעבר ל-done (idempotent — done→done לא כותב כלום; reopen לא כותב אירוע).
+- **`labels.ts` טהור:** enums + תוויות עברית ב-`modules/tasks/labels.ts` (ללא server deps) — `schema.ts` וה-`index.ts` מייבאים משם, ורכיבי client מייבאים ישירות מ-`labels` (לא למשוך `getDb`→`node:fs` ל-bundle; כמו WP-13).
+- **פעולת סטטוס אחת לשני הצדדים:** `setTaskStatusAction(taskId, status)` ב-`app/(therapist)/.../tasks/actions.ts` משתמשת ב-`getScopedDb()` (מחזיר `TherapistDb|PatientDb`), ומתריעה למטפל (`task_completed`, סוג חדש ב-union) רק כש-`db.role === "patient"` והמשימה עברה ל-done. עמוד המטופל `/p/tasks` מייבא את אותה פעולה.
+- **מסכים:** `/t/patients/[id]/tasks` (רשימה פתוחות/בוצעו + toggle + עריכה + מחיקה, `audit("view","task")`) · `/tasks/new` · `/tasks/[taskId]/edit` · `/p/tasks` (מטופל — checkbox server-action, ללא client JS). כפתור "משימות" בתיק · "משימה מהמפגש" במסך המפגש (חיווט שלב המשימות מזרימת WP-13).
+- **בדיקות:** `tests/isolation/tasks-module.test.ts` (6) — cross-therapist (list/get/update/delete) · patient handle נוגע רק במשימות שלו (`setTaskStatus` על משימה זרה → `task_not_found`) · create → timeline + audit · מטופל משלים → `completed_at` + `task_completed` (idempotent) · reopen מנקה `completed_at` ללא אירוע · סינון status. 93 סה"כ.
+- **נבדק בדפדפן מול Neon:** מטפלת יצרה משימה ל"דנה" (timeline created+completed) · יצרה משימה ל"בדיקה התראה"; המטופל התחבר, ראה **רק** את המשימה שלו, סימן "בוצע" → למטפלת התקבלה התראה "משימה סומנה כבוצעה" ב-`/t/alerts`.
+
+**נדחו:** תזכורות תדירות (daily/weekly) כאירועי לוח בפועל — התדירות היא תווית בלבד ב-v1 · מטופל יוצר/עורך משימה · היסטוריית שינויי סטטוס.

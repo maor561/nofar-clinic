@@ -6,9 +6,9 @@
 
 ## מצב נוכחי
 
-שלב **דומיין**. Core: WP-00..09 ✓ (למעט WP-08). **WP-10 Patients · WP-11 Timeline · WP-12 Appointments · WP-13 Sessions · WP-14 Plans — הכול ✓**.
-87 בדיקות ירוקות, הפריסה חיה, Neon + Resend מחוברים.
-**הבא: WP-15 — Tasks (משימות למטופל).**
+שלב **דומיין**. Core: WP-00..09 ✓ (למעט WP-08). **WP-10..15 ✓** (Patients · Timeline · Appointments · Sessions · Plans · Tasks).
+93 בדיקות ירוקות, הפריסה חיה, Neon + Resend מחוברים.
+**הבא: WP-16 — Messaging (שיחה מטפל↔מטופל).**
 
 ## קישורים
 
@@ -27,8 +27,9 @@
 
 ## בעבודה
 
-- **WP-15 — Tasks** (הבא). משימות למטופל: כותרת/תיאור/טווח תאריכים/תדירות/סטטוס; המטופל מסמן "בוצע"; אירוע Timeline + התראה; חיווט לשלב "משימות" בזרימת המפגש (WP-13). בדיקת בידוד.
-- **WP-14 — Treatment Plans** ✓ — `treatment_plan` + `treatment_plan_version` append-only (מיגרציה 0008); תוכן דרך Field Registry (`plan_version`); `/p/plan` למטופל. תיקון `core/fields`: כתיבה ריקה לא קורסת על `value` NOT NULL.
+- **WP-16 — Messaging** (הבא). שיחה מטפל↔מטופל, polling, נקרא/לא נקרא, שרשור מבודד למטופל. בדיקת בידוד.
+- **WP-15 — Tasks** ✓ — `task` dual-scoped (מיגרציה 0009); `setTaskStatus` לשני התפקידים; `task_created`/`task_completed` ל-Timeline; מטופל משלים → התראה למטפל; `/p/tasks`. תדירות = תווית בלבד ב-v1.
+- **WP-14 — Treatment Plans** ✓ — `treatment_plan_version` append-only (מיגרציה 0008); תוכן דרך Field Registry; `/p/plan`.
 - **WP-13 — Treatment Sessions** ✓ — `treatment_session` (מיגרציה 0007) + מסך "זרימה אחת". שלב "משימות" מהזרימה — יחווט ב-WP-15.
 - **WP-12 — Appointments** ✓ — יומן שבועי (agenda) + CRUD + סטטוסים + `/p/appointments` לקריאה. `lib/tz.ts` שעון-קיר `Asia/Jerusalem`.
 - **WP-11 — Patient File + Timeline** ✓ — `listTimeline`/`countTimeline` (scoped, סינון בשאילתה) + כרטיס ציר זמן במסך התיק.
@@ -121,6 +122,12 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-30 — WP-15 Tasks
+`modules/tasks` (ADR-027): `task` (מיגרציה `0009`, הוחלה על Neon; dual-scoped) + service list/get/create/update/delete + `setTaskStatus(db, id, status)` שמקבל `TherapistDb | PatientDb` (המטופל מסמן "בוצע"). Timeline: `task_created` / `task_completed` (idempotent). `labels.ts` טהור ל-client.
+פעולה אחת לשני הצדדים: `setTaskStatusAction` ב-`app/(therapist)/.../tasks/actions.ts` דרך `getScopedDb()`; `/p/tasks` מייבא אותה; מטופל שמסיים → `notify(task_completed)` למטפל (סוג חדש ב-union). מסכים `/t/patients/[id]/tasks` (+ `/new` `/[taskId]/edit`) · `/p/tasks` (checkbox = server-action form, אפס client JS) · כפתור "משימות" בתיק + "משימה מהמפגש" במסך המפגש (חיווט שלב המשימות מ-WP-13).
+6 בדיקות isolation → 93 סה"כ. lint/typecheck/build ירוקים (build ללא env). *הערה: ריצת test מלאה אחת הראתה flake ב-`auth.test.ts` (timing, argon2 תחת עומס); ריצה חוזרת ירוקה.*
+**נבדק בדפדפן מול Neon:** מטפלת יצרה משימה ל"דנה" (timeline created+completed) · משימה ל"בדיקה התראה"; המטופל התחבר, ראה **רק** את שלו, סימן "בוצע" → למטפלת התראה "משימה סומנה כבוצעה" ב-`/t/alerts`. console נקי.
 
 ### 2026-08-30 — WP-14 Treatment Plans + גרסאות
 `modules/plans` (ADR-026): `treatment_plan` (unique patient) + `treatment_plan_version` append-only (מיגרציה `0008`, הוחלה על Neon; שני הrows scoped therapist+patient). `savePlanVersion` — כל save = `version_no+1`, ערכי שדות מול מזהה הגרסה החדש (גרסאות קודמות לא נדרסות), `current_version_id` מתעדכן, `plan_changed` ל-Timeline + `notify` למטופל (critical → גם אימייל).
