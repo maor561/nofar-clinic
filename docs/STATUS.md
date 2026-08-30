@@ -124,6 +124,7 @@
 מסך `/t/patients/[id]`: כרטיס "ציר זמן" — צ'יפים `?ev=<type>` + `<PatientTimeline>` (רכיב render טהור: קיבוץ יומי "היום"/"אתמול"/תאריך, פס `border-s` עם בועות אייקון); כותרת = סה"כ אירועים (לא מסונן). הוסר ה-placeholder של WP-10.
 6 בדיקות isolation (`patient-file-timeline.test.ts`) — cross-therapist ריק · patient handle רק את עצמו · מיון · סינון סוג · חלון תאריכים · תקרת 500. 69 סה"כ · lint/typecheck/build ירוקים.
 **נבדק בדפדפן מול Neon:** תיק "דנה פרץ" — "נוספ/ה למערכת" תחת "היום" @ 20:26, תווית "סטטוס"; `?ev=appointment` → מצב ריק. console נקי (רק HMR ws של הפריוויו).
+**CI hiccup:** ה-build נפל על `StatusPill` שיוצא מ-`patients/page.tsx` — Next 16 אוסר export לא-סטנדרטי מקובץ route (`{ [x: string]: never }`). הועבר ל-`status-pill.tsx` נפרד (commit `b9035e7`). לוקאלית עבר (Node 24) אבל נפל ב-CI (Node 22) — הכלל תקף בכל מקרה.
 
 ### 2026-08-30 — WP-10 Patients + version stamp
 **חותמת גרסה:** `next.config` מטביע git SHA + build time → `GET /api/version` + כותרת תחתונה של `/`. אומת חי (d20e15d).
