@@ -43,6 +43,13 @@
       "when": 1788110194353,
       "tag": "0005_patients_profile",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788113808190,
+      "tag": "0006_appointments",
+      "breakpoints": true
     }
   ]
 }

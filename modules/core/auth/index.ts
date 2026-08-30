@@ -16,6 +16,7 @@ import {
   provisionPatientUser as _provisionPatientUser,
   getUserById as _getUserById,
   getTherapistUserId as _getTherapistUserId,
+  getPatientUserId as _getPatientUserId,
 } from "./internal/register";
 import {
   createSession as _createSession,
@@ -119,6 +120,10 @@ export function getDisplayName(session: ActiveSession) {
 
 export function getTherapistUserId(therapistId: string) {
   return _getTherapistUserId(getDb(), therapistId);
+}
+
+export function getPatientUserId(patientId: string) {
+  return _getPatientUserId(getDb(), patientId);
 }
 
 export function readSession(token: string | undefined) {

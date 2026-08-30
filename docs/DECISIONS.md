@@ -240,3 +240,16 @@ Spike מול Neon (endpoint pooled, פרנקפורט) — `modules/core/data/scr
 - **נבדק בדפדפן מול Neon:** תיק "דנה פרץ" — אירוע "נוספ/ה למערכת" מופיע תחת "היום" עם חותמת שעה; `?ev=appointment` → מצב ריק.
 
 **נדחו:** event bus / תור אירועים — כל מודול קורא `recordEvent` ישירות (ARCHITECTURE §4.3). דפדוף אינסופי / cursor pagination — לא נדרש לנפחי v1.
+
+## ADR-024 — Appointments: agenda-by-week UI, wall-clock times via `Asia/Jerusalem`
+**תאריך:** 2026-08-30 · **סטטוס:** נעול · **מממש WP-12**
+
+- **schema:** `appointment` (מיגרציה `0006`) — `therapist_id` + `patient_id` שניהם present, אז השורה נגישה לשני ה-handles הממוקדים. `status` (`scheduled`/`done`/`cancelled`/`no_show`), `treatment_type` (nullable, מ-enum של patients), `gcal_event_id` nullable (שלב 2). אינדקסים `(therapist_id, starts_at)` + `(patient_id, starts_at)`.
+- **service** (`modules/appointments`): `listAppointmentRows(db)` — גולמי, לשני ה-scopes; `listAppointments(tdb)` — מוסיף `patientName` (שאילתה שנייה, TherapistDb בלבד — patient לא צריך לראות שם של עצמו וגם לא יכול לשאול את `patient`); `getAppointment(tdb)`; `createAppointment`/`updateAppointment`/`setAppointmentStatus` — מקבלים `TherapistDb`. סינון `from/to/patientId/status` ב-SQL, תקרת 500.
+- **Timeline + התראות:** כל mutation → `recordEvent(type:"appointment", occurredAt: startsAt, refId)`; `setAppointmentStatus` מחזיר `patientId` כדי שה-action יתריע. שלושה סוגי notification חדשים (`appointment_scheduled/changed/cancelled`) — **union ב-TS בלבד, ללא מיגרציה** (drizzle `text enum` = עמודת text). לא critical (in-app בלבד ל-v1; אימיילי תזכורת = WP מאוחר). `getPatientUserId` נוסף ל-`core/auth`.
+- **זמנים:** `lib/tz.ts` — `CLINIC_TZ = Asia/Jerusalem`. הקלט הוא שעון-קיר (`YYYY-MM-DD` + `HH:MM`) → `fromClinicWallTime` ממיר ל-instant דרך היסט ה-tz באותו רגע; כל הרינדור דרך `clinicDateFmt` עם `timeZone` מפורש. נכון פרט לקיפול DST של שעה — מקובל ל-v1. הוחלט **לא** להביא ספריית tz.
+- **מסכים:** `/t/calendar` — יומן שבועי כ-**agenda** (7 ימים, ניווט ‹ היום ›, צ'יפים לפי status), לא רשת גרירה (מחוץ לסקופ v1, לא ב-DoD) · `/t/calendar/new` + `/[id]` (פרטים + כפתורי סטטוס כ-server-action forms) + `/[id]/edit` · `AppointmentForm` משותף · `/p/appointments` — קריאה-בלבד (קרובות/קודמות) דרך `getPatientDb()` · כפתור "פגישה" בתיק המטופל (`?patient=<id>`).
+- **בדיקות:** `tests/isolation/appointments-module.test.ts` (6) — מטפל לא רואה/נוגע ביומן של מטפל אחר · patient handle רק את עצמו (גם עם `patientId` זר בפילטר) · create → timeline `appointment` + audit · reschedule/status → timeline · no-op status = אפס event · סינון חלון/סטטוס. 75 סה"כ.
+- **נבדק בדפדפן מול Neon:** יצירת פגישה ל"דנה פרץ" (09:00) → agenda + פרטים + timeline "פגישה נקבעה" · מטופל "בדיקה התראה" רואה **רק** את הפגישה שלו (11:00 רפלקסולוגיה) ולא את של דנה · round-trip של tz (11:00 קלט = 11:00 תצוגה).
+
+**נדחו:** רשת יומן אינטראקטיבית (drag/resize) · בדיקת חפיפות זמנים · אימיילי תזכורת · סנכרון Google Calendar — כולם WPs מאוחרים או מחוץ ל-v1.

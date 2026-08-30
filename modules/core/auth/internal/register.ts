@@ -83,3 +83,13 @@ export async function getTherapistUserId(db: Db, therapistId: string): Promise<s
     .limit(1);
   return rows[0]?.id ?? null;
 }
+
+/** The login user id for a patient row, if one has been provisioned. */
+export async function getPatientUserId(db: Db, patientId: string): Promise<string | null> {
+  const rows = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(and(eq(user.patientId, patientId), eq(user.role, "patient")))
+    .limit(1);
+  return rows[0]?.id ?? null;
+}

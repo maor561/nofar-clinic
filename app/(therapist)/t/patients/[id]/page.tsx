@@ -106,6 +106,11 @@ export default async function PatientPage({
         </div>
         <div className="flex gap-2">
           <Button asChild variant="outline" size="sm">
+            <Link href={`/t/calendar/new?patient=${id}`}>
+              <Icon name="calendar" size={16} /> פגישה
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
             <Link href={`/t/patients/${id}/edit`}>
               <Icon name="settings" size={16} /> עריכה
             </Link>

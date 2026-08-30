@@ -6,9 +6,9 @@
 
 ## מצב נוכחי
 
-שלב **דומיין**. Core: WP-00..09 ✓ (למעט WP-08 File Storage). **WP-10 (Patients) ✓ · WP-11 (Patient File + Timeline) ✓**.
-69 בדיקות ירוקות, הפריסה חיה, Neon + Resend מחוברים.
-**הבא: WP-12 — Appointments (יומן פנימי).**
+שלב **דומיין**. Core: WP-00..09 ✓ (למעט WP-08 File Storage). **WP-10 (Patients) ✓ · WP-11 (Timeline) ✓ · WP-12 (Appointments) ✓**.
+75 בדיקות ירוקות, הפריסה חיה, Neon + Resend מחוברים.
+**הבא: WP-13 — Treatment Sessions (מסך פגישה כזרימה אחת).**
 
 ## קישורים
 
@@ -27,8 +27,9 @@
 
 ## בעבודה
 
-- **WP-12 — Appointments** (הבא). יומן פנימי: יצירה/שינוי/ביטול, `no_show`, אירוע Timeline + התראה, בדיקת בידוד.
-- **WP-11 — Patient File + Timeline** ✓ — `listTimeline`/`countTimeline` (scoped, סינון בשאילתה) + כרטיס ציר זמן במסך התיק. חיווט אירועים ממודולים אחרים יתווסף כשייבנו.
+- **WP-13 — Treatment Sessions** (הבא). מסך תיעוד מפגש כזרימה אחת, מקושר אופציונלית ל-appointment, שדות פר-תחום דרך Field Registry, אירוע Timeline, בדיקת בידוד.
+- **WP-12 — Appointments** ✓ — יומן שבועי (agenda) + CRUD + סטטוסים + `/p/appointments` לקריאה. `lib/tz.ts` שעון-קיר `Asia/Jerusalem`. חפיפות זמנים / רשת גרירה / תזכורות אימייל / סנכרון GCal — נדחו.
+- **WP-11 — Patient File + Timeline** ✓ — `listTimeline`/`countTimeline` (scoped, סינון בשאילתה) + כרטיס ציר זמן במסך התיק.
 - **WP-08 — File Storage** (Vercel Blob). פעולה קטנה מהלקוח: יצירת Blob store ב-Vercel → `BLOB_READ_WRITE_TOKEN` מוזרק אוטומטית.
 - **מיתוג:** הלקוח שלח לוגו (עיגול מרווה + פרח לבן, כותרת "נופר כהן נטורופתית N.D והרבליסטית קלינית Cl.H"). לדגום ירוק מהלוגו + לעדכן subtitle. **הלקוח ביקש להתעלם מבקשות נוספות עד הודעה חדשה.**
 - **דיוקי תוכן במוקאפים** — טראק מקביל, לא חוסם.
@@ -118,6 +119,15 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-30 — WP-12 Appointments
+`modules/appointments` (ADR-024): `appointment` (מיגרציה `0006`, הוחל על Neon) — therapist+patient scoped, status `scheduled/done/cancelled/no_show`, `gcal_event_id` nullable.
+service: `listAppointmentRows` (גולמי, שני scopes) · `listAppointments` (מוסיף `patientName`, TherapistDb) · `getAppointment` · `create/update/setAppointmentStatus` · סינון from/to/patient/status ב-SQL.
+כל mutation → `recordEvent(type:"appointment", occurredAt:startsAt, refId)` + התראת in-app למטופל (`appointment_scheduled/changed/cancelled` — נוספו ל-union של `notificationType`, אין מיגרציה כי `text enum`). `getPatientUserId` נוסף ל-`core/auth`.
+`lib/tz.ts`: `CLINIC_TZ=Asia/Jerusalem`, `fromClinicWallTime`/`toClinicFields`/`clinicWeekStart`/`clinicDateFmt` — קלט שעון-קיר, רינדור עם `timeZone` מפורש.
+מסכים: `/t/calendar` (agenda שבועי, ניווט ‹היום›, צ'יפים לפי status) · `/new` + `/[id]` (כפתורי סטטוס כ-server-action forms) + `/[id]/edit` · `AppointmentForm` משותף · `/p/appointments` (קריאה בלבד, קרובות/קודמות) · כפתור "פגישה" בתיק (`?patient=`).
+`StatusPill` הועבר מ-`patients/page.tsx` ל-`status-pill.tsx` (המשך תיקון WP-11 route-export). 6 בדיקות isolation → 75 סה"כ. lint/typecheck/build ירוקים (כולל build ללא env).
+**נבדק בדפדפן מול Neon:** פגישה ל"דנה פרץ" 09:00 → agenda + פרטים + timeline "פגישה נקבעה" · מטופל "בדיקה התראה" (הזמנה חדשה) רואה **רק** את הפגישה שלו (11:00 רפלקסולוגיה) · round-trip tz תקין. console נקי (רק HMR ws).
 
 ### 2026-08-30 — WP-11 Patient File + Timeline
 `modules/patient-file` (ADR-023): `listTimeline`/`countTimeline` לצד `recordEvent` — `TherapistDb | PatientDb` (cast ל-union), סינון בשאילתה (`types[]` inArray · `gte/lte` על `occurred_at` · מיון desc/asc) · תקרת 500 על האינדקס הקיים `(patient_id, occurred_at)` · `TIMELINE_LABEL` עברית במודול, `TIMELINE_ICON` ב-UI.

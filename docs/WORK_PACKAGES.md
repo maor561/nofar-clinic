@@ -91,10 +91,12 @@ Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפ
 **DoD:** צד קריאה + סינון ✓ · < 1ש' ל-500 (שאילתה יחידה מאונדקסת) ✓ · 6 בדיקות isolation (cross-therapist ריק · patient רק את עצמו · מיון · סינון · תקרה) ✓ · נבדק בדפדפן מול Neon ✓. *אירועים ממודולים אחרים — כשייבנו (WP-12+), כל אחד קורא `recordEvent`.*
 **תלוי:** WP-10 · **הבא:** WP-12 (Appointments)
 
-### WP-12 · Appointments (יומן פנימי) ⬜
-יצירה/שינוי/ביטול/תצוגת יומן, קישור למטופל, מצב `no_show`.
-**DoD:** מטפל מנהל יומן; מטופל רואה את הפגישות שלו בלבד; אירוע Timeline + התראה; בדיקת בידוד.
-**תלוי:** WP-10
+### WP-12 · Appointments (יומן פנימי) ✅
+`modules/appointments` (ADR-024): `appointment` (מיגרציה `0006`, therapist+patient scoped) · service `listAppointments`/`listAppointmentRows`/`getAppointment`/`createAppointment`/`updateAppointment`/`setAppointmentStatus` · סינון from/to/patient/status ב-SQL ·
+כל mutation → timeline `appointment` + התראה למטופל (`appointment_scheduled/changed/cancelled` — union TS, ללא מיגרציה) · `lib/tz.ts` שעון-קיר `Asia/Jerusalem` · `getPatientUserId` ב-core/auth ·
+מסכים `/t/calendar` (agenda שבועי + צ'יפים) · `/new` · `/[id]` (+כפתורי סטטוס) · `/[id]/edit` · `/p/appointments` (קריאה בלבד) · כפתור "פגישה" בתיק.
+**DoD:** מטפל מנהל יומן ✓ · מטופל רואה את הפגישות שלו בלבד ✓ (נבדק בדפדפן מול Neon) · אירוע Timeline + התראה ✓ · 6 בדיקות isolation ✓.
+**תלוי:** WP-10 · **הבא:** WP-13 (Treatment Sessions)
 
 ### WP-13 · Treatment Sessions ⬜
 מסך פגישה כ**זרימה אחת** (לא תיבות מנותקות): מצב מטופל → טיפול → המלצות → משימות → המשך. שדות פר-תחום דרך WP-09.
