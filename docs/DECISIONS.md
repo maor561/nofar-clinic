@@ -253,3 +253,17 @@ Spike מול Neon (endpoint pooled, פרנקפורט) — `modules/core/data/scr
 - **נבדק בדפדפן מול Neon:** יצירת פגישה ל"דנה פרץ" (09:00) → agenda + פרטים + timeline "פגישה נקבעה" · מטופל "בדיקה התראה" רואה **רק** את הפגישה שלו (11:00 רפלקסולוגיה) ולא את של דנה · round-trip של tz (11:00 קלט = 11:00 תצוגה).
 
 **נדחו:** רשת יומן אינטראקטיבית (drag/resize) · בדיקת חפיפות זמנים · אימיילי תזכורת · סנכרון Google Calendar — כולם WPs מאוחרים או מחוץ ל-v1.
+
+## ADR-025 — Treatment Sessions: single-flow screen, fields via Registry, `__setActiveDb` test seam
+**תאריך:** 2026-08-30 · **סטטוס:** נעול · **מממש WP-13**
+
+- **schema:** `treatment_session` (מיגרציה `0007`) לפי DATA_MODEL — `appointment_id` nullable (`on delete set null`), `date`, `treatment_type`, ושבע עמודות טקסט חופשי (`patient_report`/`complaints`/`changes_since_last`/`treatment_done`/`therapist_notes`/`recommendations`/`next_focus`). dual-scoped (therapist+patient) אף שאין מסך למטופל ב-v1.
+- **מדדים פר-תחום:** דרך ה-Field Registry (`entity = 'treatment_session'` — `energy_level`/`sleep_quality`/`weight_kg`, כבר ב-`FIELD_REGISTRY`). הרינדור עם `<FieldInput>` הקיים; ה-action מקודד ערכים לפי `def.type` ומעביר ל-`setFieldValuesIn` (validate-on-write). קריאה דרך `getFieldValuesFrom` (validate-on-read).
+- **service** (`modules/sessions`): `listSessions`/`getSession` (מצרף `patientName` + `fields`) / `createSession` / `updateSession` — מקבלים `TherapistDb`. `assertAppointment` מוודא שה-`appointment_id` המקושר שייך לאותו מטפל ולאותו מטופל (guard). `createSession` → `recordEvent(type:"session", occurredAt:date, refId)`; `updateSession` לא כותב אירוע חדש (עריכה, לא מפגש חדש).
+- **גבול client/server:** `SESSION_SECTIONS` הועבר ל-`modules/sessions/sections.ts` טהור — `session-form.tsx` (`"use client"`) מייבא משם ולא מ-`index.ts` (שמושך `getDb`→`node:fs` ל-bundle).
+- **מסך "זרימה אחת"** (WP-13 core): `/t/sessions/new` — טופס `<form>` יחיד, שלושה חלקים ממוספרים (מצב המטופל/ת → הטיפול שבוצע → המלצות והמשך), המדדים משובצים בחלק הראשון, submit אחד. `/t/sessions/[id]` צפייה + `/[id]/edit`. כניסה מהתיק ("מפגש") ומפרטי פגישה ("תיעוד מפגש", עם `?appointment=`). *שלב "משימות" מה-spec — יחווט כש-Tasks (WP-15) קיים.*
+- **`__setActiveDb` (client.ts):** seam לבדיקות — `createTestDb()` מצביע את `getDb()` על ה-PGlite של הבדיקה, כך שה-wrappers הציבוריים שמבוססי `getDb()` (core/fields, core/notifications…) עובדים ב-isolation. `setFieldValuesIn`/`getFieldValuesFrom` הפכו ל-wrappers שמזריקים `getDb()` (במקום re-export גולמי).
+- **בדיקות:** `tests/isolation/sessions-module.test.ts` (6) — cross-therapist (list/get/update) · field_value scoped למטפל הבעלים · create → timeline `session` + audit · update מחליף ערכי שדות בלי אירוע חדש · ערך מחוץ לסכימה נדחה · appointment של מטופל אחר נדחה. 81 סה"כ.
+- **נבדק בדפדפן מול Neon:** מפגש ל"דנה פרץ" — מדדים (אנרגיה 8 / שינה 7 / משקל 68.4) נשמרו, אומתו, והוצגו · timeline "תיעוד מפגש" (מפגש טיפולי) · `/t/audit`: create(treatment_session) + create(timeline_event) + view(treatment_session).
+
+**נדחו:** מסך מפגש למטופל · חיווט יצירת משימות בתוך הזרימה (עד WP-15) · אירוע Timeline על עריכת מפגש.

@@ -53,6 +53,11 @@ export default async function AppointmentPage({ params }: { params: Promise<{ id
         </div>
         <div className="flex gap-2">
           <Button asChild variant="outline" size="sm">
+            <Link href={`/t/sessions/new?patient=${a.patientId}&appointment=${id}`}>
+              <Icon name="leaf" size={16} /> תיעוד מפגש
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
             <Link href={`/t/patients/${a.patientId}`}>
               <Icon name="users" size={16} /> תיק המטופל/ת
             </Link>

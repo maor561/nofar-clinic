@@ -98,10 +98,11 @@ Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפ
 **DoD:** מטפל מנהל יומן ✓ · מטופל רואה את הפגישות שלו בלבד ✓ (נבדק בדפדפן מול Neon) · אירוע Timeline + התראה ✓ · 6 בדיקות isolation ✓.
 **תלוי:** WP-10 · **הבא:** WP-13 (Treatment Sessions)
 
-### WP-13 · Treatment Sessions ⬜
-מסך פגישה כ**זרימה אחת** (לא תיבות מנותקות): מצב מטופל → טיפול → המלצות → משימות → המשך. שדות פר-תחום דרך WP-09.
-**DoD:** תיעוד פגישה מלא; מקושר ל-appointment אופציונלי; אירוע Timeline; בדיקת בידוד.
-**תלוי:** WP-11, WP-09
+### WP-13 · Treatment Sessions ✅
+`modules/sessions` (ADR-025): `treatment_session` (מיגרציה `0007`) + service `listSessions`/`getSession`/`createSession`/`updateSession` (מקבלים `TherapistDb`) · מדדים פר-תחום דרך Field Registry (`entity=treatment_session`) · `assertAppointment` בודק שהקישור לאותו מטפל+מטופל ·
+מסך "זרימה אחת" `/t/sessions/new` (טופס יחיד, 3 חלקים ממוספרים, המדדים משובצים) · `/[id]` + `/[id]/edit` · כניסה מהתיק ומפרטי פגישה · `recordEvent(type:"session")` · `__setActiveDb` seam לבדיקות.
+**DoD:** תיעוד מלא כזרימה אחת ✓ · מקושר ל-appointment אופציונלי (מאומת ב-guard) ✓ · אירוע Timeline ✓ · 6 בדיקות isolation ✓ · נבדק בדפדפן מול Neon ✓. *שלב "משימות" יחווט ב-WP-15.*
+**תלוי:** WP-11, WP-09 · **הבא:** WP-14 (Treatment Plans + גרסאות)
 
 ### WP-14 · Treatment Plans + גרסאות ⬜
 תוכנית פעילה + היסטוריית גרסאות; שינוי = גרסה חדשה + Timeline + התראה; המטופל רואה נוכחית.

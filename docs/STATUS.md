@@ -6,9 +6,9 @@
 
 ## מצב נוכחי
 
-שלב **דומיין**. Core: WP-00..09 ✓ (למעט WP-08 File Storage). **WP-10 (Patients) ✓ · WP-11 (Timeline) ✓ · WP-12 (Appointments) ✓**.
-75 בדיקות ירוקות, הפריסה חיה, Neon + Resend מחוברים.
-**הבא: WP-13 — Treatment Sessions (מסך פגישה כזרימה אחת).**
+שלב **דומיין**. Core: WP-00..09 ✓ (למעט WP-08). **WP-10 Patients ✓ · WP-11 Timeline ✓ · WP-12 Appointments ✓ · WP-13 Treatment Sessions ✓**.
+81 בדיקות ירוקות, הפריסה חיה, Neon + Resend מחוברים.
+**הבא: WP-14 — Treatment Plans + היסטוריית גרסאות.**
 
 ## קישורים
 
@@ -27,8 +27,9 @@
 
 ## בעבודה
 
-- **WP-13 — Treatment Sessions** (הבא). מסך תיעוד מפגש כזרימה אחת, מקושר אופציונלית ל-appointment, שדות פר-תחום דרך Field Registry, אירוע Timeline, בדיקת בידוד.
-- **WP-12 — Appointments** ✓ — יומן שבועי (agenda) + CRUD + סטטוסים + `/p/appointments` לקריאה. `lib/tz.ts` שעון-קיר `Asia/Jerusalem`. חפיפות זמנים / רשת גרירה / תזכורות אימייל / סנכרון GCal — נדחו.
+- **WP-14 — Treatment Plans + גרסאות** (הבא). תוכנית פעילה + היסטוריית גרסאות (append, לא דריסה); שינוי = גרסה חדשה + `timeline_event('plan_changed')` + התראה; המטופל רואה נוכחית. בדיקת בידוד.
+- **WP-13 — Treatment Sessions** ✓ — `treatment_session` (מיגרציה 0007) + מסך "זרימה אחת" (3 חלקים ממוספרים, מדדי Registry משובצים) + קישור אופציונלי ל-appointment (מאומת). שלב "משימות" מהזרימה — יחווט ב-WP-15.
+- **WP-12 — Appointments** ✓ — יומן שבועי (agenda) + CRUD + סטטוסים + `/p/appointments` לקריאה. `lib/tz.ts` שעון-קיר `Asia/Jerusalem`.
 - **WP-11 — Patient File + Timeline** ✓ — `listTimeline`/`countTimeline` (scoped, סינון בשאילתה) + כרטיס ציר זמן במסך התיק.
 - **WP-08 — File Storage** (Vercel Blob). פעולה קטנה מהלקוח: יצירת Blob store ב-Vercel → `BLOB_READ_WRITE_TOKEN` מוזרק אוטומטית.
 - **מיתוג:** הלקוח שלח לוגו (עיגול מרווה + פרח לבן, כותרת "נופר כהן נטורופתית N.D והרבליסטית קלינית Cl.H"). לדגום ירוק מהלוגו + לעדכן subtitle. **הלקוח ביקש להתעלם מבקשות נוספות עד הודעה חדשה.**
@@ -119,6 +120,13 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-30 — WP-13 Treatment Sessions
+`modules/sessions` (ADR-025): `treatment_session` (מיגרציה `0007`, הוחל על Neon) — `appointment_id` nullable + 7 עמודות טקסט חופשי · service `listSessions`/`getSession`/`createSession`/`updateSession` (מקבלים `TherapistDb`) · `assertAppointment` (guard) · מדדים דרך Field Registry (`entity=treatment_session`).
+`setFieldValuesIn`/`getFieldValuesFrom` הפכו ל-wrappers שמזריקים `getDb()`; נוסף `__setActiveDb` ל-`client.ts` ו-`createTestDb()` מצביע את `getDb()` על ה-PGlite של הבדיקה (כך שה-wrappers עובדים ב-isolation).
+מסך "זרימה אחת" `/t/sessions/new` (טופס יחיד, 3 חלקים ממוספרים, `<FieldInput>` משובץ בחלק 1) · `/[id]` + `/[id]/edit` · `SessionForm` משותף · `SESSION_SECTIONS` ל-`sections.ts` טהור (לא למשוך `getDb`→`node:fs` ל-client bundle) · כניסה מהתיק ("מפגש") ומפרטי פגישה ("תיעוד מפגש", `?appointment=`).
+6 בדיקות isolation → 81 סה"כ. lint/typecheck/build ירוקים (כולל build ללא env).
+**נבדק בדפדפן מול Neon:** מפגש ל"דנה פרץ" — מדדים (אנרגיה 8 / שינה 7 / משקל 68.4) נשמרו+אומתו+הוצגו · timeline "תיעוד מפגש" (מפגש טיפולי) · `/t/audit` = create(treatment_session)+create(timeline_event)+view(treatment_session). console נקי.
 
 ### 2026-08-30 — WP-12 Appointments
 `modules/appointments` (ADR-024): `appointment` (מיגרציה `0006`, הוחל על Neon) — therapist+patient scoped, status `scheduled/done/cancelled/no_show`, `gcal_event_id` nullable.

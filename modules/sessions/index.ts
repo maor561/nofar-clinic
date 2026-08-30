@@ -1,2 +1,177 @@
-// Public service contract for the sessions module. Implementation in ./internal (never imported directly).
-export {};
+import { and, desc, eq, inArray, type SQL } from "drizzle-orm";
+import type { InferSelectModel } from "drizzle-orm";
+import type { TherapistDb } from "@/modules/core/authz";
+import { patient } from "@/modules/patients/schema";
+import { appointment } from "@/modules/appointments/schema";
+import { recordEvent } from "@/modules/patient-file";
+import {
+  fieldDefinitionsFor,
+  setFieldValuesIn,
+  getFieldValuesFrom,
+  type FieldValueOut,
+} from "@/modules/core/fields";
+import { treatmentSession } from "./schema";
+
+export { SESSION_SECTIONS, type SessionSectionKey } from "./sections";
+
+export const SESSION_FIELD_ENTITY = "treatment_session" as const;
+
+export type SessionRow = InferSelectModel<typeof treatmentSession>;
+export type SessionListItem = SessionRow & { patientName: string };
+export type SessionDetail = SessionListItem & { fields: FieldValueOut[] };
+
+export type SessionInput = {
+  patientId: string;
+  date: string;
+  appointmentId?: string | null;
+  treatmentType?: SessionRow["treatmentType"];
+  patientReport?: string | null;
+  complaints?: string | null;
+  changesSinceLast?: string | null;
+  treatmentDone?: string | null;
+  therapistNotes?: string | null;
+  recommendations?: string | null;
+  nextFocus?: string | null;
+};
+
+export type FieldWriteInput = { definitionId: string; value: unknown };
+
+function textCols(input: Partial<SessionInput>) {
+  return {
+    treatmentType: input.treatmentType ?? null,
+    patientReport: input.patientReport ?? null,
+    complaints: input.complaints ?? null,
+    changesSinceLast: input.changesSinceLast ?? null,
+    treatmentDone: input.treatmentDone ?? null,
+    therapistNotes: input.therapistNotes ?? null,
+    recommendations: input.recommendations ?? null,
+    nextFocus: input.nextFocus ?? null,
+  };
+}
+
+/** Definitions to render the per-domain metric inputs for the session flow. */
+export function sessionFieldDefs(tdb: TherapistDb) {
+  return fieldDefinitionsFor(tdb.therapistId, SESSION_FIELD_ENTITY);
+}
+
+async function withNames(tdb: TherapistDb, rows: SessionRow[]): Promise<SessionListItem[]> {
+  if (rows.length === 0) return [];
+  const ids = [...new Set(rows.map((r) => r.patientId))];
+  const people = await tdb.findMany(patient, inArray(patient.id, ids));
+  const nameById = new Map(people.map((p) => [p.id, `${p.firstName} ${p.lastName}`]));
+  return rows.map((r) => ({ ...r, patientName: nameById.get(r.patientId) ?? "מטופל/ת" }));
+}
+
+export async function listSessions(
+  tdb: TherapistDb,
+  filter: { patientId?: string; limit?: number; offset?: number } = {},
+): Promise<SessionListItem[]> {
+  const conds: SQL[] = [];
+  if (filter.patientId) conds.push(eq(treatmentSession.patientId, filter.patientId));
+  const rows = await tdb.list(treatmentSession, {
+    where: conds.length ? and(...conds) : undefined,
+    orderBy: [desc(treatmentSession.date), desc(treatmentSession.createdAt)],
+    limit: Math.min(filter.limit ?? 100, 500),
+    offset: filter.offset ?? 0,
+  });
+  return withNames(tdb, rows);
+}
+
+export async function getSession(tdb: TherapistDb, id: string): Promise<SessionDetail | null> {
+  const row = await tdb.findOne(treatmentSession, eq(treatmentSession.id, id));
+  if (!row) return null;
+  const [[withName], fields] = await Promise.all([
+    withNames(tdb, [row]),
+    getFieldValuesFrom(tdb.therapistId, SESSION_FIELD_ENTITY, id),
+  ]);
+  return { ...withName, fields };
+}
+
+/** Confirm an appointment id is this therapist's AND for this patient. */
+async function assertAppointment(
+  tdb: TherapistDb,
+  appointmentId: string,
+  patientId: string,
+): Promise<void> {
+  const appt = await tdb.findOne(
+    appointment,
+    and(eq(appointment.id, appointmentId), eq(appointment.patientId, patientId)),
+  );
+  if (!appt) throw new Error("appointment_not_found");
+}
+
+const summaryDateFmt = new Intl.DateTimeFormat("he-IL", { dateStyle: "medium" });
+function summary(input: SessionInput): string {
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(input.date)
+    ? summaryDateFmt.format(new Date(`${input.date}T12:00:00Z`))
+    : input.date;
+  return `תיעוד מפגש — ${d}`;
+}
+
+export async function createSession(
+  tdb: TherapistDb,
+  input: SessionInput,
+  fieldWrites: FieldWriteInput[] = [],
+): Promise<{ id: string }> {
+  if (input.appointmentId) await assertAppointment(tdb, input.appointmentId, input.patientId);
+
+  const [row] = await tdb.insert(treatmentSession, {
+    patientId: input.patientId,
+    appointmentId: input.appointmentId ?? null,
+    date: input.date,
+    ...textCols(input),
+  });
+
+  if (fieldWrites.length) {
+    await setFieldValuesIn(
+      { therapistId: tdb.therapistId, patientId: input.patientId },
+      SESSION_FIELD_ENTITY,
+      row.id,
+      fieldWrites,
+    );
+  }
+
+  await recordEvent(tdb, {
+    patientId: input.patientId,
+    type: "session",
+    summary: summary(input),
+    occurredAt: new Date(`${input.date}T12:00:00Z`),
+    refId: row.id,
+  });
+
+  return { id: row.id };
+}
+
+export async function updateSession(
+  tdb: TherapistDb,
+  id: string,
+  patch: Partial<SessionInput>,
+  fieldWrites: FieldWriteInput[] = [],
+): Promise<void> {
+  const existing = await tdb.findOne(treatmentSession, eq(treatmentSession.id, id));
+  if (!existing) throw new Error("session_not_found");
+
+  if (patch.appointmentId) await assertAppointment(tdb, patch.appointmentId, existing.patientId);
+
+  const updated = await tdb.update(
+    treatmentSession,
+    {
+      date: patch.date ?? existing.date,
+      appointmentId:
+        patch.appointmentId === undefined ? existing.appointmentId : (patch.appointmentId ?? null),
+      ...textCols({ ...existing, ...patch }),
+      updatedAt: new Date(),
+    },
+    eq(treatmentSession.id, id),
+  );
+  if (updated.length === 0) throw new Error("session_not_found");
+
+  if (fieldWrites.length) {
+    await setFieldValuesIn(
+      { therapistId: tdb.therapistId, patientId: existing.patientId },
+      SESSION_FIELD_ENTITY,
+      id,
+      fieldWrites,
+    );
+  }
+}

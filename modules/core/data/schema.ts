@@ -10,3 +10,4 @@ export * from "@/modules/core/notifications/schema";
 export * from "@/modules/patients/schema";
 export * from "@/modules/patient-file/schema";
 export * from "@/modules/appointments/schema";
+export * from "@/modules/sessions/schema";

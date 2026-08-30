@@ -20,14 +20,29 @@ export {
   loadRegistry as loadRegistryInto,
   type RegistryDef,
 } from "./internal/registry";
-export {
-  setFieldValues as setFieldValuesIn,
-  getFieldValues as getFieldValuesFrom,
+import {
+  setFieldValues as _setFieldValues,
+  getFieldValues as _getFieldValues,
   type FieldScope,
   type FieldWrite,
-  type FieldValueOut,
 } from "./internal/store";
+export type { FieldScope, FieldWrite, FieldValueOut } from "./internal/store";
 export type { FieldEntity, FieldType } from "./schema";
+
+/** Upsert the field values for one (entity, entityId). Every value is validated. */
+export function setFieldValuesIn(
+  scope: FieldScope,
+  entity: FieldEntity,
+  entityId: string,
+  writes: FieldWrite[],
+) {
+  return _setFieldValues(getDb(), scope, entity, entityId, writes);
+}
+
+/** Read + re-validate the field values for one (entity, entityId). */
+export function getFieldValuesFrom(therapistId: string, entity: FieldEntity, entityId: string) {
+  return _getFieldValues(getDb(), therapistId, entity, entityId);
+}
 
 /** Definitions for one entity, ordered — for rendering a form. */
 export async function fieldDefinitionsFor(therapistId: string, entity: FieldEntity) {

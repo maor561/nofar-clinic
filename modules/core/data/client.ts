@@ -76,4 +76,13 @@ export function getDb(): Db {
   return globalForDb.__nofarDb;
 }
 
+/**
+ * Test-only seam. `createTestDb()` calls this so the `getDb()`-bound public
+ * wrappers (core/fields, core/notifications, …) resolve to the per-test PGlite
+ * instance instead of spinning up a stray one. Never called from app code.
+ */
+export function __setActiveDb(db: Db | undefined): void {
+  globalForDb.__nofarDb = db;
+}
+
 export { schema };
