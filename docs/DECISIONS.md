@@ -173,3 +173,17 @@ Spike מול Neon (endpoint pooled, פרנקפורט) — `modules/core/data/scr
 - **append-only נאכף ב-DB** — trigger `BEFORE UPDATE OR DELETE` שעושה `RAISE`. `purgeOldAudit` (retention, לא מתוזמן — WP-21) מכבה את ה-trigger ב-transaction כדי לגזום. שמירה: 730 יום.
 
 **נדחו:** audit לכל קריאת DB — רעש/ביצועים. אכיפת append-only ברמת שירות בלבד — פחות חזק מ-trigger.
+
+## ADR-019 — Field Registry: schema סריאלי → Zod, validator יחיד, registry בקוד
+**תאריך:** 2026-08-30 · **סטטוס:** נעול · **מממש ADR-004 / WP-09**
+`modules/core/fields`.
+
+- **schema סריאלי:** `field_definition.schema` (JSONB, NOT NULL) = descriptor פשוט (`{type:"scale",min:1,max:10}`). `compileFieldSchema()` → Zod validator. descriptor פגום זורק ("אין schema, אין שדה").
+- **validator יחיד:** `validateFieldValue(def, value)` — הנקודה היחידה שבודקת `field_value`. `setFieldValues`/`getFieldValues` קוראים לו **בכתיבה ובקריאה** (שורת JSONB מזוייפת/ישנה נתפסת, לא נסמכים עליה).
+- **registry בקוד:** `FIELD_REGISTRY` (מערך), `assertRegistryValid()` — קומפילציה של כל schema + ייחודיות key + התאמת type↔schema + כלל ADR-004 מס' 3 (`charted:true` דורש `chartedColumn`). רץ ב-test suite → schema שבור מפיל CI. `loadRegistryInto(db, therapistId)` עושה upsert; `pnpm db:registry` לטעינה מחדש.
+- **טבלאות:** `field_definition` (unique על therapist+entity+key), `field_value` (unique על entity+entity_id+definition_id). מיגרציה `0003`.
+- **רינדור:** `<FieldInput def name defaultValue>` — פקד לכל type (text/number/scale/boolean/select/date). scale = pill buttons.
+- **ללא בונה טפסים גרפי ב-v1** (ADR-004 מס' 4).
+- **גישה:** `setFieldValues`/`getFieldValues` מקבלים `Db` + scope מפורש; `core/fields` ב-lint allowlist. שילוב עם ה-scoping guard בזרימות הדומיין (WP-13/18).
+
+**נדחו:** אחסון Zod מסריאל אמיתי (`zod-to-json-schema` וכו') — descriptor ממוקד פשוט ובטוח יותר. metrics עם עמודות אמיתיות — שלב 2 (`metric_entry` כבר מוגדר ב-DATA_MODEL).

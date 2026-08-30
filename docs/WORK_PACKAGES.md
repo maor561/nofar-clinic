@@ -69,7 +69,11 @@ Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפ
 **DoD:** העלאה+הורדה עובדות; קובץ לא נגיש בלי scope + visibility; URL חתום פג-תוקף.
 **תלוי:** WP-03
 
-### WP-09 · Field Registry ⬜ 🔑
+### WP-09 · Field Registry ✅ 🔑
+`core/fields` (ADR-019): `field_definition`/`field_value` (מיגרציה 0003) · `FieldSchema` סריאלי + `compileFieldSchema`→Zod · **validator יחיד** `validateFieldValue` (כתיבה+קריאה) ·
+`FIELD_REGISTRY` בקוד + `assertRegistryValid` (רץ כבדיקה → schema שבור מפיל CI; charted בלי column זורק) · `loadRegistryInto` + `pnpm db:registry` · `<FieldInput>` (6 סוגים) ·
+**DoD:** schema פגום → `compileFieldSchema` זורק ✓ · I/O מחוץ ל-validator נכשל (14 בדיקות) ✓ · `charted=true` בלי mapping → שגיאה ✓.
+**תלוי:** WP-04 · **הבא:** WP-07 (Email, חסום על הלקוח) או WP-10 (Patients).
 `core/fields`: `field_definition`, סכמות Zod סריאליות, **validator יחיד** לכל I/O של `field_value`, רינדור שדה בסיסי (text/number/scale/boolean/select/date).
 **DoD:** הגדרת שדה בלי סכמה מפילה build; קריאה/כתיבה מחוץ ל-validator נכשלת בבדיקה; שדה `charted=true` בלי mapping לעמודה — שגיאה.
 **תלוי:** WP-04

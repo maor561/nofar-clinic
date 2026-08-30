@@ -6,9 +6,9 @@
 
 ## מצב נוכחי
 
-שלב **תשתית**. WP-D1 · WP-00 · WP-01 · WP-02 · WP-03 · WP-04 · **WP-05 ✓ (Audit Log)** — כולם הושלמו.
-auto-audit דרך ה-guard, append-only ב-trigger, מסך `/t/audit`. 37 בדיקות ירוקות.
-**הבא: WP-07 — Email (Resend).** *דרוש מהלקוח: חשבון Resend + דומיין.*
+שלב **תשתית**. WP-D1 · WP-00 · WP-01 · WP-02 · WP-03 · WP-04 · WP-05 · **WP-09 ✓ (Field Registry 🔑)** — כולם הושלמו.
+**Core כמעט שלם.** נותרו: WP-07 Email (חסום — Resend), WP-06 Notifications (תלוי 07), WP-08 File Storage. 51 בדיקות ירוקות.
+**הבא: WP-10 — Patients** (מודול דומיין ראשון) או WP-07 כשה-Resend מוכן.
 
 ## קישורים
 
@@ -109,6 +109,13 @@ auto-audit דרך ה-guard, append-only ב-trigger, מסך `/t/audit`. 37 בדי
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-30 — WP-09 Field Registry
+`core/fields` (ADR-019): `field_definition`/`field_value` + מיגרציה `0003` · `internal/field-schema.ts` (`fieldSchemaSchema` discriminated-union + `compileFieldSchema`→Zod) ·
+`internal/validate.ts` (`validateFieldValue` + `FieldValidationError` עם `fieldKey`) · `internal/registry.ts` (`FIELD_REGISTRY` 6 שדות + `assertRegistryValid` + `loadRegistry`) ·
+`internal/store.ts` (`setFieldValues`/`getFieldValues` — validate on write+read) · `index.ts` · `field-input.tsx` (client, 6 סוגים, scale=pills) ·
+`core/fields` ל-lint allowlist · seed טוען registry · `scripts/load-registry.ts` + `pnpm db:registry` (הורץ מול Neon) · 14 בדיקות (compile/validate/registry-rules/store) · 51 סה"כ · build ירוק.
+תיקון: `z.core.$ZodIssue` לא יציב → issues כ-`{message,path}[]`; `@ts-expect-error` על schema חסר לא נחוץ (drizzle לא אוכף NOT NULL בטיפוס) → `null as unknown as object`.
 
 ### 2026-08-30 — WP-05 Audit Log
 `core/audit` (ADR-018): `audit_log` + טבלת trigger append-only (migration `0002`, מותאם ידנית ל-SQL) · שירות record/query/purge · `server.ts` `audit()` ·

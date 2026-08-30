@@ -18,7 +18,8 @@
     "format:check": "prettier --check .",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx modules/core/data/migrate.ts",
-    "db:seed": "tsx modules/core/data/seed.ts"
+    "db:seed": "tsx modules/core/data/seed.ts",
+    "db:registry": "tsx modules/core/data/scripts/load-registry.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",

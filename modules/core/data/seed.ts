@@ -4,6 +4,7 @@ import { getDb } from "./client";
 import { therapist } from "@/modules/core/auth/schema";
 import { patient } from "@/modules/patients/schema";
 import { registerTherapist, provisionPatientUser, createPatientInvite } from "@/modules/core/auth";
+import { loadRegistryInto } from "@/modules/core/fields";
 
 /**
  * Dev seed: one therapist (נופר) + two patients with pending invites.
@@ -23,6 +24,9 @@ export async function seed() {
     password: "nofar-dev-2026",
   });
   console.log("seed: therapist nofar@example.co.il / nofar-dev-2026");
+
+  await loadRegistryInto(db, therapistId);
+  console.log("seed: field registry loaded");
 
   for (const p of [
     { firstName: "מיכל", lastName: "אברהם", email: "michal@example.co.il" },

@@ -20,6 +20,7 @@ const eslintConfig = defineConfig([
       "modules/core/authz/**",
       "modules/core/auth/**",
       "modules/core/audit/**",
+      "modules/core/fields/**",
       "**/*.test.{ts,tsx}",
       "**/*.spec.{ts,tsx}",
     ],
