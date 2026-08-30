@@ -14,8 +14,8 @@
 
 - GitHub: https://github.com/maor561/nofar-clinic
 - Vercel: https://nofar-clinic.vercel.app · dashboard: https://vercel.com/maor561s-projects/nofar-clinic
-- git↔Vercel מחובר, auto-deploy מ-`main`. **תיקון:** Framework Preset היה "Other" (הגיש `public/` סטטית → 404) → שונה ל-Next.js.
-- הפריסה כרגע = עמודים סטטיים בלבד (`/`, `/design`). auth ידרוש DB — Neon ב-WP-04.
+- git↔Vercel מחובר, auto-deploy מ-`main`. Framework Preset = Next.js. Neon + Resend מחוברים ל-env.
+- **חותמת גרסה:** `GET /api/version` מחזיר `sha`/`shortSha`/`ref`/`builtAt` (מ-`VERCEL_GIT_COMMIT_SHA`). גם בכותרת התחתונה של `/`. להשוואה מול הקומיט האחרון ב-`main` = "האם הדחיפה עלתה".
 
 ## מה נעשה
 
