@@ -23,6 +23,7 @@ import {
   TableRow,
   cn,
 } from "@/modules/core/design-system";
+import { StatusPill } from "./status-pill";
 
 export const metadata: Metadata = { title: "מטופלים — נופר" };
 
@@ -192,19 +193,5 @@ function FilterChip({
     >
       {children}
     </Link>
-  );
-}
-
-export function StatusPill({ status }: { status: PatientStatus }) {
-  const cls: Record<PatientStatus, string> = {
-    active: "bg-sage-soft text-sage-deep",
-    paused: "bg-amber-soft text-amber-ink",
-    completed: "bg-line-soft text-ink-soft",
-    inactive: "bg-[#f0eee9] text-ink-faint",
-  };
-  return (
-    <span className={cn("inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold", cls[status])}>
-      {STATUS_LABEL[status]}
-    </span>
   );
 }

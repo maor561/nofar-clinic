@@ -20,7 +20,7 @@ import {
   Icon,
   cn,
 } from "@/modules/core/design-system";
-import { StatusPill } from "../page";
+import { StatusPill } from "../status-pill";
 import { PatientTimeline } from "./timeline";
 
 export const metadata: Metadata = { title: "תיק מטופל — נופר" };
