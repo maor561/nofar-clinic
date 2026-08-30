@@ -2,6 +2,7 @@
 
 import { startPasswordReset } from "@/modules/core/auth";
 import { requestContext } from "@/modules/core/auth/server";
+import { sendPasswordResetEmail } from "@/modules/core/email";
 import { DbNotConfiguredError } from "@/modules/core/authz";
 
 export type ForgotState = { sent?: boolean; error?: string };
@@ -16,9 +17,12 @@ export async function requestResetAction(
   try {
     const { ip } = await requestContext();
     const result = await startPasswordReset(email, ip);
-    // No email provider yet (WP-07): surface the link in the server log for dev.
-    if (result && process.env.NODE_ENV !== "production") {
-      console.log(`[dev] password reset link: /reset/${result.token}`);
+    if (result) {
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`[dev] password reset link: /reset/${result.token}`);
+      }
+      // fail-open: a mail failure must not change the response or fail the flow
+      await sendPasswordResetEmail(email, { token: result.token });
     }
   } catch (e) {
     if (!(e instanceof DbNotConfiguredError)) throw e;

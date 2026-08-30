@@ -187,3 +187,14 @@ Spike מול Neon (endpoint pooled, פרנקפורט) — `modules/core/data/scr
 - **גישה:** `setFieldValues`/`getFieldValues` מקבלים `Db` + scope מפורש; `core/fields` ב-lint allowlist. שילוב עם ה-scoping guard בזרימות הדומיין (WP-13/18).
 
 **נדחו:** אחסון Zod מסריאל אמיתי (`zod-to-json-schema` וכו') — descriptor ממוקד פשוט ובטוח יותר. metrics עם עמודות אמיתיות — שלב 2 (`metric_entry` כבר מוגדר ב-DATA_MODEL).
+
+## ADR-020 — Email: Resend, fail-open, 4 תבניות RTL
+**תאריך:** 2026-08-30 · **סטטוס:** נעול · **מממש ADR-007 / WP-07**
+`modules/core/email`.
+
+- **ספק:** Resend (`resend` npm). דומיין `nofar-health.com` (מאומת — בדיקת שליחה חיה הצליחה, id הוחזר). `from` = `EMAIL_FROM` env = "נופר כהן <nofar@nofar-health.com>".
+- **fail-open:** `sendEmail` תופס שגיאות, כותב ללוג (`console.error` → נראה ב-Vercel logs), ומחזיר `{ok:false,error}` — **לעולם לא זורק**. `RESEND_API_KEY` חסר → `{ok:false,skipped:true}` + warning (dev בלי מפתח). כשל דוא"ל לא משנה את תגובת הזרימה ולא מפיל אותה.
+- **4 תבניות** (`internal/templates.ts`) — עברית RTL, inline styles בלבד (מיילרים מסירים `<style>`): הזמנה · איפוס סיסמה · תזכורת פגישה · שינוי תוכנית. layout משותף (לוגו + footer).
+- **פונקציות שליחה מטופסות** ב-`index.ts`: `sendInviteEmail`/`sendPasswordResetEmail`/`sendUpcomingAppointmentEmail`/`sendPlanChangedEmail`. `appUrl()` בונה קישורים מ-`APP_URL` env.
+- **חיווט:** `/forgot` action שולח דוא"ל איפוס אמיתי (עדיין לוג dev). הזמנה → WP-10, תזכורת פגישה → WP-12, שינוי תוכנית → WP-14.
+- **פתוח:** טבלת `email_log` ב-DB (לא רק console) — מועמד ל-WP-21. **הלקוח:** לאפס את ה-API key (הודבק בצ'אט) + להגדיר `RESEND_API_KEY`/`EMAIL_FROM`/`APP_URL` ב-Vercel env.

@@ -59,7 +59,11 @@ Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפ
 **DoD:** התראה נוצרת+נצפית לשני התפקידים; אירוע קריטי שולח דוא"ל; polling מרענן badge.
 **תלוי:** WP-04, WP-07
 
-### WP-07 · Email ⬜
+### WP-07 · Email ✅
+`core/email` (ADR-020): Resend · fail-open `sendEmail` (לוג + `{ok,error}`, לא זורק; בלי מפתח → skipped) · 4 תבניות RTL עברית (הזמנה/איפוס/תזכורת פגישה/שינוי תוכנית) · `send*Email` מטופסות + `appUrl()` ·
+`/forgot` שולח דוא"ל אמיתי · דומיין `nofar-health.com` **מאומת** (בדיקת שליחה חיה ✓). 3 בדיקות · `pnpm tsx .../send-test-email.ts`.
+**DoD:** 4 תבניות נשלחות RTL ✓ · כשל נרשם ולא מפיל ✓. **פתוח:** לקוח מגדיר env ב-Vercel + מאפס key.
+**תלוי:** WP-00
 `core/email`: ספק (Resend — לאישור), תבניות (הזמנה, איפוס סיסמה, פגישה קרובה, שינוי תוכנית), fallback/לוג כשל.
 **DoD:** ארבע התבניות נשלחות בעברית RTL; כשל נרשם ולא מפיל זרימה.
 **תלוי:** WP-00

@@ -6,9 +6,9 @@
 
 ## מצב נוכחי
 
-שלב **תשתית**. WP-D1 · WP-00 · WP-01 · WP-02 · WP-03 · WP-04 · WP-05 · **WP-09 ✓ (Field Registry 🔑)** — כולם הושלמו.
-**Core כמעט שלם.** נותרו: WP-07 Email (חסום — Resend), WP-06 Notifications (תלוי 07), WP-08 File Storage. 51 בדיקות ירוקות.
-**הבא: WP-10 — Patients** (מודול דומיין ראשון) או WP-07 כשה-Resend מוכן.
+שלב **תשתית → דומיין**. WP-00/01/02/03/04/05/07/09 ✓. **Core: נותרו WP-06 (Notifications) ו-WP-08 (File Storage).**
+54 בדיקות ירוקות, הפריסה חיה, Neon + Resend מחוברים.
+**הבא: WP-10 — Patients** (מודול הדומיין הראשון) או WP-08 (File Storage).
 
 ## קישורים
 
@@ -27,11 +27,18 @@
 
 ## בעבודה
 
-- **WP-07 — Email (Resend)** (הבא). `core/email`: ספק, 4 תבניות (הזמנה/איפוס/פגישה קרובה/שינוי תוכנית), fallback. **דרוש מהלקוח:** חשבון Resend + דומיין.
-  *(WP-06 Notification Center תלוי ב-WP-07, אז נעשה 07 קודם.)*
-- **דיוקי תוכן במוקאפים** — טראק מקביל מול הלקוח, לא חוסם.
-- **TOTP enrollment UI** + change-password UI — נדחו למסך הגדרות (WP-20). הליבה + בדיקות קיימות.
-- **audit של קריאות** — `audit("view", "patient", ...)` ייווסף במסך תיק המטופל (WP-11).
+- **WP-10 — Patients** (הבא). CRUD, חיפוש, סינון, סטטוס, סוגי טיפול, הסכמות. מודול דומיין ראשון — פותח את WP-11–20.
+- **WP-08 — File Storage** (Vercel Blob). פעולה קטנה מהלקוח: יצירת Blob store ב-Vercel + `BLOB_READ_WRITE_TOKEN`.
+- **דיוקי תוכן במוקאפים** — טראק מקביל, לא חוסם.
+- **TOTP enrollment UI** + change-password UI — נדחו למסך הגדרות (WP-20).
+- **audit של קריאות** — `audit("view", "patient", ...)` ייווסף בתיק המטופל (WP-11).
+
+## פעולות פתוחות ללקוח
+
+- **לאפס סיסמת Neon + API key של Resend** (שניהם הודבקו בצ'אט) → לעדכן `.env.local` + Vercel env.
+- **Vercel env:** להוסיף `RESEND_API_KEY`, `EMAIL_FROM=נופר כהן <nofar@nofar-health.com>`, `APP_URL=https://nofar-clinic.vercel.app`.
+- **לוודא ש-Neon מחובר לפרויקט Vercel** (Settings → Environment Variables).
+- **למחוק את ה-MongoDB** שנוצר בטעות.
 
 ## פעולות פתוחות ללקוח
 
@@ -109,6 +116,11 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-30 — WP-07 Email (Resend)
+הלקוח מסר creds (key בצ'אט → לאפס): דומיין `nofar-health.com`, from "נופר כהן <nofar@nofar-health.com>". `.env.local` עודכן (`RESEND_API_KEY`/`EMAIL_FROM`/`APP_URL`).
+`core/email` (ADR-020): `internal/client.ts` (Resend, fail-open, skipped בלי key) · `internal/templates.ts` (4 תבניות RTL, inline styles, layout משותף) · `index.ts` (`send*Email` + `appUrl`) ·
+`/forgot` שולח דוא"ל אמיתי · `scripts/send-test-email.ts` — **בדיקת שליחה חיה ל-nofar@nofar-health.com הצליחה** (`ok:true`, id הוחזר → הדומיין מאומת) · 3 בדיקות · 54 סה"כ · build ירוק.
 
 ### 2026-08-30 — WP-09 Field Registry
 `core/fields` (ADR-019): `field_definition`/`field_value` + מיגרציה `0003` · `internal/field-schema.ts` (`fieldSchemaSchema` discriminated-union + `compileFieldSchema`→Zod) ·
