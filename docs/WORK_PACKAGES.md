@@ -38,10 +38,12 @@ Auth.js credentials, session ב-DB, הרשמת מטפל, הזמנת מטופל (
 **DoD:** אין נתיב לקבל query ל-DB בלי scope (נאכף בבדיקת lint/type + runtime); חבילת `tests/isolation` בסיסית (2 טבלאות) ירוקה ב-CI; ניסיון עקיפה נכשל בבדיקה.
 **תלוי:** WP-02
 
-### WP-04 · Data Layer + RLS spike ⬜
-Drizzle, חיבור Neon, מיגרציות, seed. **Spike:** לאמת התנהגות `SET LOCAL`/`set_config` + RLS מול transaction-mode pooler ב-Neon. תיעוד תוצאה ב-ADR חדש.
-**DoD:** סכמת בסיס (זהות + patient + timeline_event + audit) מיגרייטת; seed למטפל + 2 מטופלים; החלטה מתועדת אם RLS load-bearing או הגנה-בעומק; policies כתובות לטבלאות הקיימות.
-**תלוי:** WP-03
+### WP-04 · Data Layer + RLS spike ✅
+Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפי `DATABASE_URL` (Postgres / PGlite-memory לבדיקות / PGlite-file לוקאלי).
+`db:migrate` דרך חיבור unpooled, seed רץ מול Neon. **Spike:** `rls-spike.ts` — `SET LOCAL` בתוך txn עובד דרך ה-pooler, אבל `neondb_owner` הוא `BYPASSRLS`.
+**החלטה (ADR-017):** RLS נדחה; ה-Scoping Guard (WP-03) הוא האכיפה היחידה ל-v1. hooks ל-RLS קיימים אם נדרש בהמשך.
+**DoD:** סכמה מיגרייטת ל-Neon ✓ · seed (מטפל + 2 מטופלים) ✓ · החלטת RLS מתועדת (ADR-017) ✓ · התחברות נבדקה מקומית מול Neon ✓.
+**תלוי:** WP-03 · **הבא:** WP-05 (Audit Log)
 
 ### WP-05 · Audit Log ⬜
 `core/audit`: API כתיבה + שאילתה, middleware שמתעד גישה למידע מטופל, מסך צפייה למטפל.

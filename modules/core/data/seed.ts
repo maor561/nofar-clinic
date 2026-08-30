@@ -1,3 +1,4 @@
+import "./load-env";
 import { sql } from "drizzle-orm";
 import { getDb } from "./client";
 import { therapist } from "@/modules/core/auth/schema";

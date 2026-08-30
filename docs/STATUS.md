@@ -6,8 +6,9 @@
 
 ## מצב נוכחי
 
-שלב **תשתית**. WP-D1 ✓ · WP-00 ✓ · WP-01 ✓ · WP-02 ✓ · **WP-03 ✓ (Scoping Guard)** · הפריסה חיה.
-`core/authz` — ScopedDb מטופס בלי raw handle, lint חוסם עקיפה, 11 בדיקות בידוד ירוקות. **הבא: WP-04 — Data Layer + RLS spike (Neon).**
+שלב **תשתית**. WP-D1 · WP-00 · WP-01 · WP-02 · WP-03 · **WP-04 ✓** — כולם הושלמו.
+Neon Postgres (פרנקפורט) מחובר; סכמה + seed הורצו; התחברות עובדת מקומית מול Neon. RLS נדחה (ADR-017).
+**הבא: WP-05 — Audit Log.**
 
 ## קישורים
 
@@ -26,12 +27,15 @@
 
 ## בעבודה
 
-- **WP-04 — Data Layer + RLS spike** (הבא). להקים Postgres/Neon בפרויקט Vercel (פרנקפורט), להעביר את `client.ts` מ-PGlite ל-Neon,
-  spike ל-`SET LOCAL`/`set_config` + RLS מול transaction-pooler, seed בפרודקשן, החלטה מתועדת אם RLS load-bearing או הגנה-בעומק.
-  **דרוש מהלקוח:** יצירת ה-DB ב-Vercel + connection string / env.
+- **WP-05 — Audit Log** (הבא). `core/audit`: API כתיבה+שאילתה, middleware שמתעד גישה למידע מטופל, מסך צפייה למטפל. append-only.
 - **דיוקי תוכן במוקאפים** — טראק מקביל מול הלקוח, לא חוסם.
 - **TOTP enrollment UI** + change-password UI — נדחו למסך הגדרות (WP-20). הליבה + בדיקות קיימות.
-- **מהירות בדיקות:** ~90ש' (migrate-per-test ב-PGlite). לשקול template DB משותף בהמשך.
+
+## פעולות פתוחות ללקוח
+
+- **לאפס סיסמת Neon** — הודבקה בצ'אט. Neon → Roles → `neondb_owner` → Reset password → לעדכן `.env.local` + Vercel env.
+- **לוודא ש-Neon מחובר לפרויקט Vercel** — Settings → Environment Variables: אמורים להופיע `DATABASE_URL` וכו' מהאינטגרציה. אם לא — Storage → הבסיס → Connect Project.
+- **למחוק את ה-MongoDB** שנוצר בטעות (Storage → NOFAR-CLINIC → Delete).
 
 ## ✅ הושלם
 
@@ -103,6 +107,13 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-30 — WP-04 Data Layer + RLS spike (Neon)
+הלקוח יצר Neon (Frankfurt `eu-central-1`) — תחילה MongoDB בטעות, תוקן. `.env.local` נוצר (gitignored). **הסיסמה הודבקה בצ'אט → לאפס.**
+נוסף `postgres` (postgres.js). `client.ts` נכתב מחדש — בחירת driver לפי `DATABASE_URL` (Postgres `prepare:false` ל-pooler / PGlite memory לבדיקות / PGlite file לוקאלי / `DbNotConfiguredError` על Vercel בלי env).
+`migrate.ts` — Postgres דרך unpooled + advisory lock; `load-env.ts` (`process.loadEnvFile`) ל-scripts; `drizzle.config` טוען env + `dbCredentials`. `testing.ts` cast ל-`Db`.
+`db:migrate` + `db:seed` הורצו מול Neon בהצלחה. **התחברות נבדקה בדפדפן מקומית מול Neon** (נופר → `/t`).
+**RLS spike** (`scripts/rls-spike.ts`): `SET LOCAL` ב-txn עובד דרך ה-pooler; אבל `neondb_owner` = `rolbypassrls` → RLS נעקף. **ADR-017: RLS נדחה, הגארד יחיד.** 30 בדיקות + build ירוקים.
 
 ### 2026-08-30 — WP-03 Scoping Guard
 `core/authz` נבנה (ADR-016): `ScopedDb` (Therapist/Patient) מטופס, raw handle `protected` ללא accessor · `getTherapistDb`/`getPatientDb` ב-`server.ts` ·

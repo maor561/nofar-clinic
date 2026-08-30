@@ -1,50 +1,69 @@
 import { mkdirSync } from "node:fs";
-import { drizzle } from "drizzle-orm/pglite";
+import { drizzle as drizzlePg, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
+import { drizzle as drizzlePglite } from "drizzle-orm/pglite";
 import { PGlite } from "@electric-sql/pglite";
+import postgres from "postgres";
 import * as schema from "./schema";
 
 /**
  * DB client.
  *
- * v1 local dev + tests run on PGlite (in-process Postgres, no install). The
- * production swap to Neon Postgres (WP-04) replaces only this file — schema,
- * queries and migrations are dialect-identical.
+ * - `DATABASE_URL` = `postgres(ql)://…`  -> Neon Postgres via postgres.js (prod + local).
+ * - `DATABASE_URL` = `memory://`         -> in-process PGlite (tests).
+ * - `DATABASE_URL` = `pglite://<path>`   -> PGlite at a path.
+ * - unset (local)                        -> file-backed PGlite at .data/dev.
+ * - unset (Vercel)                       -> DbNotConfiguredError; auth degrades gracefully.
  *
- * `DATABASE_URL`:
- *   - unset / "pglite"      -> file-backed PGlite at .data/dev  (local dev)
- *   - "memory://"           -> in-memory PGlite                  (tests)
- *   - "postgres://..."      -> reserved for WP-04 (throws for now)
- *
- * On Vercel there is no writable persistent FS, so PGlite is refused with a
- * typed error the auth layer catches — the deployed preview simply has no DB
- * until Neon is wired in WP-04.
+ * The query surface is dialect-identical, so the app / guard / migrations don't
+ * care which backend is live.
  */
-export type Db = ReturnType<typeof drizzle<typeof schema>>;
+export type Db = PostgresJsDatabase<typeof schema>;
 
 export class DbNotConfiguredError extends Error {
   constructor() {
-    super("no database configured (set DATABASE_URL — Neon lands in WP-04)");
+    super("no database configured (set DATABASE_URL)");
     this.name = "DbNotConfiguredError";
   }
 }
 
-function resolveDataDir(url: string | undefined): string {
-  if (url && (url.startsWith("postgres://") || url.startsWith("postgresql://"))) {
-    throw new Error("Postgres/Neon support lands in WP-04; unset DATABASE_URL to use PGlite.");
-  }
-  if (url?.startsWith("memory://")) return "memory://";
-  if (url?.startsWith("pglite://")) return url.slice("pglite://".length);
-  if (process.env.VERCEL) throw new DbNotConfiguredError();
-  return "./.data/dev";
+function isPostgresUrl(url: string | undefined): url is string {
+  return !!url && (url.startsWith("postgres://") || url.startsWith("postgresql://"));
 }
 
-const globalForDb = globalThis as unknown as { __nofarDb?: Db };
+const globalForDb = globalThis as unknown as {
+  __nofarDb?: Db;
+  __nofarSql?: ReturnType<typeof postgres>;
+};
+
+/**
+ * Build a postgres.js drizzle instance. `prepare: false` keeps it compatible with
+ * Neon's transaction-mode pooler (the `-pooler` host).
+ */
+function makePostgres(url: string): Db {
+  if (!globalForDb.__nofarSql) {
+    globalForDb.__nofarSql = postgres(url, { prepare: false });
+  }
+  return drizzlePg({ client: globalForDb.__nofarSql, schema });
+}
+
+function makePglite(): Db {
+  const url = process.env.DATABASE_URL;
+  let dir: string;
+  if (url?.startsWith("memory://")) dir = "memory://";
+  else if (url?.startsWith("pglite://")) dir = url.slice("pglite://".length);
+  else {
+    if (process.env.VERCEL) throw new DbNotConfiguredError();
+    dir = "./.data/dev";
+  }
+  if (dir !== "memory://") mkdirSync(dir, { recursive: true });
+  // pglite's drizzle instance is a structural match for the postgres-js type.
+  return drizzlePglite({ client: new PGlite(dir), schema }) as unknown as Db;
+}
 
 export function getDb(): Db {
   if (!globalForDb.__nofarDb) {
-    const dir = resolveDataDir(process.env.DATABASE_URL);
-    if (dir !== "memory://") mkdirSync(dir, { recursive: true });
-    globalForDb.__nofarDb = drizzle({ client: new PGlite(dir), schema });
+    const url = process.env.DATABASE_URL;
+    globalForDb.__nofarDb = isPostgresUrl(url) ? makePostgres(url) : makePglite();
   }
   return globalForDb.__nofarDb;
 }

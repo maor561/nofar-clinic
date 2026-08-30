@@ -11,5 +11,5 @@ import type { Db } from "./client";
 export async function createTestDb(): Promise<Db> {
   const db = drizzle({ client: new PGlite(), schema });
   await migrate(db, { migrationsFolder: "./modules/core/data/migrations" });
-  return db;
+  return db as unknown as Db;
 }

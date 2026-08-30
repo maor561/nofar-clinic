@@ -140,3 +140,21 @@ Patients · Patient File + Timeline · Treatment Sessions · Appointments (יו�
 - נוספה טבלת `timeline_event` מינימלית (`modules/patient-file/schema.ts`, מיגרציה `0001`) כטבלה שנייה אמיתית ל-suite; WP-11 ירחיב.
 
 **נדחו:** wrapper שמסתמך על משמעת (domain dev זוכר להוסיף `WHERE`) — לא "בלתי ניתן לעקיפה". RLS כשכבה יחידה — WP-04 spike, בינתיים ה-guard נושא לבד.
+
+## ADR-017 — RLS נדחה; ה-Scoping Guard הוא האכיפה היחידה ל-v1
+**תאריך:** 2026-08-30 · **סטטוס:** נעול · **סוגר את ה-spike של ADR-009**
+Spike מול Neon (endpoint pooled, פרנקפורט) — `modules/core/data/scripts/rls-spike.ts`.
+
+**ממצאים:**
+- `SET LOCAL` / `set_config(_, _, true)` בתוך `sql.begin(...)` — **עובד** דרך ה-pooler. הדאגה מ-ADR-009 (transaction-mode pooling) אינה החסם.
+- **`neondb_owner` (משתמש ברירת המחדל) הוא `rolbypassrls = true`** → RLS נעקף לחלוטין לחיבור של האפליקציה. ה-probe החזיר את כל השורות עם ובלי scope.
+- הרול כן יכול ליצור roles (`rolcreaterole`), אז *אפשר* להקים רול מוגבל (`NOBYPASSRLS`) עם סיסמה חזקה.
+
+**החלטה:** לא מפעילים RLS ב-v1. ה-Scoping Guard (WP-03, ADR-016) הוא נקודת האכיפה היחידה.
+**למה:**
+1. הגארד כבר חזק ומוכח — `ScopedDb` בלי raw handle, אכיפת lint על ייבוא `getDb`, וחבילת `tests/isolation/` שהיא הגדרת ה-"גמור".
+2. RLS על Neon דורש: רול מוגבל שני + connection string שני + עטיפת **כל** פעולת DB ב-transaction שמזריק `set_config` + policy על **כל טבלה** (מס גרסאות + בדיקות תמידי).
+3. v1 מטפל יחיד — ממד ה-therapist_id הוא אפס blast-radius; ממד ה-patient_id (הקריטי ל"כלל הזהב") מכוסה מלא ע"י הגארד + בדיקות הבידוד.
+4. **הפיך:** ה-hooks קיימים. סקירת אבטחה / מעבר לריבוי-דיירים → מוסיפים רול מוגבל + policies + transaction-wrapping. הסקריפט נשאר לאימות חוזר.
+
+**נדחו:** RLS load-bearing עכשיו — עלות מימוש/תחזוקה גבוהה מול תועלת שולית ב-v1 מטפל-יחיד עם גארד מוכח.

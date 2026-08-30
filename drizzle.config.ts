@@ -1,9 +1,12 @@
+import { existsSync } from "node:fs";
 import { defineConfig } from "drizzle-kit";
 
+if (existsSync(".env.local")) process.loadEnvFile(".env.local");
+
 /**
- * Used only for `drizzle-kit generate` (schema diff -> SQL). Migrations are
- * applied programmatically via modules/core/data/migrate.ts (PGlite) — and via
- * the Neon connection in WP-04.
+ * `drizzle-kit generate` diffs the schema -> SQL. `drizzle-kit migrate/push/studio`
+ * connect via the direct (unpooled) URL. Runtime migrations still go through
+ * modules/core/data/migrate.ts.
  */
 export default defineConfig({
   dialect: "postgresql",
@@ -11,4 +14,7 @@ export default defineConfig({
   out: "./modules/core/data/migrations",
   strict: true,
   verbose: true,
+  dbCredentials: {
+    url: process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL ?? "postgres://unset",
+  },
 });
