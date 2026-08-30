@@ -1,20 +1,74 @@
-import { pgTable, uuid, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, timestamp, date, index, unique } from "drizzle-orm/pg-core";
 import { therapist } from "@/modules/core/auth/schema";
 
-/**
- * Minimal patient table. WP-10 (Patients) extends this with profile fields,
- * treatment types, consents, etc. via a follow-up migration.
- */
+/** Patient profile + treatment types + consents (WP-10). DATA_MODEL#patient. */
+
 export const patientStatus = ["active", "inactive", "completed", "paused"] as const;
 export type PatientStatus = (typeof patientStatus)[number];
 
-export const patient = pgTable("patient", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  therapistId: uuid("therapist_id")
-    .notNull()
-    .references(() => therapist.id, { onDelete: "restrict" }),
-  firstName: text("first_name").notNull(),
-  lastName: text("last_name").notNull(),
-  status: text("status", { enum: patientStatus }).notNull().default("active"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const treatmentType = ["naturopathy", "reflexology", "nutrition"] as const;
+export type TreatmentType = (typeof treatmentType)[number];
+
+export const consentKind = ["data_processing", "data_transfer_abroad", "research_future"] as const;
+export type ConsentKind = (typeof consentKind)[number];
+
+export const patient = pgTable(
+  "patient",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    therapistId: uuid("therapist_id")
+      .notNull()
+      .references(() => therapist.id, { onDelete: "restrict" }),
+    firstName: text("first_name").notNull(),
+    lastName: text("last_name").notNull(),
+    dob: date("dob"),
+    phone: text("phone"),
+    email: text("email"),
+    address: text("address"),
+    photoUrl: text("photo_url"),
+    status: text("status", { enum: patientStatus }).notNull().default("active"),
+    treatmentGoal: text("treatment_goal"),
+    generalNotes: text("general_notes"),
+    joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("patient_therapist_idx").on(t.therapistId),
+    index("patient_therapist_status_idx").on(t.therapistId, t.status),
+  ],
+);
+
+export const patientTreatmentType = pgTable(
+  "patient_treatment_type",
+  {
+    patientId: uuid("patient_id")
+      .notNull()
+      .references(() => patient.id, { onDelete: "cascade" }),
+    treatmentType: text("treatment_type", { enum: treatmentType }).notNull(),
+    therapistId: uuid("therapist_id")
+      .notNull()
+      .references(() => therapist.id, { onDelete: "restrict" }),
+  },
+  (t) => [
+    unique("patient_treatment_type_pk").on(t.patientId, t.treatmentType),
+    index("patient_treatment_type_therapist_idx").on(t.therapistId),
+  ],
+);
+
+export const consent = pgTable(
+  "consent",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    patientId: uuid("patient_id")
+      .notNull()
+      .references(() => patient.id, { onDelete: "cascade" }),
+    therapistId: uuid("therapist_id")
+      .notNull()
+      .references(() => therapist.id, { onDelete: "restrict" }),
+    kind: text("kind", { enum: consentKind }).notNull(),
+    grantedAt: timestamp("granted_at", { withTimezone: true }).notNull().defaultNow(),
+    textVersion: text("text_version").notNull().default("v1"),
+  },
+  (t) => [unique("consent_unique").on(t.patientId, t.kind)],
+);

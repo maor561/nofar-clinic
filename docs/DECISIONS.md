@@ -211,3 +211,18 @@ Spike מול Neon (endpoint pooled, פרנקפורט) — `modules/core/data/scr
 - **טריגרים מחווטים:** קבלת הזמנה → `patient_joined` למטפל (in-app). איפוס סיסמה → `password_changed` למשתמש (in-app + אימייל).
 - `core/notifications` + `core/email` נוספו ל-lint allowlist. **נבדק בדפדפן:** מטופל קיבל הזמנה → למטפל נוצרה התראה, מופיעה ב-`/t/alerts` ו-badge = 1.
 **נדחו:** websockets/SSE ל-v1 (polling מספיק למטפל יחיד). מחיקת התראות ע"י המשתמש — לא נדרש; retention עם ה-audit ב-WP-21.
+
+## ADR-022 — Patients module: service מקבל TherapistDb, `list()` נוסף ל-ScopedDb
+**תאריך:** 2026-08-30 · **סטטוס:** נעול · **מממש WP-10**
+`modules/patients` — מודול הדומיין הראשון.
+
+- **schema:** `patient` הורחב (dob/phone/email/address/photo_url/treatment_goal/general_notes/joined_at/updated_at) · `patient_treatment_type` (M2M, unique על patient+type) · `consent` (unique על patient+kind). מיגרציה `0005`.
+- **service** (`index.ts`) — `listPatients`/`getPatient`/`createPatient`/`updatePatient`/`setPatientStatus`. **כל פונקציה מקבלת `TherapistDb`** (מ-`getTherapistDb()`), אז הכול scoped + auto-audited. חיפוש: `ilike` על שם/טלפון/דוא"ל + התאמת UUID מדויקת; סינון סטטוס + סוג טיפול (2 שאילתות דרך `findMany`).
+- **ScopedDb הורחב:** `list(table, { where?, orderBy?, limit?, offset? })` — למסכי רשימה (ל-`findMany` אין order/pagination). נשאר scoped.
+- **timeline:** `modules/patient-file/index.ts` קיבל `recordEvent(scopedDb, {...})` מינימלי — כותב ל-`timeline_event` דרך ה-handle הממוקד. יצירת מטופל → `status_changed` "נוספ/ה למערכת"; שינוי סטטוס → `status_changed` עם הישן←החדש.
+- **יצירה:** `createPatient` (DB) → ה-action מוסיף `provisionPatientUser` + `createPatientInvite` + `sendInviteEmail` (אם יש דוא"ל, best-effort).
+- **מסכים:** `/t/patients` (רשימה + חיפוש + פילטרים) · `/t/patients/new` · `/t/patients/[id]` (פרופיל + Timeline placeholder + קשר + הסכמות; `audit("view","patient")`) · `/t/patients/[id]/edit`. `PatientForm` משותף.
+- **בדיקות:** `tests/isolation/patients-module.test.ts` (5) — מטפל לא רואה/נוגע במטופלי מטפל אחר; createPatient → timeline + audit; שינוי סטטוס → timeline; חיפוש/פילטרים. 63 סה"כ.
+- **נבדק בדפדפן מול Neon:** יצירת "דנה פרץ" → redirect לתיק · `/t/audit` הראה create(patient/pt/timeline_event) + view(patient).
+
+**נדחו:** `unsafeQuery` escape hatch — לא נדרש ל-WP-10 (join של סוגי טיפול נעשה ב-2 שאילתות). מחיקת מטופל — anonymize+lock, WP רגולציה.

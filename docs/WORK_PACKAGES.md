@@ -79,10 +79,11 @@ Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפ
 
 ## שלב 1 — מודולי דומיין
 
-### WP-10 · Patients ⬜
-CRUD, חיפוש (שם/טלפון/email/מזהה), סינון, סטטוס, פרופיל, סוגי טיפול, הסכמות.
-**DoD:** מטפל מנהל מטופל מקצה לקצה; חיפוש למטפל בלבד; `tests/isolation` לכל endpoint; פעולות ב-Audit + Timeline.
-**תלוי:** WP-03, WP-05, WP-09
+### WP-10 · Patients ✅
+`modules/patients` (ADR-022): schema מורחב + `patient_treatment_type` + `consent` (מיגרציה 0005) · service `listPatients`/`getPatient`/`createPatient`/`updatePatient`/`setPatientStatus` — כולם מקבלים `TherapistDb` (scoped + auto-audit) · חיפוש `ilike` + פילטר סטטוס/סוג-טיפול ·
+`ScopedDb.list()` (order+pagination) · `patientFile.recordEvent()` מינימלי · מסכים `/t/patients` (+ `/new` `/[id]` `/[id]/edit`) · יצירה → user+invite+email · `audit("view","patient")` בתיק.
+**DoD:** ניהול מקצה-לקצה ✓ (נבדק בדפדפן מול Neon) · חיפוש למטפל בלבד (guard) ✓ · 5 בדיקות isolation ✓ · פעולות ב-Audit + Timeline ✓.
+**תלוי:** WP-03, WP-05, WP-09 · **הבא:** WP-11 (Patient File + Timeline)
 
 ### WP-11 · Patient File + Timeline ⬜
 מסך תיק (פרופיל + Timeline), `patientFile.recordEvent()`, סינון Timeline.

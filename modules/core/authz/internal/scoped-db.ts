@@ -41,6 +41,7 @@ export type PatientScopedTable = PgTable & { therapistId: PgColumn; patientId: P
 
 type Rows = Record<string, unknown>[];
 type Values = Record<string, unknown> | readonly Record<string, unknown>[];
+export type ListOpts = { where?: SQL; orderBy?: SQL | SQL[]; limit?: number; offset?: number };
 
 // drizzle's generic query builder resists precise typing across arbitrary
 // tables; the `any` casts are internal, the public signatures stay type-safe.
@@ -87,6 +88,19 @@ export class TherapistDb extends BaseScopedDb {
       .select()
       .from(table)
       .where(this.scopeWhere(table, extra))) as InferSelectModel<T>[];
+  }
+
+  /** Scoped list with ordering + pagination — for list screens. */
+  async list<T extends TherapistScopedTable>(
+    table: T,
+    opts: ListOpts = {},
+  ): Promise<InferSelectModel<T>[]> {
+    let q = (this._db as any).select().from(table).where(this.scopeWhere(table, opts.where));
+    if (opts.orderBy)
+      q = q.orderBy(...(Array.isArray(opts.orderBy) ? opts.orderBy : [opts.orderBy]));
+    if (opts.limit != null) q = q.limit(opts.limit);
+    if (opts.offset != null) q = q.offset(opts.offset);
+    return (await q) as InferSelectModel<T>[];
   }
 
   async findOne<T extends TherapistScopedTable>(
@@ -176,6 +190,19 @@ export class PatientDb extends BaseScopedDb {
       .select()
       .from(table)
       .where(this.scopeWhere(table, extra))) as InferSelectModel<T>[];
+  }
+
+  /** Scoped list with ordering + pagination — for list screens. */
+  async list<T extends PatientScopedTable>(
+    table: T,
+    opts: ListOpts = {},
+  ): Promise<InferSelectModel<T>[]> {
+    let q = (this._db as any).select().from(table).where(this.scopeWhere(table, opts.where));
+    if (opts.orderBy)
+      q = q.orderBy(...(Array.isArray(opts.orderBy) ? opts.orderBy : [opts.orderBy]));
+    if (opts.limit != null) q = q.limit(opts.limit);
+    if (opts.offset != null) q = q.offset(opts.offset);
+    return (await q) as InferSelectModel<T>[];
   }
 
   async findOne<T extends PatientScopedTable>(
