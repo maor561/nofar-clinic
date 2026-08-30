@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { acceptInvite, createSession, passwordSchema } from "@/modules/core/auth";
 import { writeSessionCookie, requestContext } from "@/modules/core/auth/server";
+import { audit } from "@/modules/core/audit/server";
 import { DbNotConfiguredError } from "@/modules/core/authz";
 
 export type InviteState = { error?: string };
@@ -24,8 +25,10 @@ export async function acceptInviteAction(
   }
 
   let userId: string;
+  let therapistId: string;
+  let patientId: string;
   try {
-    ({ userId } = await acceptInvite(token, password));
+    ({ userId, therapistId, patientId } = await acceptInvite(token, password));
   } catch (e) {
     if (e instanceof DbNotConfiguredError) {
       return { error: "המערכת עדיין לא מחוברת למסד נתונים (יוגדר ב-WP-04)." };
@@ -35,5 +38,11 @@ export async function acceptInviteAction(
 
   const { token: sessionToken, expiresAt } = await createSession(userId, await requestContext());
   await writeSessionCookie(sessionToken, expiresAt);
+  await audit("invite", "user", {
+    actor: { therapistId, userId, role: "patient" },
+    entityId: userId,
+    patientId,
+    meta: { event: "invite_accepted" },
+  });
   redirect("/p");
 }

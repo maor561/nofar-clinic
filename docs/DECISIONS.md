@@ -158,3 +158,18 @@ Spike מול Neon (endpoint pooled, פרנקפורט) — `modules/core/data/scr
 4. **הפיך:** ה-hooks קיימים. סקירת אבטחה / מעבר לריבוי-דיירים → מוסיפים רול מוגבל + policies + transaction-wrapping. הסקריפט נשאר לאימות חוזר.
 
 **נדחו:** RLS load-bearing עכשיו — עלות מימוש/תחזוקה גבוהה מול תועלת שולית ב-v1 מטפל-יחיד עם גארד מוכח.
+
+## ADR-018 — Audit Log: auto-audit דרך ה-guard, append-only ב-trigger
+**תאריך:** 2026-08-30 · **סטטוס:** נעול · **מממש WP-05**
+`modules/core/audit` — טבלת `audit_log` (DATA_MODEL), שירות `recordAudit`/`queryAudit`/`purgeOldAudit`, `server.ts` עם `audit()` (מושך actor+IP מה-session).
+
+**כתיבה אוטומטית:** ל-`ScopedDb` (WP-03) נוסף `ScopedAuditSink` אופציונלי — כל `insert`/`update`/`delete` דרך handle ממוקד פולט אירוע. `getTherapistDb()`/`getPatientDb()` מחווטים אותו ל-`recordAudit`. **אי אפשר לשכוח** — זה יושב בתוך הגארד. זה ה"middleware שמתעד גישה למידע מטופל" שה-DoD מבקש.
+
+**כתיבה מפורשת:** אירועי auth (`audit("login", ...)` ב-login action, `audit("invite", ...)` ב-accept) וקריאות ברמת-מסך (`audit("view", "patient", {patientId})` — ייווסף במסך תיק המטופל ב-WP-11).
+
+**החלטות:**
+- **קריאות לא מבוקרות אוטומטית** — audit של כל `findMany` = רעש (טעינת דשבורד = עשרות reads) ופגיעה בביצועים. הבידוד (WP-03) כבר מונע cross-read; audit-של-קריאות נלכד ברמת המסך/endpoint.
+- **fail-open** — `recordAudit` תופס שגיאות ולא מפיל את הפעולה הראשית (זמינות > חוסר-audit לאירוע יחיד). לשקילה מחדש בסקירת אבטחה.
+- **append-only נאכף ב-DB** — trigger `BEFORE UPDATE OR DELETE` שעושה `RAISE`. `purgeOldAudit` (retention, לא מתוזמן — WP-21) מכבה את ה-trigger ב-transaction כדי לגזום. שמירה: 730 יום.
+
+**נדחו:** audit לכל קריאת DB — רעש/ביצועים. אכיפת append-only ברמת שירות בלבד — פחות חזק מ-trigger.

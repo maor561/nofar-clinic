@@ -49,7 +49,14 @@ export { SESSION_COOKIE, SESSION_TTL_MS, passwordSchema };
 export type { AuthResult, ActiveSession, SessionContext, InvitePreview };
 
 export type LoginResult =
-  | { status: "ok"; userId: string; role: "therapist" | "patient"; token: string; expiresAt: Date }
+  | {
+      status: "ok";
+      userId: string;
+      role: "therapist" | "patient";
+      therapistId: string;
+      token: string;
+      expiresAt: Date;
+    }
   | Exclude<AuthResult, { status: "ok" }>;
 
 // ---- registration / provisioning ----
@@ -91,7 +98,14 @@ export async function login(
   const result = await _authenticate(db, input, { ip: ctx.ip });
   if (result.status !== "ok") return result;
   const { token, expiresAt } = await _createSession(db, result.userId, ctx);
-  return { status: "ok", userId: result.userId, role: result.role, token, expiresAt };
+  return {
+    status: "ok",
+    userId: result.userId,
+    role: result.role,
+    therapistId: result.therapistId,
+    token,
+    expiresAt,
+  };
 }
 
 export function createSession(userId: string, ctx?: SessionContext) {

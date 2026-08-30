@@ -45,7 +45,11 @@ Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפ
 **DoD:** סכמה מיגרייטת ל-Neon ✓ · seed (מטפל + 2 מטופלים) ✓ · החלטת RLS מתועדת (ADR-017) ✓ · התחברות נבדקה מקומית מול Neon ✓.
 **תלוי:** WP-03 · **הבא:** WP-05 (Audit Log)
 
-### WP-05 · Audit Log ⬜
+### WP-05 · Audit Log ✅
+`core/audit` (ADR-018): `audit_log` + trigger append-only (migration 0002) · `recordAudit`/`queryAudit`/`purgeOldAudit` · `server.ts` `audit()` ·
+**auto-audit** ב-`ScopedDb` (כל write ממוקד → אירוע, לא ניתן לשכוח) · `audit("login"/"invite")` בזרימות auth · מסך `/t/audit` עם 3 פילטרים (מטופל/תאריך/פעולה).
+**DoD:** CRUD על מידע מטופל → רשומה ✓ · מסך מסונן ✓ · append-only נאכף (trigger + בדיקה) ✓ · 7 בדיקות · נבדק בדפדפן (login → רשומה במסך).
+**תלוי:** WP-04 · **הבא:** WP-07 (Email) — WP-06 (Notifications) תלוי בו.
 `core/audit`: API כתיבה + שאילתה, middleware שמתעד גישה למידע מטופל, מסך צפייה למטפל.
 **DoD:** כל CRUD על מידע מטופל מייצר רשומה; מסך Audit מסונן לפי מטופל/תאריך/פעולה; append-only נאכף.
 **תלוי:** WP-04

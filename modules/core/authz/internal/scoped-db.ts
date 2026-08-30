@@ -1,7 +1,22 @@
-import { and, eq, sql, type InferSelectModel, type SQL } from "drizzle-orm";
+import { and, eq, getTableName, sql, type InferSelectModel, type SQL } from "drizzle-orm";
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import type { Db } from "@/modules/core/data/client";
 import { patient } from "@/modules/patients/schema";
+
+/**
+ * Optional audit sink. Every write through a scoped handle emits one event, so
+ * "every write to patient data is recorded" cannot be forgotten (WP-05). The
+ * sink is a plain callback — core/authz stays free of server-only deps; the
+ * request entry points (getTherapistDb / getPatientDb) wire it to core/audit.
+ */
+export type ScopedAuditEvent = {
+  action: "create" | "update" | "delete";
+  entity: string;
+  entityId: string | null;
+  patientId: string | null;
+  count: number;
+};
+export type ScopedAuditSink = (evt: ScopedAuditEvent) => void;
 
 /**
  * The scoping guard's runtime half.
@@ -32,7 +47,21 @@ type Values = Record<string, unknown> | readonly Record<string, unknown>[];
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 abstract class BaseScopedDb {
-  protected constructor(protected readonly _db: Db) {}
+  protected constructor(
+    protected readonly _db: Db,
+    protected readonly _audit?: ScopedAuditSink,
+  ) {}
+
+  protected _emit(action: ScopedAuditEvent["action"], table: PgTable, rows: unknown[]) {
+    if (!this._audit) return;
+    const entity = getTableName(table);
+    const one = rows.length === 1 ? (rows[0] as Record<string, unknown>) : undefined;
+    const entityId = (one?.id as string | undefined) ?? null;
+    const patientId =
+      (one?.patientId as string | undefined) ??
+      (entity === "patient" ? ((one?.id as string | undefined) ?? null) : null);
+    this._audit({ action, entity, entityId, patientId, count: rows.length });
+  }
 }
 
 export class TherapistDb extends BaseScopedDb {
@@ -40,8 +69,9 @@ export class TherapistDb extends BaseScopedDb {
   constructor(
     db: Db,
     readonly therapistId: string,
+    audit?: ScopedAuditSink,
   ) {
-    super(db);
+    super(db, audit);
   }
 
   scopeWhere<T extends TherapistScopedTable>(table: T, extra?: SQL): SQL {
@@ -80,10 +110,12 @@ export class TherapistDb extends BaseScopedDb {
   ): Promise<InferSelectModel<T>[]> {
     const list = Array.isArray(values) ? values : [values];
     const scoped = list.map((v) => ({ ...v, therapistId: this.therapistId }));
-    return (await (this._db as any)
+    const rows = (await (this._db as any)
       .insert(table)
       .values(scoped)
       .returning()) as InferSelectModel<T>[];
+    this._emit("create", table, rows);
+    return rows;
   }
 
   async update<T extends TherapistScopedTable>(
@@ -91,18 +123,22 @@ export class TherapistDb extends BaseScopedDb {
     set: Record<string, unknown>,
     extra?: SQL,
   ): Promise<InferSelectModel<T>[]> {
-    return (await (this._db as any)
+    const rows = (await (this._db as any)
       .update(table)
       .set(set)
       .where(this.scopeWhere(table, extra))
       .returning()) as InferSelectModel<T>[];
+    if (rows.length) this._emit("update", table, rows);
+    return rows;
   }
 
   async delete<T extends TherapistScopedTable>(table: T, extra?: SQL): Promise<Rows> {
-    return (await (this._db as any)
+    const rows = (await (this._db as any)
       .delete(table)
       .where(this.scopeWhere(table, extra))
       .returning()) as Rows;
+    if (rows.length) this._emit("delete", table, rows);
+    return rows;
   }
 }
 
@@ -112,8 +148,9 @@ export class PatientDb extends BaseScopedDb {
     db: Db,
     readonly therapistId: string,
     readonly patientId: string,
+    audit?: ScopedAuditSink,
   ) {
-    super(db);
+    super(db, audit);
   }
 
   scopeWhere<T extends PatientScopedTable>(table: T, extra?: SQL): SQL {
@@ -166,10 +203,12 @@ export class PatientDb extends BaseScopedDb {
       therapistId: this.therapistId,
       patientId: this.patientId,
     }));
-    return (await (this._db as any)
+    const rows = (await (this._db as any)
       .insert(table)
       .values(scoped)
       .returning()) as InferSelectModel<T>[];
+    this._emit("create", table, rows);
+    return rows;
   }
 
   async update<T extends PatientScopedTable>(
@@ -177,18 +216,22 @@ export class PatientDb extends BaseScopedDb {
     set: Record<string, unknown>,
     extra?: SQL,
   ): Promise<InferSelectModel<T>[]> {
-    return (await (this._db as any)
+    const rows = (await (this._db as any)
       .update(table)
       .set(set)
       .where(this.scopeWhere(table, extra))
       .returning()) as InferSelectModel<T>[];
+    if (rows.length) this._emit("update", table, rows);
+    return rows;
   }
 
   async delete<T extends PatientScopedTable>(table: T, extra?: SQL): Promise<Rows> {
-    return (await (this._db as any)
+    const rows = (await (this._db as any)
       .delete(table)
       .where(this.scopeWhere(table, extra))
       .returning()) as Rows;
+    if (rows.length) this._emit("delete", table, rows);
+    return rows;
   }
 }
 

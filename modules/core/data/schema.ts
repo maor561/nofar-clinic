@@ -4,5 +4,6 @@
  * schema file; this only re-exports.
  */
 export * from "@/modules/core/auth/schema";
+export * from "@/modules/core/audit/schema";
 export * from "@/modules/patients/schema";
 export * from "@/modules/patient-file/schema";

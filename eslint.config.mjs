@@ -11,13 +11,15 @@ const eslintConfig = defineConfig([
 
   // Scoping guard (WP-03): the raw DB handle is off-limits. App and domain code
   // must go through @/modules/core/authz/server (getTherapistDb / getPatientDb).
-  // Trusted base — core/data, core/authz, core/auth — is exempt, as are tests.
+  // Trusted base — core/data, core/authz, core/auth, core/audit — is exempt, as
+  // are tests.
   {
     files: ["app/**/*.{ts,tsx}", "modules/**/*.{ts,tsx}"],
     ignores: [
       "modules/core/data/**",
       "modules/core/authz/**",
       "modules/core/auth/**",
+      "modules/core/audit/**",
       "**/*.test.{ts,tsx}",
       "**/*.spec.{ts,tsx}",
     ],

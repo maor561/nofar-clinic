@@ -18,6 +18,7 @@ const DEFAULT_GROUPS: NavGroup[] = [
     items: [
       { label: "מסמכים", icon: "doc", href: "/t/documents" },
       { label: "התראות", icon: "bell", href: "/t/alerts" },
+      { label: "יומן פעילות", icon: "status", href: "/t/audit" },
       { label: "הגדרות", icon: "settings", href: "/t/settings" },
     ],
   },

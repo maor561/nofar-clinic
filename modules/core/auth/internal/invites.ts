@@ -45,7 +45,7 @@ export async function acceptInvite(
   db: Db,
   token: string,
   password: string,
-): Promise<{ userId: string }> {
+): Promise<{ userId: string; therapistId: string; patientId: string }> {
   const tokenHash = hashToken(token);
   const rows = await db
     .select()
@@ -81,5 +81,5 @@ export async function acceptInvite(
     })
     .where(eq(user.id, u.id));
 
-  return { userId: u.id };
+  return { userId: u.id, therapistId: row.therapistId, patientId: row.patientId };
 }

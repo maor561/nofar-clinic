@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { login } from "@/modules/core/auth";
 import { writeSessionCookie, requestContext } from "@/modules/core/auth/server";
+import { audit } from "@/modules/core/audit/server";
 import { DbNotConfiguredError } from "@/modules/core/authz";
 
 export type LoginState = {
@@ -40,6 +41,10 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
   switch (result.status) {
     case "ok":
       await writeSessionCookie(result.token, result.expiresAt);
+      await audit("login", "user", {
+        actor: { therapistId: result.therapistId, userId: result.userId, role: result.role },
+        entityId: result.userId,
+      });
       redirect(next ?? (result.role === "therapist" ? "/t" : "/p"));
     // redirect throws — no break needed
     case "totp_required":

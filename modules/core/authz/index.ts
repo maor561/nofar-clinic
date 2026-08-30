@@ -13,19 +13,19 @@
  */
 import type { Db } from "@/modules/core/data/client";
 import type { ActiveSession } from "@/modules/core/auth";
-import { PatientDb, TherapistDb, type ScopedDb } from "./internal/scoped-db";
+import { PatientDb, TherapistDb, type ScopedAuditSink, type ScopedDb } from "./internal/scoped-db";
 
 export { TherapistDb, PatientDb };
 export { DbNotConfiguredError } from "@/modules/core/data/client";
-export type { ScopedDb };
+export type { ScopedDb, ScopedAuditSink, ScopedAuditEvent } from "./internal/scoped-db";
 export type { TherapistScopedTable, PatientScopedTable } from "./internal/scoped-db";
 
-export function scopedDbFor(db: Db, session: ActiveSession): ScopedDb {
+export function scopedDbFor(db: Db, session: ActiveSession, audit?: ScopedAuditSink): ScopedDb {
   if (session.role === "therapist") {
-    return new TherapistDb(db, session.therapistId);
+    return new TherapistDb(db, session.therapistId, audit);
   }
   if (!session.patientId) {
     throw new Error("patient session without patient_id");
   }
-  return new PatientDb(db, session.therapistId, session.patientId);
+  return new PatientDb(db, session.therapistId, session.patientId, audit);
 }

@@ -6,9 +6,9 @@
 
 ## מצב נוכחי
 
-שלב **תשתית**. WP-D1 · WP-00 · WP-01 · WP-02 · WP-03 · **WP-04 ✓** — כולם הושלמו.
-Neon Postgres (פרנקפורט) מחובר; סכמה + seed הורצו; התחברות עובדת מקומית מול Neon. RLS נדחה (ADR-017).
-**הבא: WP-05 — Audit Log.**
+שלב **תשתית**. WP-D1 · WP-00 · WP-01 · WP-02 · WP-03 · WP-04 · **WP-05 ✓ (Audit Log)** — כולם הושלמו.
+auto-audit דרך ה-guard, append-only ב-trigger, מסך `/t/audit`. 37 בדיקות ירוקות.
+**הבא: WP-07 — Email (Resend).** *דרוש מהלקוח: חשבון Resend + דומיין.*
 
 ## קישורים
 
@@ -27,9 +27,11 @@ Neon Postgres (פרנקפורט) מחובר; סכמה + seed הורצו; התח�
 
 ## בעבודה
 
-- **WP-05 — Audit Log** (הבא). `core/audit`: API כתיבה+שאילתה, middleware שמתעד גישה למידע מטופל, מסך צפייה למטפל. append-only.
+- **WP-07 — Email (Resend)** (הבא). `core/email`: ספק, 4 תבניות (הזמנה/איפוס/פגישה קרובה/שינוי תוכנית), fallback. **דרוש מהלקוח:** חשבון Resend + דומיין.
+  *(WP-06 Notification Center תלוי ב-WP-07, אז נעשה 07 קודם.)*
 - **דיוקי תוכן במוקאפים** — טראק מקביל מול הלקוח, לא חוסם.
 - **TOTP enrollment UI** + change-password UI — נדחו למסך הגדרות (WP-20). הליבה + בדיקות קיימות.
+- **audit של קריאות** — `audit("view", "patient", ...)` ייווסף במסך תיק המטופל (WP-11).
 
 ## פעולות פתוחות ללקוח
 
@@ -107,6 +109,12 @@ Neon Postgres (פרנקפורט) מחובר; סכמה + seed הורצו; התח�
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-30 — WP-05 Audit Log
+`core/audit` (ADR-018): `audit_log` + טבלת trigger append-only (migration `0002`, מותאם ידנית ל-SQL) · שירות record/query/purge · `server.ts` `audit()` ·
+`ScopedDb` הורחב עם `ScopedAuditSink` — כל write ממוקד פולט אירוע, `getTherapistDb`/`getPatientDb` מחווטים ל-`recordAudit` · `audit("login")` ב-login action, `audit("invite")` ב-accept · `acceptInvite` מחזיר גם `therapistId`/`patientId`, `AuthResult.ok`+`therapistId` ·
+מסך `/t/audit` (server, פילטרים GET) + פריט nav "יומן פעילות" · `core/audit` נוסף ל-lint allowlist · 7 בדיקות (round-trip/filters/scoping/append-only/purge/auto-audit) ·
+תיקון: cast `as TherapistDb` (union לא callable ב-`next build` TS) · trigger error עטוף ב-DrizzleQueryError (בדיקה בודקת `P0001`/שם הפונקציה) · נבדק בדפדפן: login → רשומה במסך יומן. 37 בדיקות + build ירוקים.
 
 ### 2026-08-30 — WP-04 Data Layer + RLS spike (Neon)
 הלקוח יצר Neon (Frankfurt `eu-central-1`) — תחילה MongoDB בטעות, תוקן. `.env.local` נוצר (gitignored). **הסיסמה הודבקה בצ'אט → לאפס.**

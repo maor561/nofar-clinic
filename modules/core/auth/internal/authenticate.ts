@@ -5,7 +5,7 @@ import { getUserByEmail } from "./register";
 import { clearFailures, isIpThrottled, isLocked, recordAttempt, registerFailure } from "./lockout";
 
 export type AuthResult =
-  | { status: "ok"; userId: string; role: "therapist" | "patient" }
+  | { status: "ok"; userId: string; role: "therapist" | "patient"; therapistId: string }
   | { status: "totp_required" }
   | { status: "invalid" }
   | { status: "locked"; until: Date }
@@ -57,5 +57,5 @@ export async function authenticate(
 
   await clearFailures(db, u.id);
   await recordAttempt(db, email, ctx.ip, true);
-  return { status: "ok", userId: u.id, role: u.role };
+  return { status: "ok", userId: u.id, role: u.role, therapistId: u.therapistId };
 }
