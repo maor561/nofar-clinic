@@ -117,10 +117,12 @@ Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפ
 **DoD:** מטפל יוצר · מטופל מעדכן סטטוס · אירועי Timeline · התראות · 6 בדיקות isolation — הכול ✓ (נבדק בדפדפן מול Neon: מטופל השלים → התראה למטפל).
 **תלוי:** WP-11 · **הבא:** WP-16 (Messaging)
 
-### WP-16 · Messaging ⬜
-שיחה מטפל↔מטופל, polling, נקרא/לא נקרא, היסטוריה.
-**DoD:** שני הצדדים מתכתבים; badge מתעדכן; שרשור מבודד למטופל; בדיקת בידוד.
-**תלוי:** WP-06
+### WP-16 · Messaging ✅
+`modules/messaging` (ADR-028): `message_thread` (אחד למטופל) + `message` (מיגרציה `0010`, dual-scoped) · `listMessages`/`sendMessage`/`markThreadRead`/`unreadCountFor` (שני scopes) + `listThreads(tdb)` לתיבה ·
+`read_at` = מתי הצד השני קרא · polling דרך `<ChatPoller>` (`router.refresh()`) · פעולה אחת לשני הצדדים (`sendMessageAction` + `getScopedDb()`) · `notify(message_received)` בשליחה ·
+מסכים `/t/messages` (תיבה) · `/t/messages/[patientId]` · `/p/messages`.
+**DoD:** שני הצדדים מתכתבים ✓ · badge מתעדכן ✓ · שרשור מבודד למטופל ✓ (נבדק בדפדפן מול Neon) · 5 בדיקות isolation ✓.
+**תלוי:** WP-06 · **הבא:** WP-17 (Documents — צריך Vercel Blob) / WP-18 (Questionnaires)
 
 ### WP-17 · Documents ⬜
 UI מעל WP-08: העלאה ע"י מטפל/מטופל, visibility, רשימה בתיק.

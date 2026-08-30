@@ -293,3 +293,18 @@ Spike מול Neon (endpoint pooled, פרנקפורט) — `modules/core/data/scr
 - **נבדק בדפדפן מול Neon:** מטפלת יצרה משימה ל"דנה" (timeline created+completed) · יצרה משימה ל"בדיקה התראה"; המטופל התחבר, ראה **רק** את המשימה שלו, סימן "בוצע" → למטפלת התקבלה התראה "משימה סומנה כבוצעה" ב-`/t/alerts`.
 
 **נדחו:** תזכורות תדירות (daily/weekly) כאירועי לוח בפועל — התדירות היא תווית בלבד ב-v1 · מטופל יוצר/עורך משימה · היסטוריית שינויי סטטוס.
+
+## ADR-028 — Messaging: one thread per patient, poll via router.refresh, read = other party's rows
+**תאריך:** 2026-08-30 · **סטטוס:** נעול · **מממש WP-16**
+
+- **schema:** `message_thread` (unique `patient_id` — שיחה אחת למטופל) + `message` (`thread_id`, `sender` (`therapist`/`patient`), `body`, `sent_at`, `read_at`). מיגרציה `0010`. שני הrows נושאים `therapist_id` + `patient_id` — dual-scoped.
+- **`read_at` = מתי הצד השני קרא:** `markThreadRead(db, patientId)` מסמן `read_at=now()` על הודעות ב-thread ש-`sender != db.role AND read_at IS NULL`. `unreadCountFor(db)` סופר לפי אותו כלל — למטפלת: על פני כל המטופלים (scope = therapist_id); למטופל: רק ה-thread שלו.
+- **service** (`modules/messaging`): `listMessages` / `sendMessage` / `markThreadRead` / `unreadCountFor` — כולם `TherapistDb | PatientDb`. `listThreads(tdb)` = תיבת דואר: thread לכל מטופל + הודעה אחרונה + מונה שלא-נקרא + שם. `sendMessage` יוצר את ה-thread בפעם הראשונה; מטפלת מוגבלת ל-`findOne(patient)` scoped לפני יצירה (`patient_not_found` על מטופל זר); מטופל — ה-guard כופה `patient_id` על ה-insert.
+- **polling** (WP-16 "polling"): `<ChatPoller>` (`"use client"`) קורא `router.refresh()` כל 12ש' (20ש' בתיבה) → ה-server component נטען מחדש והודעות חדשות מופיעות. ללא WebSocket/SSE (מספיק למטפלת יחידה). `<ChatComposer>` — `useActionState` + Enter-לשליחה, `router.refresh()` אחרי הצלחה.
+- **פעולה אחת לשני הצדדים:** `sendMessageAction(patientId, ...)` ב-`app/(therapist)/t/messages/actions.ts` דרך `getScopedDb()`; `/p/messages` מייבא את אותה פעולה + את `MessageList`/`ChatComposer`. שליחה → `notify(message_received)` לצד השני (in-app; ה-badge של פעמון ההתראות מתעדכן ב-poll הקיים של WP-06).
+- **מסכים:** `/t/messages` (תיבה + "התחלת שיחה" עם מטופלים ללא thread) · `/t/messages/[patientId]` (שיחה, `markThreadRead` ברינדור, `audit("view","message_thread")`) · `/p/messages` (שיחה יחידה). בועות מיושרות לפי sender, "נקרא" על הודעה משלי שנקראה.
+- **אין אירוע Timeline להודעה בודדת** — צ'אט אינו אבן דרך קלינית; מסך ההודעות הוא משטח נפרד.
+- **בדיקות:** `tests/isolation/messaging-module.test.ts` (5) — מטפלת לא קוראת/פותחת שיחה של מטפלת אחרת (`patient_not_found`) · patient handle רק ה-thread שלו · שני הצדדים ל-thread אחד, סדר כרונולוגי · `unread`/`markThreadRead` נוגעים רק בהודעות הצד השני · `listThreads` = הודעה אחרונה + מונה. 98 סה"כ.
+- **נבדק בדפדפן מול Neon:** מטפלת→"בדיקה התראה" הודעה; המטופל התחבר, ראה **רק** את השיחה שלו, סימון "נקרא" חזר למטפלת; המטופל השיב → בתיבת המטפלת badge "1" + ההודעה האחרונה. (שליחה בבדיקה בוצעה דרך `form.requestSubmit()` — לחיצה על כפתור קטן ב-automation לא הפעילה submit; הטופס תקין ועובד.)
+
+**נדחו:** WebSocket/SSE · קבצים בהודעות (שלב עתידי, DATA_MODEL) · יותר מ-thread אחד למטופל · הקלדה/typing indicators · אירוע Timeline להודעה.

@@ -6,9 +6,9 @@
 
 ## מצב נוכחי
 
-שלב **דומיין**. Core: WP-00..09 ✓ (למעט WP-08). **WP-10..15 ✓** (Patients · Timeline · Appointments · Sessions · Plans · Tasks).
-93 בדיקות ירוקות, הפריסה חיה, Neon + Resend מחוברים.
-**הבא: WP-16 — Messaging (שיחה מטפל↔מטופל).**
+שלב **דומיין**. Core: WP-00..09 ✓ (למעט WP-08). **WP-10..16 ✓** (Patients · Timeline · Appointments · Sessions · Plans · Tasks · Messaging).
+98 בדיקות ירוקות, הפריסה חיה, Neon + Resend מחוברים.
+**הבא: WP-17 — Documents (דורש Vercel Blob — WP-08) או WP-18 — Questionnaires.**
 
 ## קישורים
 
@@ -27,8 +27,9 @@
 
 ## בעבודה
 
-- **WP-16 — Messaging** (הבא). שיחה מטפל↔מטופל, polling, נקרא/לא נקרא, שרשור מבודד למטופל. בדיקת בידוד.
-- **WP-15 — Tasks** ✓ — `task` dual-scoped (מיגרציה 0009); `setTaskStatus` לשני התפקידים; `task_created`/`task_completed` ל-Timeline; מטופל משלים → התראה למטפל; `/p/tasks`. תדירות = תווית בלבד ב-v1.
+- **WP-17 — Documents** (הבא, **חסום** — דורש Vercel Blob store מהלקוח / WP-08). או להקדים את **WP-18 — Questionnaires** (שאלון קליטה, לא חסום).
+- **WP-16 — Messaging** ✓ — `message_thread`/`message` (מיגרציה 0010, dual-scoped); `read_at` = הצד השני קרא; polling ב-`router.refresh()`; פעולה אחת לשני התפקידים; `/t/messages` תיבה + `/p/messages`. אין WebSocket, אין קבצים בהודעות.
+- **WP-15 — Tasks** ✓ — `task` dual-scoped (מיגרציה 0009); `setTaskStatus` לשני התפקידים; `task_created`/`task_completed` ל-Timeline; `/p/tasks`.
 - **WP-14 — Treatment Plans** ✓ — `treatment_plan_version` append-only (מיגרציה 0008); תוכן דרך Field Registry; `/p/plan`.
 - **WP-13 — Treatment Sessions** ✓ — `treatment_session` (מיגרציה 0007) + מסך "זרימה אחת". שלב "משימות" מהזרימה — יחווט ב-WP-15.
 - **WP-12 — Appointments** ✓ — יומן שבועי (agenda) + CRUD + סטטוסים + `/p/appointments` לקריאה. `lib/tz.ts` שעון-קיר `Asia/Jerusalem`.
@@ -122,6 +123,13 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-30 — WP-16 Messaging
+`modules/messaging` (ADR-028): `message_thread` (unique patient) + `message` (מיגרציה `0010`, הוחלה על Neon; dual-scoped). `read_at` = מתי הצד השני קרא — `markThreadRead` נוגע רק בהודעות `sender != db.role`; `unreadCountFor` (מטפלת: כל המטופלים; מטופל: ה-thread שלו). `sendMessage` יוצר thread בפעם ראשונה, מטפלת מוגבלת ל-`findOne(patient)` scoped לפני יצירה.
+polling: `<ChatPoller>` (`router.refresh()` כל 12ש'/20ש'). פעולה אחת `sendMessageAction` דרך `getScopedDb()` — `/p/messages` מייבא אותה + את `MessageList`/`ChatComposer` מ-`(therapist)`. שליחה → `notify(message_received)` לצד השני (badge של פעמון WP-06 מתעדכן ב-poll). אין אירוע Timeline להודעה בודדת.
+מסכים `/t/messages` (תיבה + "התחלת שיחה") · `/t/messages/[patientId]` (`markThreadRead` ברינדור + `audit view`) · `/p/messages` (שיחה יחידה). בועות מיושרות לפי sender + חיווי "נקרא".
+5 בדיקות isolation → 98 סה"כ. lint/typecheck/build ירוקים (build ללא env).
+**נבדק בדפדפן מול Neon:** מטפלת שלחה ל"בדיקה התראה"; המטופל התחבר, ראה **רק** את השיחה שלו, "נקרא" חזר למטפלת; המטופל השיב → בתיבת המטפלת badge "1" + ההודעה האחרונה. (שליחה ב-automation דרך `form.requestSubmit()` — כפתור קטן; הטופס תקין.) console נקי.
 
 ### 2026-08-30 — WP-15 Tasks
 `modules/tasks` (ADR-027): `task` (מיגרציה `0009`, הוחלה על Neon; dual-scoped) + service list/get/create/update/delete + `setTaskStatus(db, id, status)` שמקבל `TherapistDb | PatientDb` (המטופל מסמן "בוצע"). Timeline: `task_created` / `task_completed` (idempotent). `labels.ts` טהור ל-client.
