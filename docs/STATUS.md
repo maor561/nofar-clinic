@@ -6,9 +6,9 @@
 
 ## מצב נוכחי
 
-שלב **דומיין**. Core: WP-00..09 ✓ (למעט WP-08 File Storage). **WP-10 (Patients) ✓** — מודול הדומיין הראשון.
-63 בדיקות ירוקות, הפריסה חיה, Neon + Resend מחוברים.
-**הבא: WP-11 — Patient File + Timeline.**
+שלב **דומיין**. Core: WP-00..09 ✓ (למעט WP-08 File Storage). **WP-10 (Patients) ✓ · WP-11 (Patient File + Timeline) ✓**.
+69 בדיקות ירוקות, הפריסה חיה, Neon + Resend מחוברים.
+**הבא: WP-12 — Appointments (יומן פנימי).**
 
 ## קישורים
 
@@ -27,7 +27,8 @@
 
 ## בעבודה
 
-- **WP-11 — Patient File + Timeline** (הבא). מסך התיק המלא + פיד ה-Timeline + סינון. `recordEvent` כבר קיים (WP-10); צריך את צד הקריאה + חיווט משאר המודולים.
+- **WP-12 — Appointments** (הבא). יומן פנימי: יצירה/שינוי/ביטול, `no_show`, אירוע Timeline + התראה, בדיקת בידוד.
+- **WP-11 — Patient File + Timeline** ✓ — `listTimeline`/`countTimeline` (scoped, סינון בשאילתה) + כרטיס ציר זמן במסך התיק. חיווט אירועים ממודולים אחרים יתווסף כשייבנו.
 - **WP-08 — File Storage** (Vercel Blob). פעולה קטנה מהלקוח: יצירת Blob store ב-Vercel → `BLOB_READ_WRITE_TOKEN` מוזרק אוטומטית.
 - **מיתוג:** הלקוח שלח לוגו (עיגול מרווה + פרח לבן, כותרת "נופר כהן נטורופתית N.D והרבליסטית קלינית Cl.H"). לדגום ירוק מהלוגו + לעדכן subtitle. **הלקוח ביקש להתעלם מבקשות נוספות עד הודעה חדשה.**
 - **דיוקי תוכן במוקאפים** — טראק מקביל, לא חוסם.
@@ -117,6 +118,12 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-30 — WP-11 Patient File + Timeline
+`modules/patient-file` (ADR-023): `listTimeline`/`countTimeline` לצד `recordEvent` — `TherapistDb | PatientDb` (cast ל-union), סינון בשאילתה (`types[]` inArray · `gte/lte` על `occurred_at` · מיון desc/asc) · תקרת 500 על האינדקס הקיים `(patient_id, occurred_at)` · `TIMELINE_LABEL` עברית במודול, `TIMELINE_ICON` ב-UI.
+מסך `/t/patients/[id]`: כרטיס "ציר זמן" — צ'יפים `?ev=<type>` + `<PatientTimeline>` (רכיב render טהור: קיבוץ יומי "היום"/"אתמול"/תאריך, פס `border-s` עם בועות אייקון); כותרת = סה"כ אירועים (לא מסונן). הוסר ה-placeholder של WP-10.
+6 בדיקות isolation (`patient-file-timeline.test.ts`) — cross-therapist ריק · patient handle רק את עצמו · מיון · סינון סוג · חלון תאריכים · תקרת 500. 69 סה"כ · lint/typecheck/build ירוקים.
+**נבדק בדפדפן מול Neon:** תיק "דנה פרץ" — "נוספ/ה למערכת" תחת "היום" @ 20:26, תווית "סטטוס"; `?ev=appointment` → מצב ריק. console נקי (רק HMR ws של הפריוויו).
 
 ### 2026-08-30 — WP-10 Patients + version stamp
 **חותמת גרסה:** `next.config` מטביע git SHA + build time → `GET /api/version` + כותרת תחתונה של `/`. אומת חי (d20e15d).

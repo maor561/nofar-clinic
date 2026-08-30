@@ -5,25 +5,52 @@ import { getTherapistDb } from "@/modules/core/authz/server";
 import { audit } from "@/modules/core/audit/server";
 import { getPatient, TREATMENT_LABEL, CONSENT_LABEL } from "@/modules/patients";
 import {
+  listTimeline,
+  countTimeline,
+  timelineEventType,
+  TIMELINE_LABEL,
+  type TimelineEventType,
+} from "@/modules/patient-file";
+import {
   Button,
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  EmptyState,
   Icon,
+  cn,
 } from "@/modules/core/design-system";
 import { StatusPill } from "../page";
+import { PatientTimeline } from "./timeline";
 
 export const metadata: Metadata = { title: "תיק מטופל — נופר" };
 
-export default async function PatientPage({ params }: { params: Promise<{ id: string }> }) {
+type SP = { ev?: string };
+
+export default async function PatientPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<SP>;
+}) {
   const { id } = await params;
+  const sp = await searchParams;
   const tdb = await getTherapistDb();
   const p = await getPatient(tdb, id);
   if (!p) notFound();
 
   await audit("view", "patient", { patientId: id, entityId: id });
+
+  const ev = (timelineEventType as readonly string[]).includes(sp.ev ?? "")
+    ? (sp.ev as TimelineEventType)
+    : undefined;
+  const [events, total] = await Promise.all([
+    listTimeline(tdb, id, { types: ev ? [ev] : undefined, limit: 500 }),
+    countTimeline(tdb, id),
+  ]);
+
+  const evHref = (t?: TimelineEventType) => (t ? `/t/patients/${id}?ev=${t}` : `/t/patients/${id}`);
 
   // server component render — computing "now" per request is fine here
   /* eslint-disable react-hooks/purity */
@@ -91,13 +118,20 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
           <Card>
             <CardHeader>
               <CardTitle>ציר זמן</CardTitle>
+              <span className="text-ink-faint text-xs tabular-nums">{total} אירועים</span>
             </CardHeader>
-            <CardContent>
-              <EmptyState
-                icon="plan"
-                title="ה-Timeline ייבנה ב-WP-11"
-                description="פגישות, תוכניות, משימות, מסמכים והודעות של המטופל/ת יופיעו כאן כרונולוגית."
-              />
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-1.5">
+                <TlChip href={evHref()} active={!ev}>
+                  הכול
+                </TlChip>
+                {timelineEventType.map((t) => (
+                  <TlChip key={t} href={evHref(t)} active={ev === t}>
+                    {TIMELINE_LABEL[t]}
+                  </TlChip>
+                ))}
+              </div>
+              <PatientTimeline entries={events} />
             </CardContent>
           </Card>
 
@@ -156,5 +190,29 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
         </aside>
       </div>
     </div>
+  );
+}
+
+function TlChip({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "rounded-full border px-2.5 py-0.5 text-[11.5px] font-semibold transition-colors",
+        active
+          ? "border-sage bg-sage-soft text-sage-deep"
+          : "border-line text-ink-soft hover:border-sage",
+      )}
+    >
+      {children}
+    </Link>
   );
 }

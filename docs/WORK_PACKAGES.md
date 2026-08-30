@@ -85,10 +85,11 @@ Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפ
 **DoD:** ניהול מקצה-לקצה ✓ (נבדק בדפדפן מול Neon) · חיפוש למטפל בלבד (guard) ✓ · 5 בדיקות isolation ✓ · פעולות ב-Audit + Timeline ✓.
 **תלוי:** WP-03, WP-05, WP-09 · **הבא:** WP-11 (Patient File + Timeline)
 
-### WP-11 · Patient File + Timeline ⬜
-מסך תיק (פרופיל + Timeline), `patientFile.recordEvent()`, סינון Timeline.
-**DoD:** אירועים מכל מודול v1 מופיעים; טעינה < 1ש' ל-500 אירועים; בדיקת בידוד.
-**תלוי:** WP-10
+### WP-11 · Patient File + Timeline ✅
+`modules/patient-file` (ADR-023): `listTimeline`/`countTimeline` לצד `recordEvent` — מקבלים `TherapistDb | PatientDb`, סינון בשאילתה (`types[]` inArray · חלון תאריכים · מיון desc/asc) · תקרת עמוד 500 על האינדקס הקיים `(patient_id, occurred_at)` · `TIMELINE_LABEL` עברית ·
+מסך `/t/patients/[id]` — כרטיס "ציר זמן" עם צ'יפים `?ev=<type>` + `<PatientTimeline>` (קיבוץ לפי יום, פס רציף עם בועות אייקון) · כותרת = סה"כ אירועים.
+**DoD:** צד קריאה + סינון ✓ · < 1ש' ל-500 (שאילתה יחידה מאונדקסת) ✓ · 6 בדיקות isolation (cross-therapist ריק · patient רק את עצמו · מיון · סינון · תקרה) ✓ · נבדק בדפדפן מול Neon ✓. *אירועים ממודולים אחרים — כשייבנו (WP-12+), כל אחד קורא `recordEvent`.*
+**תלוי:** WP-10 · **הבא:** WP-12 (Appointments)
 
 ### WP-12 · Appointments (יומן פנימי) ⬜
 יצירה/שינוי/ביטול/תצוגת יומן, קישור למטופל, מצב `no_show`.

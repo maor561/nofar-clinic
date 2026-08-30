@@ -226,3 +226,17 @@ Spike מול Neon (endpoint pooled, פרנקפורט) — `modules/core/data/scr
 - **נבדק בדפדפן מול Neon:** יצירת "דנה פרץ" → redirect לתיק · `/t/audit` הראה create(patient/pt/timeline_event) + view(patient).
 
 **נדחו:** `unsafeQuery` escape hatch — לא נדרש ל-WP-10 (join של סוגי טיפול נעשה ב-2 שאילתות). מחיקת מטופל — anonymize+lock, WP רגולציה.
+
+## ADR-023 — Timeline read side: `listTimeline` scoped, filter-in-query, single index
+**תאריך:** 2026-08-30 · **סטטוס:** נעול · **מממש WP-11**
+צד הקריאה של ה-Timeline נוסף ל-`modules/patient-file` לצד `recordEvent` הקיים.
+
+- **`listTimeline(db, patientId, filter)` / `countTimeline(...)`** — מקבלים `TherapistDb | PatientDb` (cast ל-`TherapistDb` לקריאת ה-union, כמו `recordEvent`). `TherapistDb` מוסיף `therapist_id`, `PatientDb` מוסיף גם `patient_id` — אף handle לא חוצה tenant גם אם מעבירים `patientId` זר.
+- **סינון בשאילתה, לא בזיכרון:** `types[]` → `inArray`, חלון תאריכים → `gte/lte` על `occurred_at`, מיון `desc` (ברירת מחדל) או `asc`. הכול AND-נכנס דרך `ScopedDb.list({ where })`.
+- **ביצועים:** אינדקס יחיד קיים `timeline_event_patient_idx` על `(patient_id, occurred_at)` — מכסה את הסינון והמיון. תקרת עמוד 500 (DoD: < 1ש' ל-500). `offset` נתמך לעתיד, אין "load more" ב-v1.
+- **תוויות עברית** (`TIMELINE_LABEL`) במודול הדומיין (כמו `STATUS_LABEL` ב-patients); מיפוי אייקונים (`TIMELINE_ICON`) נשאר בשכבת ה-UI.
+- **מסך:** `/t/patients/[id]` — כרטיס "ציר זמן" עם צ'יפים לפי סוג (`?ev=<type>`) + `<PatientTimeline>` (רכיב render טהור: קיבוץ לפי יום, "היום"/"אתמול"/תאריך, פס רציף עם בועות אייקון). הכותרת מציגה סה"כ אירועים (לא מסונן).
+- **בדיקות:** `tests/isolation/patient-file-timeline.test.ts` (6) — cross-therapist ריק, patient handle רואה רק את עצמו, מיון, סינון סוג, חלון תאריכים, תקרת 500. 69 סה"כ.
+- **נבדק בדפדפן מול Neon:** תיק "דנה פרץ" — אירוע "נוספ/ה למערכת" מופיע תחת "היום" עם חותמת שעה; `?ev=appointment` → מצב ריק.
+
+**נדחו:** event bus / תור אירועים — כל מודול קורא `recordEvent` ישירות (ARCHITECTURE §4.3). דפדוף אינסופי / cursor pagination — לא נדרש לנפחי v1.
