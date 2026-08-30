@@ -1,9 +1,15 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { acceptInvite, createSession, passwordSchema } from "@/modules/core/auth";
+import {
+  acceptInvite,
+  createSession,
+  getTherapistUserId,
+  passwordSchema,
+} from "@/modules/core/auth";
 import { writeSessionCookie, requestContext } from "@/modules/core/auth/server";
 import { audit } from "@/modules/core/audit/server";
+import { notify } from "@/modules/core/notifications";
 import { DbNotConfiguredError } from "@/modules/core/authz";
 
 export type InviteState = { error?: string };
@@ -44,5 +50,19 @@ export async function acceptInviteAction(
     patientId,
     meta: { event: "invite_accepted" },
   });
+
+  const therapistUserId = await getTherapistUserId(therapistId);
+  if (therapistUserId) {
+    await notify({
+      recipientUserId: therapistUserId,
+      therapistId,
+      type: "patient_joined",
+      titleHe: "מטופל/ת חדש/ה הצטרף/ה",
+      bodyHe: "המטופל/ת השלים/ה את ההזמנה והגדיר/ה סיסמה.",
+      link: "/t/patients",
+      meta: { patientId },
+    });
+  }
+
   redirect("/p");
 }

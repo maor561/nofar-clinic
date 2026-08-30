@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { Db } from "@/modules/core/data/client";
 import { therapist, user } from "../schema";
 import { hashPassword } from "./password";
@@ -72,4 +72,14 @@ export async function getUserByEmail(db: Db, email: string) {
 export async function getUserById(db: Db, id: string) {
   const rows = await db.select().from(user).where(eq(user.id, id)).limit(1);
   return rows[0] ?? null;
+}
+
+/** The user id of the therapist account (v1: single therapist). */
+export async function getTherapistUserId(db: Db, therapistId: string): Promise<string | null> {
+  const rows = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(and(eq(user.therapistId, therapistId), eq(user.role, "therapist")))
+    .limit(1);
+  return rows[0]?.id ?? null;
 }

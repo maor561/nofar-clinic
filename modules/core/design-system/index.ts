@@ -56,6 +56,13 @@ export {
   DialogTrigger,
 } from "@/components/ui/dialog";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+export {
+  Popover,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 export { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 export { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 export { toast } from "sonner";

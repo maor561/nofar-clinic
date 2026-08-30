@@ -6,9 +6,9 @@
 
 ## מצב נוכחי
 
-שלב **תשתית → דומיין**. WP-00/01/02/03/04/05/07/09 ✓. **Core: נותרו WP-06 (Notifications) ו-WP-08 (File Storage).**
-54 בדיקות ירוקות, הפריסה חיה, Neon + Resend מחוברים.
-**הבא: WP-10 — Patients** (מודול הדומיין הראשון) או WP-08 (File Storage).
+שלב **דומיין**. WP-00/01/02/03/04/05/06/07/09 ✓ — **כל ה-core למעט WP-08 (File Storage) הושלם.**
+58 בדיקות ירוקות, הפריסה חיה, Neon + Resend מחוברים.
+**הבא: WP-10 — Patients** (מודול הדומיין הראשון). WP-08 כשיהיה Blob store.
 
 ## קישורים
 
@@ -27,8 +27,8 @@
 
 ## בעבודה
 
-- **WP-10 — Patients** (הבא). CRUD, חיפוש, סינון, סטטוס, סוגי טיפול, הסכמות. מודול דומיין ראשון — פותח את WP-11–20.
-- **WP-08 — File Storage** (Vercel Blob). פעולה קטנה מהלקוח: יצירת Blob store ב-Vercel + `BLOB_READ_WRITE_TOKEN`.
+- **WP-10 — Patients** (הבא). CRUD, חיפוש, סינון, סטטוס, סוגי טיפול, הסכמות. מודול דומיין ראשון — פותח את WP-11–20. השתמש ב-`getTherapistDb()` (guard) + audit + notify.
+- **WP-08 — File Storage** (Vercel Blob). פעולה קטנה מהלקוח: יצירת Blob store ב-Vercel → `BLOB_READ_WRITE_TOKEN` מוזרק אוטומטית.
 - **דיוקי תוכן במוקאפים** — טראק מקביל, לא חוסם.
 - **TOTP enrollment UI** + change-password UI — נדחו למסך הגדרות (WP-20).
 - **audit של קריאות** — `audit("view", "patient", ...)` ייווסף בתיק המטופל (WP-11).
@@ -116,6 +116,13 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-30 — WP-06 Notification Center
+Vercel env הוגדר (`RESEND_API_KEY`/`EMAIL_FROM`/`APP_URL`), `DATABASE_URL` + Neon vars אושרו, נוסף fallback `POSTGRES_URL` ב-`client.ts`.
+`core/notifications` (ADR-021): טבלת `notification` + מיגרציה `0004` · `internal/store.ts` (create/list/unreadCount/markRead — scoped ל-recipient) · `internal/notify.ts` (יצירה + אימייל לאירוע קריטי, fail-open) · `index.ts` · `server.ts` ·
+`app/api/notifications/route.ts` (GET count+items / POST mark) · `app/notification-bell.tsx` (polling 30ש', popover) בשני ה-shells · `/t/alerts` + server action mark-all ·
+טריגרים: invite accept → `getTherapistUserId` + `notify(patient_joined)` · reset complete → `notify(password_changed)` (+אימייל); `completePasswordReset` מחזיר גם `therapistId`, `AuthResult.ok`+`therapistId`, `acceptInvite`+ids ·
+`shadcn add popover` · `core/notifications`+`core/email` ל-lint allowlist · תיקון therapist-shell: `headerSlot` נראה גם במובייל · 4 בדיקות · 58 סה"כ · build ירוק · **נבדק בדפדפן**: מטופל→הזמנה→התראה למטפל ב-`/t/alerts` + badge=1.
 
 ### 2026-08-30 — WP-07 Email (Resend)
 הלקוח מסר creds (key בצ'אט → לאפס): דומיין `nofar-health.com`, from "נופר כהן <nofar@nofar-health.com>". `.env.local` עודכן (`RESEND_API_KEY`/`EMAIL_FROM`/`APP_URL`).

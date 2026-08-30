@@ -198,3 +198,16 @@ Spike מול Neon (endpoint pooled, פרנקפורט) — `modules/core/data/scr
 - **פונקציות שליחה מטופסות** ב-`index.ts`: `sendInviteEmail`/`sendPasswordResetEmail`/`sendUpcomingAppointmentEmail`/`sendPlanChangedEmail`. `appUrl()` בונה קישורים מ-`APP_URL` env.
 - **חיווט:** `/forgot` action שולח דוא"ל איפוס אמיתי (עדיין לוג dev). הזמנה → WP-10, תזכורת פגישה → WP-12, שינוי תוכנית → WP-14.
 - **פתוח:** טבלת `email_log` ב-DB (לא רק console) — מועמד ל-WP-21. **הלקוח:** לאפס את ה-API key (הודבק בצ'אט) + להגדיר `RESEND_API_KEY`/`EMAIL_FROM`/`APP_URL` ב-Vercel env.
+
+## ADR-021 — Notification Center: פיד פר-נמען, badge ב-polling, אימייל לאירועים קריטיים
+**תאריך:** 2026-08-30 · **סטטוס:** נעול · **מממש WP-06 / ADR-007**
+`modules/core/notifications`.
+
+- **טבלה:** `notification` (recipient_user_id, therapist_id, type, title_he, body_he, link, meta, created_at, read_at, emailed_at). מיגרציה `0004`. אינדקס `(recipient, created_at)`.
+- **חוזה:** `notify()` (יצירה + אימייל לאירוע קריטי), `listNotifications`/`unreadCount`/`markRead` — **כולם scoped ל-recipient_user_id** (משתמש רואה/מסמן רק את שלו; נבדק). `server.ts` = `myNotifications`/`myUnreadCount`/`markMineRead` (session נוכחי).
+- **badge:** `NotificationBell` (client) ב-`headerSlot` של שני ה-shells. **polling** ל-`GET /api/notifications` כל 30ש' → count + 15 אחרונות. popover עם פיד + "סמן הכל כנקרא". `POST /api/notifications {ids?}` לסימון.
+- **מסך מלא:** `/t/alerts` (מטפל) — רשימה מלאה + mark-all (server action + revalidate).
+- **אימייל לאירועים קריטיים:** `password_changed`/`appointment_upcoming`/`plan_changed` (או `email:true` מפורש) → `core/email.sendEmail` + חותמת `emailed_at`. **fail-open** — כשל שליחה לא מפיל את ההתראה.
+- **טריגרים מחווטים:** קבלת הזמנה → `patient_joined` למטפל (in-app). איפוס סיסמה → `password_changed` למשתמש (in-app + אימייל).
+- `core/notifications` + `core/email` נוספו ל-lint allowlist. **נבדק בדפדפן:** מטופל קיבל הזמנה → למטפל נוצרה התראה, מופיעה ב-`/t/alerts` ו-badge = 1.
+**נדחו:** websockets/SSE ל-v1 (polling מספיק למטפל יחיד). מחיקת התראות ע"י המשתמש — לא נדרש; retention עם ה-audit ב-WP-21.

@@ -6,5 +6,6 @@
 export * from "@/modules/core/auth/schema";
 export * from "@/modules/core/audit/schema";
 export * from "@/modules/core/fields/schema";
+export * from "@/modules/core/notifications/schema";
 export * from "@/modules/patients/schema";
 export * from "@/modules/patient-file/schema";

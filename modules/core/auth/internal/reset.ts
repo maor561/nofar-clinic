@@ -59,7 +59,7 @@ export async function completePasswordReset(
   db: Db,
   token: string,
   newPassword: string,
-): Promise<{ userId: string }> {
+): Promise<{ userId: string; therapistId: string }> {
   const tokenHash = hashToken(token);
   const rows = await db
     .select()
@@ -76,7 +76,7 @@ export async function completePasswordReset(
     .returning({ id: passwordReset.id });
   if (consumed.length === 0) throw new Error("reset_invalid");
 
-  await db
+  const [updated] = await db
     .update(user)
     .set({
       passwordHash: await hashPassword(newPassword),
@@ -85,10 +85,11 @@ export async function completePasswordReset(
       status: "active",
       updatedAt: new Date(),
     })
-    .where(eq(user.id, row.userId));
+    .where(eq(user.id, row.userId))
+    .returning({ therapistId: user.therapistId });
 
   await revokeAllForUser(db, row.userId);
-  return { userId: row.userId };
+  return { userId: row.userId, therapistId: updated.therapistId };
 }
 
 /** Signed-in password change — verifies the current password first. */

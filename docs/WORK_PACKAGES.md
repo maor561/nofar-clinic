@@ -50,22 +50,18 @@ Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפ
 **auto-audit** ב-`ScopedDb` (כל write ממוקד → אירוע, לא ניתן לשכוח) · `audit("login"/"invite")` בזרימות auth · מסך `/t/audit` עם 3 פילטרים (מטופל/תאריך/פעולה).
 **DoD:** CRUD על מידע מטופל → רשומה ✓ · מסך מסונן ✓ · append-only נאכף (trigger + בדיקה) ✓ · 7 בדיקות · נבדק בדפדפן (login → רשומה במסך).
 **תלוי:** WP-04 · **הבא:** WP-07 (Email) — WP-06 (Notifications) תלוי בו.
-`core/audit`: API כתיבה + שאילתה, middleware שמתעד גישה למידע מטופל, מסך צפייה למטפל.
-**DoD:** כל CRUD על מידע מטופל מייצר רשומה; מסך Audit מסונן לפי מטופל/תאריך/פעולה; append-only נאכף.
-**תלוי:** WP-04
 
-### WP-06 · Notification Center ⬜
-`core/notifications`: יצירה, פיד למשתמש, סימון נקרא, badge; חיבור ל-`core/email` לאירועים קריטיים.
-**DoD:** התראה נוצרת+נצפית לשני התפקידים; אירוע קריטי שולח דוא"ל; polling מרענן badge.
+### WP-06 · Notification Center ✅
+`core/notifications` (ADR-021): טבלת `notification` (מיגרציה 0004) · `notify()`/`listNotifications`/`unreadCount`/`markRead` — scoped ל-recipient (נבדק) · `server.ts` session-helpers ·
+`NotificationBell` (polling 30ש' → `/api/notifications`, popover, mark-all) בשני ה-shells · מסך `/t/alerts` · אימייל לאירועים קריטיים + `emailed_at` (fail-open) ·
+טריגרים: קבלת הזמנה→`patient_joined` למטפל · איפוס סיסמה→`password_changed` למשתמש (+אימייל) · 4 בדיקות · נבדק בדפדפן.
+**DoD:** התראה נוצרת+נצפית לשני התפקידים ✓ · אירוע קריטי שולח אימייל ✓ · polling מרענן badge ✓.
 **תלוי:** WP-04, WP-07
 
 ### WP-07 · Email ✅
 `core/email` (ADR-020): Resend · fail-open `sendEmail` (לוג + `{ok,error}`, לא זורק; בלי מפתח → skipped) · 4 תבניות RTL עברית (הזמנה/איפוס/תזכורת פגישה/שינוי תוכנית) · `send*Email` מטופסות + `appUrl()` ·
 `/forgot` שולח דוא"ל אמיתי · דומיין `nofar-health.com` **מאומת** (בדיקת שליחה חיה ✓). 3 בדיקות · `pnpm tsx .../send-test-email.ts`.
 **DoD:** 4 תבניות נשלחות RTL ✓ · כשל נרשם ולא מפיל ✓. **פתוח:** לקוח מגדיר env ב-Vercel + מאפס key.
-**תלוי:** WP-00
-`core/email`: ספק (Resend — לאישור), תבניות (הזמנה, איפוס סיסמה, פגישה קרובה, שינוי תוכנית), fallback/לוג כשל.
-**DoD:** ארבע התבניות נשלחות בעברית RTL; כשל נרשם ולא מפיל זרימה.
 **תלוי:** WP-00
 
 ### WP-08 · File Storage ⬜
@@ -78,9 +74,6 @@ Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפ
 `FIELD_REGISTRY` בקוד + `assertRegistryValid` (רץ כבדיקה → schema שבור מפיל CI; charted בלי column זורק) · `loadRegistryInto` + `pnpm db:registry` · `<FieldInput>` (6 סוגים) ·
 **DoD:** schema פגום → `compileFieldSchema` זורק ✓ · I/O מחוץ ל-validator נכשל (14 בדיקות) ✓ · `charted=true` בלי mapping → שגיאה ✓.
 **תלוי:** WP-04 · **הבא:** WP-07 (Email, חסום על הלקוח) או WP-10 (Patients).
-`core/fields`: `field_definition`, סכמות Zod סריאליות, **validator יחיד** לכל I/O של `field_value`, רינדור שדה בסיסי (text/number/scale/boolean/select/date).
-**DoD:** הגדרת שדה בלי סכמה מפילה build; קריאה/כתיבה מחוץ ל-validator נכשלת בבדיקה; שדה `charted=true` בלי mapping לעמודה — שגיאה.
-**תלוי:** WP-04
 
 ---
 

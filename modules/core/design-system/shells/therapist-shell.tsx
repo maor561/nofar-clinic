@@ -47,8 +47,10 @@ export function TherapistShell({ user, groups = DEFAULT_GROUPS, headerSlot, chil
         aria-label="ניווט ראשי"
         className="border-line-soft bg-surface-2 flex flex-col gap-1 border-s p-3.5 max-md:flex-row max-md:flex-wrap max-md:items-center max-md:border-s-0 max-md:border-b"
       >
-        <div className="px-2 pt-1.5 pb-3.5">
+        <div className="flex items-center justify-between gap-2 px-2 pt-1.5 pb-3.5 max-md:flex-1">
           <Logo subtitle="ניהול קליניקה" />
+          {/* actions stay reachable on mobile (rail collapses to a top bar) */}
+          <div className="md:hidden">{headerSlot}</div>
         </div>
 
         <RailNav groups={groups} />
@@ -57,7 +59,7 @@ export function TherapistShell({ user, groups = DEFAULT_GROUPS, headerSlot, chil
           <span className="bg-sage-soft text-sage-deep grid size-9 shrink-0 place-items-center rounded-full text-sm font-bold">
             {initials(user.name)}
           </span>
-          <span className="min-w-0 leading-tight">
+          <span className="min-w-0 flex-1 leading-tight">
             <span className="block truncate text-[13.5px] font-bold">{user.name}</span>
             {user.role && (
               <span className="text-ink-faint block truncate text-[11.5px]">{user.role}</span>
