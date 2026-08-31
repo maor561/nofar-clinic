@@ -98,6 +98,9 @@ export async function createAppointment(
   tdb: TherapistDb,
   input: AppointmentInput,
 ): Promise<{ id: string }> {
+  const p = await tdb.findOne(patient, eq(patient.id, input.patientId));
+  if (!p) throw new Error("patient_not_found");
+
   const [row] = await tdb.insert(appointment, {
     patientId: input.patientId,
     startsAt: input.startsAt,

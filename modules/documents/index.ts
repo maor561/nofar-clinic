@@ -65,6 +65,13 @@ export async function listRecentDocuments(
 }
 
 export async function createDocument(db: AnyScoped, input: DocumentInput): Promise<{ id: string }> {
+  // a therapist may only add a document for one of their own patients (a patient
+  // handle is already pinned to its own patient_id by the guard)
+  if (db.role === "therapist") {
+    const p = await db.findOne(patient, eq(patient.id, input.patientId));
+    if (!p) throw new Error("patient_not_found");
+  }
+
   // a patient can only ever add a shared document
   const visibility: DocumentVisibility =
     db.role === "patient" ? "therapist_and_patient" : (input.visibility ?? "therapist_only");

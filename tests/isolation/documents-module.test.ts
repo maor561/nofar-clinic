@@ -104,6 +104,10 @@ describe("cross-tenant", () => {
     expect(await getDocument(tdb(t2), id)).not.toBeNull();
   });
 
+  it("a therapist cannot create a document for another therapist's patient (WP-22)", async () => {
+    await expect(createDocument(tdb(t1), base(B))).rejects.toThrow("patient_not_found");
+  });
+
   it("listRecentDocuments (WP-20 dashboard) is therapist-scoped", async () => {
     await createDocument(tdb(t1), base(A));
     await createDocument(tdb(t2), base(B));

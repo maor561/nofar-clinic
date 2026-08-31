@@ -48,7 +48,7 @@ export async function getQuestionnaire(
   const response = await findResponse(db, patientId);
   if (!response) return null;
   const fields = await getFieldValuesFrom(
-    (db as TherapistDb).therapistId,
+    { therapistId: (db as TherapistDb).therapistId, patientId: response.patientId },
     QUESTIONNAIRE_FIELD_ENTITY,
     response.id,
   );
@@ -66,10 +66,13 @@ export async function submitQuestionnaire(
   answers: FieldWriteInput[],
 ): Promise<{ responseId: string; therapistId: string }> {
   const response = await startResponse(pdb, patientId);
+  // the guard forces the response's patient_id to the caller's scope — use that,
+  // never the (untrusted) `patientId` argument, for every downstream write.
+  const scopedPatientId = response.patientId;
 
   if (answers.length) {
     await setFieldValuesIn(
-      { therapistId: pdb.therapistId, patientId },
+      { therapistId: pdb.therapistId, patientId: scopedPatientId },
       QUESTIONNAIRE_FIELD_ENTITY,
       response.id,
       answers,
@@ -83,7 +86,7 @@ export async function submitQuestionnaire(
   );
 
   await recordEvent(pdb, {
-    patientId,
+    patientId: scopedPatientId,
     type: "questionnaire_submitted",
     summary: "שאלון קליטה הוגש",
     refId: response.id,

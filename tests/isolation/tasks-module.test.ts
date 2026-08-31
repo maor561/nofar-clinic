@@ -91,6 +91,12 @@ describe("cross-tenant", () => {
     expect((await getTask(tdb(t2), id))?.title).toBe("לשתות מים");
   });
 
+  it("a therapist cannot create a task for another therapist's patient (WP-22)", async () => {
+    await expect(createTask(tdb(t1), { patientId: B, title: "פרוץ" })).rejects.toThrow(
+      "patient_not_found",
+    );
+  });
+
   it("a patient handle can only ever touch its own tasks", async () => {
     const mine = await createTask(tdb(t1), { patientId: A, title: "יומן אכילה" });
     const other = await createTask(tdb(t2), { patientId: B, title: "של מטופל אחר" });

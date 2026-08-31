@@ -32,7 +32,7 @@ export function planFieldDefs(db: AnyScoped) {
 
 async function versionWithFields(db: AnyScoped, row: PlanVersionRow): Promise<PlanVersionDetail> {
   const fields = await getFieldValuesFrom(
-    (db as TherapistDb).therapistId,
+    { therapistId: (db as TherapistDb).therapistId, patientId: row.patientId },
     PLAN_FIELD_ENTITY,
     row.id,
   );

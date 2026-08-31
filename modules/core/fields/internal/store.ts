@@ -48,6 +48,8 @@ export async function setFieldValues(
       .from(fieldValue)
       .where(
         and(
+          eq(fieldValue.therapistId, scope.therapistId),
+          eq(fieldValue.patientId, scope.patientId),
           eq(fieldValue.entity, entity),
           eq(fieldValue.entityId, entityId),
           eq(fieldValue.definitionId, w.definitionId),
@@ -92,10 +94,15 @@ export type FieldValueOut = {
   recordedAt: Date;
 };
 
-/** Read + re-validate the field values for one (entity, entityId). */
+/**
+ * Read + re-validate the field values for one (entity, entityId), scoped to the
+ * full patient scope. Scoping by `patient_id` too — not just `therapist_id` — so
+ * an unverified `entityId` can never leak another same-therapist patient's rows
+ * (WP-22 hardening).
+ */
 export async function getFieldValues(
   db: Db,
-  therapistId: string,
+  scope: FieldScope,
   entity: FieldEntity,
   entityId: string,
 ): Promise<FieldValueOut[]> {
@@ -115,7 +122,8 @@ export async function getFieldValues(
     .innerJoin(fieldDefinition, eq(fieldDefinition.id, fieldValue.definitionId))
     .where(
       and(
-        eq(fieldValue.therapistId, therapistId),
+        eq(fieldValue.therapistId, scope.therapistId),
+        eq(fieldValue.patientId, scope.patientId),
         eq(fieldValue.entity, entity),
         eq(fieldValue.entityId, entityId),
       ),

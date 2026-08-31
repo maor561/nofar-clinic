@@ -104,6 +104,12 @@ describe("cross-tenant", () => {
     expect((await getAppointment(tdb(t2), id))?.status).toBe("scheduled");
   });
 
+  it("a therapist cannot create an appointment for another therapist's patient (WP-22)", async () => {
+    await expect(
+      createAppointment(tdb(t1), { patientId: B, startsAt: soon(), endsAt: soon() }),
+    ).rejects.toThrow("patient_not_found");
+  });
+
   it("a patient handle only ever yields its own appointments", async () => {
     const s1 = soon();
     await createAppointment(tdb(t1), {

@@ -168,7 +168,7 @@ describe("store (DB)", () => {
       { definitionId: weight.id, value: 72.4 },
     ]);
 
-    const out = await getFieldValues(db, t1, "treatment_session", sessionId);
+    const out = await getFieldValues(db, scope, "treatment_session", sessionId);
     expect(out.map((o) => o.key)).toEqual(["energy_level", "weight_kg"]);
     expect(out.find((o) => o.key === "energy_level")?.value).toBe(7);
 
@@ -190,7 +190,7 @@ describe("store (DB)", () => {
       value: "not a number",
     });
     await expect(
-      getFieldValues(db, t1, "treatment_session", corruptEntityId),
+      getFieldValues(db, scope, "treatment_session", corruptEntityId),
     ).rejects.toBeInstanceOf(FieldValidationError);
   });
 });

@@ -85,15 +85,23 @@ describe("cross-tenant", () => {
     expect((await getSession(tdb(t2), id))?.date).toBe("2026-08-01");
   });
 
-  it("field values are scoped to the owning therapist", async () => {
+  it("field values are scoped to the owning therapist AND patient", async () => {
     const wid = await weightDefId(t1);
     const { id } = await createSession(tdb(t1), { patientId: A, date: "2026-08-02" }, [
       { definitionId: wid, value: 71 },
     ]);
 
-    expect(await getFieldValuesFrom(t1, "treatment_session", id)).toHaveLength(1);
-    // the other therapist gets nothing for the same entity id
-    expect(await getFieldValuesFrom(t2, "treatment_session", id)).toEqual([]);
+    expect(
+      await getFieldValuesFrom({ therapistId: t1, patientId: A }, "treatment_session", id),
+    ).toHaveLength(1);
+    // wrong therapist -> nothing
+    expect(
+      await getFieldValuesFrom({ therapistId: t2, patientId: B }, "treatment_session", id),
+    ).toEqual([]);
+    // right therapist, WRONG patient -> nothing (WP-22 hardening)
+    expect(
+      await getFieldValuesFrom({ therapistId: t1, patientId: B }, "treatment_session", id),
+    ).toEqual([]);
   });
 });
 

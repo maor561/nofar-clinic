@@ -39,9 +39,9 @@ export function setFieldValuesIn(
   return _setFieldValues(getDb(), scope, entity, entityId, writes);
 }
 
-/** Read + re-validate the field values for one (entity, entityId). */
-export function getFieldValuesFrom(therapistId: string, entity: FieldEntity, entityId: string) {
-  return _getFieldValues(getDb(), therapistId, entity, entityId);
+/** Read + re-validate the field values for one (entity, entityId), patient-scoped. */
+export function getFieldValuesFrom(scope: FieldScope, entity: FieldEntity, entityId: string) {
+  return _getFieldValues(getDb(), scope, entity, entityId);
 }
 
 /** Definitions for one entity, ordered — for rendering a form. */

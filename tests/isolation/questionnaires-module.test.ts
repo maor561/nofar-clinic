@@ -123,14 +123,22 @@ describe("cross-tenant", () => {
     expect(await getQuestionnaire(tdb(t2), A)).toBeNull();
   });
 
-  it("answers in field_value are scoped to the owning therapist", async () => {
+  it("answers in field_value are scoped to therapist AND patient", async () => {
     const goal = await defId(t1, "main_goal");
     const { responseId } = await submitQuestionnaire(pdb(t1, A), A, [
       { definitionId: goal, value: "פרטי" },
     ]);
 
-    expect(await getFieldValuesFrom(t1, "questionnaire", responseId)).toHaveLength(1);
-    expect(await getFieldValuesFrom(t2, "questionnaire", responseId)).toEqual([]);
+    expect(
+      await getFieldValuesFrom({ therapistId: t1, patientId: A }, "questionnaire", responseId),
+    ).toHaveLength(1);
+    expect(
+      await getFieldValuesFrom({ therapistId: t2, patientId: B }, "questionnaire", responseId),
+    ).toEqual([]);
+    // same therapist, another patient -> nothing (WP-22 hardening)
+    expect(
+      await getFieldValuesFrom({ therapistId: t1, patientId: B }, "questionnaire", responseId),
+    ).toEqual([]);
   });
 
   it("a patient handle pointed at another patient still only writes its own response", async () => {

@@ -82,7 +82,11 @@ export async function getSession(tdb: TherapistDb, id: string): Promise<SessionD
   if (!row) return null;
   const [[withName], fields] = await Promise.all([
     withNames(tdb, [row]),
-    getFieldValuesFrom(tdb.therapistId, SESSION_FIELD_ENTITY, id),
+    getFieldValuesFrom(
+      { therapistId: tdb.therapistId, patientId: row.patientId },
+      SESSION_FIELD_ENTITY,
+      id,
+    ),
   ]);
   return { ...withName, fields };
 }
@@ -113,6 +117,10 @@ export async function createSession(
   input: SessionInput,
   fieldWrites: FieldWriteInput[] = [],
 ): Promise<{ id: string }> {
+  // the patient must be this therapist's (scoped) before we write anything for them
+  const p = await tdb.findOne(patient, eq(patient.id, input.patientId));
+  if (!p) throw new Error("patient_not_found");
+
   if (input.appointmentId) await assertAppointment(tdb, input.appointmentId, input.patientId);
 
   const [row] = await tdb.insert(treatmentSession, {
