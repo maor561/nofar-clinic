@@ -320,6 +320,7 @@ Spike מול Neon (endpoint pooled, פרנקפורט) — `modules/core/data/scr
 - **מסכים:** `/t/patients/[id]/documents` (רשימה + טופס העלאה עם סוג+נראות + toggle נראות + מחיקה) · `/p/documents` (רשימה של הנראים + טופס העלאה, נראות כפויה). כפתור "מסמכים" בתיק.
 - **תשתית בדיקות:** `vitest.config` — `testTimeout: 20000` · `hookTimeout: 30000` · `retry: 1` (חבילת ה-auth נגעה מדי פעם ב-5s תחת עומס argon2+PGlite של 16 קבצים במקביל — לא באג, תזמון).
 - **בדיקות:** `tests/isolation/documents-module.test.ts` (5, blob מוקד) — cross-therapist (list/get/delete) · מטופל לא רואה `therapist_only` ב-list ו-get · flip ל-`therapist_only` מסתיר שוב · העלאת מטופל = shared + uploadedBy patient · create → `document_added` + audit. 103 סה"כ.
-- **נבדק בדפדפן (ללא token):** מסך `/t/.../documents` נטען (טופס + סוג + נראות) · `/api/documents/<uuid>` בלי session → 401 · העלאה בלי token → "העלאת הקובץ נכשלה." inline, בלי 500. **תלוי:** round-trip אמיתי (העלאה→הורדה→נראות) מול הדלי — דורש `BLOB_READ_WRITE_TOKEN` ב-`.env.local` (ב-deploy מוזרק). הבידוד עצמו מוכח בבדיקות.
+- **נבדק מקומית (ללא token):** העלאה נכשלת בחן ("העלאת הקובץ נכשלה." inline, בלי 500) · `/api/documents/<uuid>` בלי session → 401.
+- **נבדק על ה-deploy החי** (שם ה-token מוזרק): העלאת PDF אמיתית לדנה → נשמר ל-Blob פרטי · הורדה דרך `/api/documents/[id]` → 200, `application/pdf`, `content-length` נכון, `content-disposition: inline; filename*=UTF-8''…`, `cache-control: private, no-store`, הגוף מתחיל ב-`%PDF` · toggle נראות משותף↔פנימי · `/p/documents` של מטופל אחר → ריק · **מטופל אחר שמושך את ה-URL של מסמך `therapist_only` → 404** (כלל הזהב).
 
 **נדחו:** קבצים מרובים בהעלאה אחת · thumbnails/preview · `putFromUrl` · צירוף מסמך להודעה (בהמשך) · הצפנת קבצים at-rest מעבר לפרטיות של Blob.

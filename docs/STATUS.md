@@ -28,7 +28,7 @@
 ## בעבודה
 
 - **WP-18 — Questionnaire** (הבא). שאלון קליטה אחד בנוי על Field Registry; המטופל ממלא בקליטה, המטפל צופה; תשובות ב-`field_value` (`entity='questionnaire'`); Timeline + התראה; בדיקת בידוד.
-- **WP-08 Files + WP-17 Documents** ✓ — `@vercel/blob` private בלבד, נגיש רק דרך `/api/documents/[id]` scoped; `visibility` (`therapist_only`/`therapist_and_patient`) נאכף בכל קריאה של מטופל; מסכים `/t/patients/[id]/documents` + `/p/documents`. **פתוח:** round-trip העלאה/הורדה אמיתי דורש `BLOB_READ_WRITE_TOKEN` ב-`.env.local` (מהלקוח); ב-deploy מוזרק אוטומטית.
+- **WP-08 Files + WP-17 Documents** ✓ — `@vercel/blob` private בלבד, נגיש רק דרך `/api/documents/[id]` scoped; `visibility` (`therapist_only`/`therapist_and_patient`) נאכף בכל קריאה של מטופל; מסכים `/t/patients/[id]/documents` + `/p/documents`. round-trip אמיתי אומת על ה-deploy החי (העלאה→הורדה→404 למטופל זר). מקומית אפשר להוסיף `BLOB_READ_WRITE_TOKEN` ל-`.env.local` לבדיקות מקומיות.
 - **WP-16 — Messaging** ✓ — `message_thread`/`message` (מיגרציה 0010, dual-scoped); polling ב-`router.refresh()`; `/t/messages` תיבה + `/p/messages`.
 - **WP-15 — Tasks** ✓ — `task` dual-scoped (מיגרציה 0009); `setTaskStatus` לשני התפקידים; `task_created`/`task_completed` ל-Timeline; `/p/tasks`.
 - **WP-14 — Treatment Plans** ✓ — `treatment_plan_version` append-only (מיגרציה 0008); תוכן דרך Field Registry; `/p/plan`.
@@ -132,7 +132,7 @@
 העלאה = פעולה אחת לשני התפקידים (`uploadDocumentAction` + `getScopedDb()`); `/p/documents` מייבא אותה + `UploadForm`. מסכים `/t/patients/[id]/documents` (סוג + נראות + toggle + מחיקה) · `/p/documents` (נראות כפויה). כפתור "מסמכים" בתיק.
 `vitest.config`: `testTimeout 20000` · `hookTimeout 30000` · `retry 1` — חבילת auth נגעה מדי פעם ב-5s תחת עומס (16 קבצים, argon2+PGlite); לא באג.
 5 בדיקות isolation (blob מוקד) → 103 סה"כ. lint/typecheck/build ירוקים (build ללא env).
-**נבדק בדפדפן (ללא token):** מסך המסמכים נטען (טופס + סוג + נראות) · `/api/documents/<uuid>` בלי session → 401 · העלאה בלי token → "העלאת הקובץ נכשלה." inline, בלי 500. **פתוח:** round-trip אמיתי מול הדלי — צריך את ה-token ב-`.env.local`.
+**נבדק על ה-deploy החי** (token מוזרק): העלאת PDF אמיתית → Blob פרטי · הורדה דרך `/api/documents/[id]` → 200 + `%PDF` + `private, no-store` · toggle נראות · `/p/documents` של מטופל אחר ריק · **מטופל אחר מושך URL של מסמך `therapist_only` → 404** (כלל הזהב). מקומית ללא token — העלאה נכשלת בחן.
 
 ### 2026-08-30 — WP-16 Messaging
 `modules/messaging` (ADR-028): `message_thread` (unique patient) + `message` (מיגרציה `0010`, הוחלה על Neon; dual-scoped). `read_at` = מתי הצד השני קרא — `markThreadRead` נוגע רק בהודעות `sender != db.role`; `unreadCountFor` (מטפלת: כל המטופלים; מטופל: ה-thread שלו). `sendMessage` יוצר thread בפעם ראשונה, מטפלת מוגבלת ל-`findOne(patient)` scoped לפני יצירה.

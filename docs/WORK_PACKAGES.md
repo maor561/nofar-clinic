@@ -66,7 +66,7 @@ Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפ
 
 ### WP-08 · File Storage ✅
 `core/files` (ADR-029): `@vercel/blob` private בלבד — `putFile`/`getFileStream`/`deleteFile` · אילוצים (`MAX_FILE_BYTES`/`ALLOWED_MIME`) ב-`labels.ts` טהור · הדלי `nofar-clinic-blob` חובר, `BLOB_READ_WRITE_TOKEN` מוזרק ב-deploy.
-**DoD:** אין URL ציבורי · הבייטים רק דרך `/api/documents/[id]` scoped · מגבלות סוג/גודל נאכפות ✓ (round-trip אמיתי תלוי token מקומי; הבידוד מוכח בבדיקות).
+**DoD:** אין URL ציבורי · הבייטים רק דרך `/api/documents/[id]` scoped · מגבלות סוג/גודל נאכפות ✓ · round-trip אמיתי אומת על ה-deploy החי (העלאה→הורדה→404 למטופל זר).
 **תלוי:** WP-03
 
 ### WP-09 · Field Registry ✅ 🔑
@@ -126,7 +126,7 @@ Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפ
 
 ### WP-17 · Documents ✅
 `modules/documents` (ADR-029, מיגרציה `0011`, dual-scoped): `listDocuments`/`getDocument`/`createDocument`/`setDocumentVisibility`/`deleteDocument` — `scopedWhere` מוסיף `visibility=therapist_and_patient` לכל קריאה של מטופל · העלאה כפעולה אחת לשני התפקידים דרך `getScopedDb()` · `document_added` ל-Timeline · מסכים `/t/patients/[id]/documents` + `/p/documents`.
-**DoD:** `therapist_only` לא נגיש למטופל ב-list/get/route ✓ · אירוע Timeline ✓ · 5 בדיקות isolation ✓ (round-trip העלאה→הורדה תלוי token).
+**DoD:** `therapist_only` לא נגיש למטופל ב-list/get/route ✓ · אירוע Timeline ✓ · 5 בדיקות isolation ✓ · round-trip אמיתי אומת על ה-deploy החי.
 **תלוי:** WP-08, WP-11 · **הבא:** WP-18 (Questionnaires)
 
 ### WP-18 · Questionnaire — שאלון קליטה ⬜
