@@ -1,3 +1,4 @@
+import { FEATURES } from "@/lib/features";
 import { Logo } from "../logo";
 import { TopNav, type NavItem } from "./shell-nav";
 
@@ -8,7 +9,9 @@ const DEFAULT_NAV: NavItem[] = [
   { label: "התוכנית שלי", icon: "plan", href: "/p/plan" },
   { label: "המשימות שלי", icon: "task-done", href: "/p/tasks" },
   { label: "הפגישות שלי", icon: "calendar", href: "/p/appointments" },
-  { label: "הודעות", icon: "chat", href: "/p/messages" },
+  ...(FEATURES.messaging
+    ? [{ label: "הודעות", icon: "chat", href: "/p/messages" } as NavItem]
+    : []),
   { label: "מסמכים", icon: "doc", href: "/p/documents" },
   { label: "שאלון קליטה", icon: "form", href: "/p/questionnaire" },
   { label: "פרופיל", icon: "settings", href: "/p/profile" },

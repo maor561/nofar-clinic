@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { FEATURES } from "@/lib/features";
 import { getTherapistDb } from "@/modules/core/authz/server";
 import { listThreads } from "@/modules/messaging";
 import { listPatients } from "@/modules/patients";
@@ -15,6 +17,8 @@ const dtf = new Intl.DateTimeFormat("he-IL", {
 });
 
 export default async function MessagesInboxPage() {
+  if (!FEATURES.messaging) notFound();
+
   const tdb = await getTherapistDb();
   const threads = await listThreads(tdb);
 

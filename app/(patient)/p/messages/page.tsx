@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { FEATURES } from "@/lib/features";
 import { getPatientDb } from "@/modules/core/authz/server";
 import { listMessages, markThreadRead } from "@/modules/messaging";
 import { MessageList } from "@/app/(therapist)/t/messages/message-list";
@@ -8,6 +10,8 @@ import { sendMessageAction } from "@/app/(therapist)/t/messages/actions";
 export const metadata: Metadata = { title: "הודעות — נופר" };
 
 export default async function MyMessagesPage() {
+  if (!FEATURES.messaging) notFound();
+
   const pdb = await getPatientDb();
   const me = await pdb.self();
   if (!me) return null;

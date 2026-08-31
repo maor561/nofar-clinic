@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { FEATURES } from "@/lib/features";
 import { getTherapistDb } from "@/modules/core/authz/server";
 import { audit } from "@/modules/core/audit/server";
 import { getPatient } from "@/modules/patients";
@@ -17,6 +18,8 @@ export default async function ConversationPage({
 }: {
   params: Promise<{ patientId: string }>;
 }) {
+  if (!FEATURES.messaging) notFound();
+
   const { patientId } = await params;
   const tdb = await getTherapistDb();
   const p = await getPatient(tdb, patientId);

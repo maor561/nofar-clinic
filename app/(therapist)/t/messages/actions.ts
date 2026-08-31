@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { FEATURES } from "@/lib/features";
 import { getScopedDb } from "@/modules/core/authz/server";
 import { getPatientUserId, getTherapistUserId } from "@/modules/core/auth";
 import { notify } from "@/modules/core/notifications";
@@ -15,6 +16,7 @@ export async function sendMessageAction(
   _prev: ChatFormState,
   fd: FormData,
 ): Promise<ChatFormState> {
+  if (!FEATURES.messaging) return { error: "התכונה אינה זמינה כרגע." };
   if (!UUID_RE.test(patientId)) return { error: "שיחה לא תקינה" };
   const body = String(fd.get("body") ?? "");
   if (!body.trim()) return { error: "לא ניתן לשלוח הודעה ריקה" };

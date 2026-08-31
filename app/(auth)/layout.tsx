@@ -13,7 +13,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           במקום אחד.
         </h2>
         <p className="mt-3 max-w-sm text-sm text-white/80">
-          תוכנית הטיפול, הפגישות, המשימות וההודעות עם נופר — מרוכזים ונגישים בכל זמן.
+          תוכנית הטיפול, הפגישות והמשימות עם נופר — מרוכזים ונגישים בכל זמן.
         </p>
         <p className="mt-7 text-xs text-white/60">נופר כהן · נטורופתיה · רפלקסולוגיה · תזונה</p>
       </aside>

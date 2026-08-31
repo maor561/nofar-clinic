@@ -1,17 +1,22 @@
+import { FEATURES } from "@/lib/features";
 import { Logo } from "../logo";
-import { RailNav, type NavGroup } from "./shell-nav";
+import { RailNav, type NavGroup, type NavItem } from "./shell-nav";
 
 export type { NavItem, NavGroup } from "./shell-nav";
+
+const MANAGE_ITEMS: NavItem[] = [
+  { label: "דשבורד", icon: "grid", href: "/t" },
+  { label: "מטופלים", icon: "users", href: "/t/patients" },
+  { label: "יומן", icon: "calendar", href: "/t/calendar" },
+  ...(FEATURES.messaging
+    ? [{ label: "הודעות", icon: "chat", href: "/t/messages" } as NavItem]
+    : []),
+];
 
 const DEFAULT_GROUPS: NavGroup[] = [
   {
     label: "ניהול",
-    items: [
-      { label: "דשבורד", icon: "grid", href: "/t" },
-      { label: "מטופלים", icon: "users", href: "/t/patients" },
-      { label: "יומן", icon: "calendar", href: "/t/calendar" },
-      { label: "הודעות", icon: "chat", href: "/t/messages" },
-    ],
+    items: MANAGE_ITEMS,
   },
   {
     label: "כללי",

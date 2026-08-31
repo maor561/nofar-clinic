@@ -4,7 +4,6 @@ import { getTherapistDb } from "@/modules/core/authz/server";
 import { listPatients } from "@/modules/patients";
 import { listAppointments, treatmentLabel } from "@/modules/appointments";
 import { listTasks } from "@/modules/tasks";
-import { unreadCountFor } from "@/modules/messaging";
 import { myUnreadCount } from "@/modules/core/notifications/server";
 import {
   Card,
@@ -30,12 +29,11 @@ export default async function TherapistDashboard() {
   const now = new Date();
   const todayKey = toClinicFields(now).date;
 
-  const [patients, upcoming, past, openTasks, msgUnread, notifUnread] = await Promise.all([
+  const [patients, upcoming, past, openTasks, notifUnread] = await Promise.all([
     listPatients(tdb, { limit: 200 }),
     listAppointments(tdb, { from: now, ascending: true, limit: 60 }),
     listAppointments(tdb, { to: now, ascending: false, limit: 60 }),
     listTasks(tdb, { status: "open", limit: 6 }),
-    unreadCountFor(tdb),
     myUnreadCount(),
   ]);
 
@@ -59,16 +57,10 @@ export default async function TherapistDashboard() {
         <p className="text-ink-soft text-sm">{dayFmt.format(now)}</p>
       </header>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {/* WP-16 messaging tile removed while the feature is hidden — see lib/features.ts */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <Stat href="/t/patients" label="מטופלים פעילים" value={active.length} icon="users" />
         <Stat href="/t/calendar" label="פגישות היום" value={today.length} icon="calendar" />
-        <Stat
-          href="/t/messages"
-          label="הודעות שלא נקראו"
-          value={msgUnread}
-          icon="chat"
-          highlight={msgUnread > 0}
-        />
         <Stat
           href="/t/alerts"
           label="התראות"

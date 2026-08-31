@@ -39,7 +39,7 @@ export function PatientTimeline({ entries }: { entries: TimelineEntry[] }) {
       <EmptyState
         icon="clock"
         title="אין אירועים"
-        description="פגישות, מפגשים, תוכניות, משימות, מסמכים והודעות יופיעו כאן כרונולוגית."
+        description="פגישות, מפגשים, תוכניות, משימות ומסמכים יופיעו כאן כרונולוגית."
       />
     );
   }

@@ -31,7 +31,7 @@ export default async function AlertsPage() {
         <EmptyState
           icon="bell"
           title="אין התראות"
-          description="עדכונים על הצטרפות מטופלים, הודעות, שינויי תוכנית ועוד יופיעו כאן."
+          description="עדכונים על הצטרפות מטופלים, שינויי תוכנית ועוד יופיעו כאן."
         />
       ) : (
         <Card>
