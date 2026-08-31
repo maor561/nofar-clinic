@@ -185,6 +185,13 @@ export async function changePassword(
   await _changePassword(db, userId, ok, newPassword);
 }
 
+/** Account facts for the settings screen. */
+export async function getAccountInfo(userId: string) {
+  const u = await _getUserById(getDb(), userId);
+  if (!u) return null;
+  return { email: u.email, totpEnabled: !!u.totpEnabledAt };
+}
+
 // ---- TOTP ----
 
 export function beginTotpEnrollment(userId: string, email: string) {

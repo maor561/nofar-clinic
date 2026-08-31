@@ -436,3 +436,15 @@ Vercel מכבד לכל ה-Serverless Functions. (`preferredRegion` route-segment
 
 **DoD:** קוד — פונקציות ב-EU ✓. אין מידע מטופל מחוץ ל-EU — **חלקי:** DB ✓, compute ✓, Blob ✗
 (פעולת לקוח + הסכמה זמנית).
+
+## ADR-036 — מסך הגדרות: החלפת סיסמה + הרשמת TOTP
+**תאריך:** 2026-08-31 · **סטטוס:** נעול
+
+`/t/settings` (היה stub) → מסך אמיתי מעל פונקציות ה-auth הקיימות (WP-02):
+- **חשבון:** שם, דוא"ל, סטטוס 2FA.
+- **החלפת סיסמה:** `changePasswordAction` → `changePassword(userId, current, next)` (מאמת נוכחית, `passwordSchema` על החדשה).
+- **אימות דו־שלבי:** `beginTotpAction` (server) → `beginTotpEnrollment` + `QRCode.toDataURL` על ה-`otpauth://` URI (נוסף `qrcode`); הלקוח מציג QR + מפתח ידני → `confirmTotpAction(secret)` → `confirmTotpEnrollment`. אחרי אישור: `router.refresh()`, ה-badge → "פעיל".
+- **נבדק בדפדפן מול Neon:** הרשמת TOTP מלאה — QR (data:image/png 180×180) + מפתח `QZJE…` → קוד תקף חושב מ-`otpauth` → הוגש → "אימות דו־שלבי פעיל". (חשבון ה-seed הוחזר לפ password-only אחרי הבדיקה — המשתמש ירשום עם המכשיר שלו.)
+- `getAccountInfo(userId)` נוסף ל-`core/auth` (email + totpEnabled).
+
+**גבול v1:** אין recovery codes — מטפל שאיבד את האפליקציה = לנקות `totp_secret`/`totp_enabled_at` ב-DB (מתועד ב-OPERATIONS §7). recovery codes = שיפור עתידי.

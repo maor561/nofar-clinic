@@ -44,7 +44,7 @@
 - **WP-08 — File Storage** (Vercel Blob). פעולה קטנה מהלקוח: יצירת Blob store ב-Vercel → `BLOB_READ_WRITE_TOKEN` מוזרק אוטומטית.
 - **מיתוג:** הלקוח שלח לוגו (עיגול מרווה + פרח לבן, כותרת "נופר כהן נטורופתית N.D והרבליסטית קלינית Cl.H"). לדגום ירוק מהלוגו + לעדכן subtitle. **הלקוח ביקש להתעלם מבקשות נוספות עד הודעה חדשה.**
 - **דיוקי תוכן במוקאפים** — טראק מקביל, לא חוסם.
-- **TOTP enrollment UI** + change-password UI — נדחו למסך הגדרות (WP-20).
+- **TOTP enrollment UI + change-password UI** ✓ — `/t/settings` (ADR-036). recovery codes = שיפור עתידי.
 - **audit של קריאות** — `audit("view", "patient", ...)` ייווסף בתיק המטופל (WP-11).
 
 ## פעולות פתוחות ללקוח
@@ -130,6 +130,11 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-31 — מסך הגדרות + front door
+`/` (היה placeholder של WP-01) → front door אמיתי: מחובר→`/t`/`/p`, אחרת נחיתה ממותגת + כפתור "כניסה".
+`/t/settings` (היה stub) → **החלפת סיסמה + הרשמת TOTP** (ADR-036) מעל פונקציות ה-auth מ-WP-02. נוסף `qrcode` (QR נוצר בשרת, `beginTotpAction`), `getAccountInfo` ל-`core/auth`.
+נבדק בדפדפן מול Neon: הרשמת TOTP מקצה-לקצה (QR 180×180 + מפתח ידני → קוד תקף → "פעיל"). חשבון seed הוחזר ל-password-only אחרי הבדיקה. 114 בדיקות.
 
 ### 2026-08-31 — WP-23 מיקום מידע EU (חלק קוד)
 `x-vercel-id` היה `fra1::iad1::…` — הקוד רץ ב-**iad1 (ארה"ב)** למרות ש-Neon בפרנקפורט. עיבוד PII מחוץ ל-EU.

@@ -1,25 +1,22 @@
 import type { Metadata } from "next";
 import { requireTherapist, getDisplayName } from "@/modules/core/auth/server";
+import { getAccountInfo } from "@/modules/core/auth";
 import { Card, CardContent, CardHeader, CardTitle, Icon } from "@/modules/core/design-system";
+import { ChangePasswordForm, TotpEnroll } from "./settings-forms";
 
 export const metadata: Metadata = { title: "הגדרות — נופר" };
 
-const SOON = [
-  "שינוי סיסמה",
-  "אימות דו־שלבי (TOTP)",
-  "פרטי הקליניקה והמיתוג",
-  "מדיניות שמירת מידע ונספח רגולציה",
-];
+const SOON = ["פרטי הקליניקה והמיתוג", "מדיניות שמירת מידע ונספח רגולציה"];
 
 export default async function SettingsPage() {
   const session = await requireTherapist();
-  const name = await getDisplayName(session);
+  const [name, acc] = await Promise.all([getDisplayName(session), getAccountInfo(session.userId)]);
 
   return (
-    <div className="space-y-5">
+    <div className="max-w-2xl space-y-5">
       <header>
         <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold">הגדרות</h1>
-        <p className="text-ink-soft text-sm">חשבון ומערכת.</p>
+        <p className="text-ink-soft text-sm">חשבון ואבטחה.</p>
       </header>
 
       <Card>
@@ -27,20 +24,33 @@ export default async function SettingsPage() {
           <CardTitle>חשבון</CardTitle>
         </CardHeader>
         <CardContent className="space-y-1.5 text-sm">
-          <p className="flex justify-between gap-3">
-            <span className="text-ink-faint">שם</span>
-            <span className="font-medium">{name}</span>
-          </p>
-          <p className="flex justify-between gap-3">
-            <span className="text-ink-faint">תפקיד</span>
-            <span className="font-medium">מטפלת · מנהלת</span>
-          </p>
+          <Row label="שם" value={name} />
+          <Row label="דוא״ל" value={acc?.email ?? "—"} />
+          <Row label="אימות דו־שלבי" value={acc?.totpEnabled ? "פעיל" : "כבוי"} />
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>בקרוב (WP-20/WP-21)</CardTitle>
+          <CardTitle>החלפת סיסמה</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChangePasswordForm />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>אימות דו־שלבי</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TotpEnroll enabled={acc?.totpEnabled ?? false} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>בקרוב</CardTitle>
         </CardHeader>
         <CardContent className="space-y-1.5 text-[13px]">
           {SOON.map((s) => (
@@ -51,5 +61,14 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <p className="flex justify-between gap-3">
+      <span className="text-ink-faint">{label}</span>
+      <span className="font-medium">{value}</span>
+    </p>
   );
 }

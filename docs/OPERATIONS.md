@@ -166,6 +166,11 @@ pg_dump "$DATABASE_URL_UNPOOLED" -Fc -f "nofar-$(date +%Y%m%d).dump"
 
 ## 7. המשכיות עסקית — אם המטפלת מושבתת
 
+**שחזור גישה ל-2FA:** אין recovery codes ב-v1. אם המטפלת איבדה את אפליקציית האימות —
+`UPDATE "user" SET totp_secret=NULL, totp_enabled_at=NULL WHERE email='<המייל>';` דרך Neon SQL Editor
+(איש האמון עם גישת ה-DB), ואז כניסה עם סיסמה בלבד והרשמה מחדש ב-`/t/settings`.
+
+
 תרחיש: נופר חולה / לא זמינה לתקופה, ומטופלים צריכים גישה למידע שלהם או להעברת טיפול.
 
 | נכס | מי צריך גישה | פתרון v1 |
