@@ -178,9 +178,9 @@ GitHub Action / Vercel Cron → dump ל-Blob/יעד מוצפן · שמירת 4 �
 **DoD:** dump שבועי רץ ונשמר; שחזור ממנו נבדק.
 **תלוי:** WP-04, WP-21
 
-### WP-22 · חומרת בידוד — סקירה סופית ⬜
-מעבר על כל endpoint, סקירת אבטחה (`/security-review`), הרצת `tests/isolation` מלאה, בדיקת זיוף URL/ID/Request ידנית.
-**DoD:** אפס ממצאי בידוד; דוח חתום ב-`STATUS.md`.
+### WP-22 · חומרת בידוד — סקירה סופית ✅
+סקירה מלאה (ADR-034): route+module+guard+auth · `tests/isolation` 67/67 · probes זיוף URL/ID/Request על ה-deploy החי כמטופל. **2 פערי הגנה-בעומק נסגרו:** `getFieldValues` scoped ל-`patient_id` (לא רק therapist); `createSession/Appointment/Task/Document` מאמתים patient scope. +3 בדיקות.
+**DoD:** אפס ממצאי בידוד ניתנים לניצול ✓ · דוח חתום ב-`STATUS.md` + ADR-034 ✓.
 **תלוי:** כל v1
 
 ---

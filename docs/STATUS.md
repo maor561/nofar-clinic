@@ -6,9 +6,9 @@
 
 ## מצב נוכחי
 
-שלב **סגירה**. **WP-00..21 ✓** — כל מודולי הדומיין, שני הדשבורדים, ונספח הרגולציה/תפעול.
-111 בדיקות ירוקות, הפריסה חיה, Neon + Resend + Blob מחוברים.
-**הבא: WP-22 (סקירת בידוד סופית) + WP-23 (מיקום EU + Blob) — שניהם חוסמי פרודקשן. אחריהם WP-24..27.**
+שלב **סגירה**. **WP-00..22 ✓** — כל v1 + סקירת בידוד סופית (אפס ממצאים).
+**114 בדיקות ירוקות** (`tests/isolation` 67/67), הפריסה חיה, Neon + Resend + Blob מחוברים.
+**הבא: WP-23 — מיקום מידע EU + Blob (חוסם פרודקשן יחיד שנותר). אחריו WP-24..27 (לא חוסמי v1).**
 
 ## קישורים
 
@@ -27,9 +27,9 @@
 
 ## בעבודה
 
-- **WP-22 — סקירת בידוד סופית** (הבא, חוסם). `/security-review`, מעבר endpoint-by-endpoint, זיוף URL/ID/Request ידני, הרצת `tests/isolation` מלאה.
-- **WP-23 — מיקום מידע EU + Blob** (חוסם). Vercel `fra1` + אזור EU ל-Blob (או S3 פרנקפורט) + גיבוי Blob.
+- **WP-23 — מיקום מידע EU + Blob** (הבא, חוסם פרודקשן). Vercel `fra1` + אזור EU ל-Blob (או S3 פרנקפורט) + גיבוי Blob.
 - **WP-24..27** — הצפנת `totp_secret` at-rest · retention cron · anonymize+lock · `pg_dump` שבועי (לא חוסמי v1).
+- **WP-22 — סקירת בידוד סופית** ✓ — אפס ממצאים ניתנים לניצול. 2 פערי הגנה-בעומק (`field_value` scoping, אימות patient ב-`create*`) נסגרו. probes חיים: כל `/t/*` → redirect, `/api/documents/<זר>` → 404. ADR-034.
 - **WP-21 — נספח רגולציה ותפעול** ✓ — `docs/OPERATIONS.md`. תיקון 13: רישום ברשם בוטל; חובת ניהול/אבטחה רובה מיושמת; DPO כנראה לא נדרש (אישור עו"ד). פערי-קוד → WP-23..27. **ממתין לאישור הלקוח.**
 - **WP-20 — Therapist Dashboard** ✓ — `/t` tiles חיים + לוח היום + משימות + טבלת מטופלים אחרונים. מולאו `/t/documents` ו-`/t/settings` (stub).
 - **WP-19 — Patient App Shell + Dashboard** ✓ — דשבורד `/p` (פגישה הבאה / משימות / עדכונים / באנר שאלון) + `/p/profile` (קריאה) + nav מלא (8). responsive נבדק.
@@ -130,6 +130,15 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-31 — WP-22 חומרת בידוד — סקירה סופית
+מעבר על כל route/endpoint + מודולים + guard + auth. `tests/isolation` = 67/67 (10 קבצים).
+**2 פערי הגנה-בעומק נסגרו** (בטוחים כפי שנעשו בפועל — כל call-site מאמת דרך הגארד — אך הודקו):
+(1) `core/fields.getFieldValues` סינן `therapist_id` בלבד → עכשיו `therapist_id AND patient_id`; `getFieldValuesFrom` מקבל `FieldScope`; `submitQuestionnaire` כותב עם `response.patientId` guard-forced.
+(2) `createSession/createAppointment/createTask/createDocument` → מאמתים `tdb.findOne(patient, eq(id))` scoped לפני כתיבה (כמו `savePlanVersion`/`sendMessage`).
++3 בדיקות (`createX` למטופל של מטפל אחר → `patient_not_found`), 2 הודקו. סה"כ 114.
+**probes זיוף על ה-deploy החי (כמטופל):** כל `/t/*` → redirect ל-`/login` · `/api/documents/<therapist_only של מטופל אחר>` → **404** · `/api/documents/<uuid אקראי>` → 404 · `POST /api/notifications` עם `ids` מזויפים → 200, שום רשומה לא סומנה.
+**מסקנה: אפס ממצאי בידוד ניתנים לניצול.** 4 שכבות עצמאיות: ScopedDb guard · lint `no-restricted-imports` · route-group layouts · middleware. מסלולי מטופל ב-URL חסרי `[id]` פרט ל-`/api/documents/[id]` (מוגן+נבדק). ADR-034.
 
 ### 2026-08-31 — WP-21 נספח רגולציה ותפעול
 נכתב `docs/OPERATIONS.md` (ADR-033) — המסמך הסוגר: גיבוי + תרגיל שחזור רבעוני · monitoring (Vercel/Neon/Resend + UptimeRobot על `/api/version`) · Dependabot · incident response (ה-audit append-only ככלי תחקיר) · DPAs + מיקום מידע (DB בפרנקפורט ✓, Blob ב-IAD1 ✗) · מדיניות שמירה 7ש'/2ש' מול anonymize+lock · "תיק חירום" להמשכיות · **תיקון 13 לחוק הגנת הפרטיות** (14.8.2025 — רישום ברשם בוטל, חובת ניהול/אבטחה, DPO כנראה לא נדרש למטפלת יחידה — טעון אישור עו"ד) · טבלת מיפוי מול תקנות אבטחת מידע · Data flow · checklist עלייה לפרודקשן.

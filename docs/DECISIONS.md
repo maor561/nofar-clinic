@@ -381,3 +381,38 @@ Spike מול Neon (endpoint pooled, פרנקפורט) — `modules/core/data/scr
 
 **DoD:** המסמך מכסה את כל נושאי ה-spec + checklist פרודקשן + טבלאות "יומן תרגילים"/"סקרי סיכונים"
 למילוי. אישור הלקוח + הפיכת פערי-קוד ל-WP — הושלם.
+
+## ADR-034 — WP-22: סקירת בידוד סופית — אפס ממצאים (2 פערי הגנה-בעומק נסגרו)
+**תאריך:** 2026-08-31 · **סטטוס:** נעול · **מממש WP-22**
+
+**היקף:** מעבר על כל route/endpoint + שכבת המודולים + הגארד + זרימות ה-auth; הרצת `tests/isolation`
+מלאה; probes של זיוף URL/ID/Request על ה-deploy החי כמטופל.
+
+**ממצאים (2) — שניהם בטוחים כפי שנעשה בפועל (כל call-site מאמת דרך הגארד קודם), נסגרו כהגנה בעומק:**
+
+1. **`core/fields.getFieldValues` סינן `therapist_id` בלבד, לא `patient_id`.** מטופל שהיה מעביר
+   `entityId` לא-מאומת יכול היה (במערכת עם >1 מטפל) לקרוא `field_value` של מטופל אחר של אותו מטפל.
+   **תיקון:** `getFieldValues(db, scope: FieldScope, ...)` — סינון `therapist_id AND patient_id`.
+   `getFieldValuesFrom` מקבל `FieldScope`. `setFieldValues` upsert-lookup גם scoped.
+   `submitQuestionnaire` כותב עם `response.patientId` (guard-forced), לא עם הארגומנט.
+
+2. **`createSession`/`createAppointment`/`createTask`/`createDocument` לא אימתו ש-`input.patientId`
+   שייך ל-scope** לפני כתיבה (בניגוד ל-`savePlanVersion`/`sendMessage` שכבר אימתו).
+   **תיקון:** כל אחד עושה `tdb.findOne(patient, eq(id))` scoped → `patient_not_found` אם לא.
+
+**בדיקות:** +3 (`createX` למטופל של מטפל אחר → נדחה) · 2 הודקו (`field_value`: מטפל נכון + מטופל
+שגוי → כלום). `tests/isolation/` = 67/67; סה"כ 114.
+
+**probes על ה-deploy החי (כמטופל "בדיקה התראה"):**
+| ניסיון | תוצאה |
+|--------|-------|
+| `GET /t` + כל `/t/*` (דשבורד, תיקי מטופל אחר, יומן, הודעות, audit, מסמכים) | redirect ל-`/login` |
+| `GET /api/documents/<מסמך therapist_only של מטופל אחר>` | **404** |
+| `GET /api/documents/<uuid אקראי>` | 404 |
+| `POST /api/notifications` עם `ids` מזויפים (של המטפלת) | 200, אף רשומה לא סומנה (`markMineRead` AND-נכנס `recipient_user_id = session.userId`) |
+
+**מסקנה:** אפס ממצאי בידוד ניתנים לניצול. הגארד (`ScopedDb`, ADR-016) + lint `no-restricted-imports`
++ route-group layouts (`requireTherapist`/`requirePatient`) + middleware הם 4 שכבות עצמאיות.
+מסלולי המטופל ב-URL **חסרי `[id]`** (הכול "me") פרט ל-`/api/documents/[id]` שמוגן ונבדק.
+
+**נותר ל-WP-23** (חוסם פרודקשן): מיקום מידע EU + Blob.
