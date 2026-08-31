@@ -24,6 +24,7 @@ vi.mock("@/modules/core/files", () => ({
 
 import {
   listDocuments,
+  listRecentDocuments,
   getDocument,
   createDocument,
   setDocumentVisibility,
@@ -101,6 +102,14 @@ describe("cross-tenant", () => {
     expect(await getDocument(tdb(t1), id)).toBeNull();
     await deleteDocument(tdb(t1), id); // scoped delete: 0 rows, no throw
     expect(await getDocument(tdb(t2), id)).not.toBeNull();
+  });
+
+  it("listRecentDocuments (WP-20 dashboard) is therapist-scoped", async () => {
+    await createDocument(tdb(t1), base(A));
+    await createDocument(tdb(t2), base(B));
+    const forT1 = await listRecentDocuments(tdb(t1));
+    expect(forT1).toHaveLength(1);
+    expect(forT1[0].patientName).toBe("איי בדיקה");
   });
 });
 

@@ -348,3 +348,14 @@ Spike מול Neon (endpoint pooled, פרנקפורט) — `modules/core/data/scr
 - **נבדק בדפדפן מול Neon:** מטופל "בדיקה התראה" — דשבורד מציג "אין פגישה קרובה" (הפגישה שלו כבר עברה), "0 משימות פתוחות", ו-4 עדכונים אחרונים עם אייקונים · פרופיל מציג שם + תאריך הצטרפות + "—" לשדות ריקים · nav מלא (8) · **נבדק responsive** ב-375px — הכרטיסים נערמים, ה-nav גולש. console נקי.
 
 **נדחו:** עריכת פרטי מטופל · widget-ים נוספים (מדדים/גרפים) · התאמה אישית של הדשבורד.
+
+## ADR-032 — Therapist dashboard + dead-nav pages filled
+**תאריך:** 2026-08-31 · **סטטוס:** נעול · **מממש WP-20**
+
+- **דשבורד `/t`:** 6 קריאות מקבילות דרך `getTherapistDb()` + `myUnreadCount()` — מטופלים פעילים (`listPatients`) · פגישות היום + קרובות (`listAppointments` from/to, קבוצה לפי `patientId` ל"הבאה"/"אחרונה") · הודעות שלא נקראו (`unreadCountFor(tdb)`) · התראות (`myUnreadCount`) · משימות פתוחות (`listTasks({status:"open"})`, עם שם מטופל). טבלת "מטופלים אחרונים" (6 לפי `joinedAt` desc) עם `StatusPill` + פגישה אחרונה/הבאה. אין service/טבלה חדשים פרט ל-`listRecentDocuments`.
+- **`/t/documents`** (פריט nav שהיה 404): `listRecentDocuments(tdb, limit)` — כל המסמכים לפי `created_at` desc + שמות מטופלים. therapist-scoped (בדיקה נוספה).
+- **`/t/settings`** (פריט nav שהיה 404): stub קריאה בלבד — שם + תפקיד + רשימת "בקרוב" (שינוי סיסמה / TOTP / מיתוג / רגולציה → WP-21).
+- **בדיקות:** case ל-`listRecentDocuments` ב-`documents-module.test.ts` → 111 סה"כ.
+- **נבדק בדפדפן מול Neon:** דשבורד "נופר" — 4 מטופלים פעילים · 0 פגישות היום · 5 התראות (מודגש) · "אין פגישות היום" · טבלת מטופלים אחרונים עם סטטוס + פגישה אחרונה (דנה 30/8, בדיקה התראה 31/8) · `/t/documents` מציג את ה-PDF של דנה · `/t/settings` מציג "נופר כהן · מטפלת · מנהלת". **responsive 375px** — rail → top bar, tiles נערמים. console נקי.
+
+**נדחו:** גרפים/מגמות · widget-ים ניתנים לגרירה · פילוח פגישות מתקדם · `/t/settings` פונקציונלי (WP-21).

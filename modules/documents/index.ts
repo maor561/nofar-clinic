@@ -1,5 +1,6 @@
-import { and, desc, eq, type SQL, type InferSelectModel } from "drizzle-orm";
+import { and, desc, eq, inArray, type SQL, type InferSelectModel } from "drizzle-orm";
 import type { TherapistDb, PatientDb } from "@/modules/core/authz";
+import { patient } from "@/modules/patients/schema";
 import { recordEvent } from "@/modules/patient-file";
 import { deleteFile } from "@/modules/core/files";
 import { document } from "./schema";
@@ -46,6 +47,21 @@ export async function listDocuments(db: AnyScoped, patientId: string): Promise<D
 
 export async function getDocument(db: AnyScoped, id: string): Promise<DocumentRow | null> {
   return (db as TherapistDb).findOne(document, scopedWhere(db, eq(document.id, id)));
+}
+
+export type DocumentListItem = DocumentRow & { patientName: string };
+
+/** Recent documents across all of the therapist's patients (dashboard / index). */
+export async function listRecentDocuments(
+  tdb: TherapistDb,
+  limit = 50,
+): Promise<DocumentListItem[]> {
+  const rows = await tdb.list(document, { orderBy: [desc(document.createdAt)], limit });
+  if (rows.length === 0) return [];
+  const ids = [...new Set(rows.map((r) => r.patientId))];
+  const people = await tdb.findMany(patient, inArray(patient.id, ids));
+  const nameById = new Map(people.map((p) => [p.id, `${p.firstName} ${p.lastName}`]));
+  return rows.map((r) => ({ ...r, patientName: nameById.get(r.patientId) ?? "מטופל/ת" }));
 }
 
 export async function createDocument(db: AnyScoped, input: DocumentInput): Promise<{ id: string }> {

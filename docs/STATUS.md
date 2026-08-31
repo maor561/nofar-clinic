@@ -6,9 +6,9 @@
 
 ## מצב נוכחי
 
-שלב **דומיין**. Core ✓. **WP-08 + WP-10..19 ✓** — כל מודולי הדומיין + מרחב המטופל.
-110 בדיקות ירוקות, הפריסה חיה, Neon + Resend + Blob מחוברים.
-**הבא: WP-20 — Therapist App Shell + Dashboard.**
+שלב **סגירה**. **WP-00..20 ✓** — כל מודולי הדומיין + שני הדשבורדים.
+111 בדיקות ירוקות, הפריסה חיה, Neon + Resend + Blob מחוברים.
+**הבא: WP-21 — נספח רגולציה ותפעול (המסמך הסוגר).**
 
 ## קישורים
 
@@ -27,7 +27,8 @@
 
 ## בעבודה
 
-- **WP-20 — Therapist App Shell + Dashboard** (הבא). דשבורד מטפלת: מטופלים פעילים, פגישות היום/קרובות, הודעות שלא נקראו, התראות, משימות; ליטוש ניווט המטפלת.
+- **WP-21 — נספח רגולציה ותפעול** (הבא, סוגר). מדיניות שמירה 7ש'/2ש', הצפנת `totp_secret`, checklist תפעולי, README פריסה.
+- **WP-20 — Therapist Dashboard** ✓ — `/t` tiles חיים + לוח היום + משימות + טבלת מטופלים אחרונים. מולאו `/t/documents` ו-`/t/settings` (stub).
 - **WP-19 — Patient App Shell + Dashboard** ✓ — דשבורד `/p` (פגישה הבאה / משימות / עדכונים / באנר שאלון) + `/p/profile` (קריאה) + nav מלא (8). responsive נבדק.
 - **WP-18 — Questionnaire** ✓ — `questionnaire_response` (מיגרציה 0012) + תשובות ב-`field_value` (8 שאלות ב-Registry); `/p/questionnaire` (טופס→קריאה, re-submit) + `/t/patients/[id]/questionnaire`; timeline + התראה.
 - **WP-08 Files + WP-17 Documents** ✓ — `@vercel/blob` private בלבד, נגיש רק דרך `/api/documents/[id]` scoped; `visibility` (`therapist_only`/`therapist_and_patient`) נאכף בכל קריאה של מטופל; מסכים `/t/patients/[id]/documents` + `/p/documents`. round-trip אמיתי אומת על ה-deploy החי (העלאה→הורדה→404 למטופל זר). מקומית אפשר להוסיף `BLOB_READ_WRITE_TOKEN` ל-`.env.local` לבדיקות מקומיות.
@@ -126,6 +127,12 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-31 — WP-20 Therapist Dashboard
+דשבורד `/t` (ADR-032): 6 קריאות מקבילות + `myUnreadCount()` — tiles (מטופלים פעילים / פגישות היום / הודעות שלא נקראו / התראות, מודגש כשיש) · "לוח היום" + "קרוב" (`listAppointments` from/to) · משימות פתוחות (עם שם מטופל) · טבלת "מטופלים אחרונים" (6 לפי joinedAt desc) עם `StatusPill` + פגישה אחרונה/הבאה (קבוצה לפי patientId).
+מולאו פריטי nav שהיו 404: `/t/documents` (נוסף `listRecentDocuments(tdb)` — כל המסמכים לפי created_at + שמות, therapist-scoped) · `/t/settings` (stub קריאה — שם/תפקיד + "בקרוב" WP-21).
+case ל-`listRecentDocuments` ב-`documents-module.test.ts` → 111 סה"כ. lint/typecheck/build ירוקים.
+**נבדק בדפדפן מול Neon:** דשבורד "נופר" — 4 פעילים / 0 היום / 5 התראות · טבלת מטופלים אחרונים עם סטטוס + פגישה אחרונה · `/t/documents` מציג PDF של דנה · `/t/settings` מציג "נופר כהן". **responsive 375px** — rail→top bar, tiles נערמים. console נקי.
 
 ### 2026-08-31 — WP-19 Patient App Shell + Dashboard
 דשבורד `/p` (ADR-031): מרכיב 4 קריאות מקבילות דרך `getPatientDb()` — הפגישה הבאה (`listAppointmentRows`) · משימות פתוחות (`listTaskRows`) · עדכונים אחרונים (`listTimeline` scoped) · באנר "שאלון ממתין" (`getQuestionnaire`). ללא service/טבלה חדשים.
