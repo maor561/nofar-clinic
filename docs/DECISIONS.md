@@ -448,3 +448,11 @@ Vercel מכבד לכל ה-Serverless Functions. (`preferredRegion` route-segment
 - `getAccountInfo(userId)` נוסף ל-`core/auth` (email + totpEnabled).
 
 **גבול v1:** אין recovery codes — מטפל שאיבד את האפליקציה = לנקות `totp_secret`/`totp_enabled_at` ב-DB (מתועד ב-OPERATIONS §7). recovery codes = שיפור עתידי.
+
+## ADR-037 — מדיניות סיסמה: אורך בלבד (10+), ללא כללי הרכב
+**תאריך:** 2026-08-31 · **סטטוס:** נעול · לבקשת הלקוח
+
+`passwordSchema` היה 10+ תווים **+ אות + ספרה**. שונה ל-**10+ תווים בלבד** (מקס' 200). מותר PIN
+של ספרות בלבד, ביטוי בעברית בלבד, או שילוב. הנימוק: אורך נושא את האנטרופיה; כפיית מחלקות תווים
+דוחפת דווקא לתבניות צפויות. עודכנו רמזי ה-UI (invite / reset / settings) ובדיקת המדיניות.
+argon2id, נעילת חשבון, throttle IP, ו-TOTP אופציונלי — ללא שינוי.

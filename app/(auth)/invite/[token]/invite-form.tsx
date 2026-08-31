@@ -36,7 +36,7 @@ export function InviteForm({ token, email }: { token: string; email: string }) {
           required
           autoFocus
         />
-        <p className="text-ink-faint text-[11.5px]">לפחות 10 תווים, כולל אות וספרה.</p>
+        <p className="text-ink-faint text-[11.5px]">לפחות 10 תווים.</p>
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="confirm">אימות סיסמה</Label>

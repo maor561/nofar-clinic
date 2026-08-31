@@ -23,7 +23,7 @@ export async function changePasswordAction(_prev: PwState, fd: FormData): Promis
   if (!current) return { error: "יש להזין את הסיסמה הנוכחית" };
   if (next !== confirm) return { error: "הסיסמאות החדשות אינן תואמות" };
   const parsed = passwordSchema.safeParse(next);
-  if (!parsed.success) return { error: "הסיסמה החדשה חייבת לכלול לפחות 8 תווים, אות וספרה" };
+  if (!parsed.success) return { error: "הסיסמה החדשה חייבת לכלול לפחות 10 תווים" };
 
   try {
     await changePassword(session.userId, current, next);

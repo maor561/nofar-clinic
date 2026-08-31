@@ -11,15 +11,11 @@ const ARGON_OPTS = {
 } as const;
 
 /**
- * Password policy: at least 10 characters, containing a letter (Latin or Hebrew)
- * and a digit. No forced "uppercase" — meaningless for a Hebrew-first audience.
+ * Password policy: at least 10 characters. No composition rules — a 10+ digit
+ * PIN, an all-Hebrew phrase, or a mix are all accepted. Length carries the
+ * entropy; forced character classes mostly push people to predictable patterns.
  */
-export const passwordSchema = z
-  .string()
-  .min(10, "לפחות 10 תווים")
-  .max(200, "עד 200 תווים")
-  .regex(/\p{L}/u, "חייבת לכלול אות")
-  .regex(/\d/, "חייבת לכלול ספרה");
+export const passwordSchema = z.string().min(10, "לפחות 10 תווים").max(200, "עד 200 תווים");
 
 export function hashPassword(plain: string): Promise<string> {
   return hash(plain, ARGON_OPTS);

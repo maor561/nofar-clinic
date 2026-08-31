@@ -17,7 +17,7 @@ export function ChangePasswordForm() {
   return (
     <form action={action} className="grid max-w-sm gap-3">
       <PwField name="current" label="סיסמה נוכחית" />
-      <PwField name="next" label="סיסמה חדשה" hint="לפחות 8 תווים, אות וספרה" />
+      <PwField name="next" label="סיסמה חדשה" hint="לפחות 10 תווים" />
       <PwField name="confirm" label="אימות סיסמה חדשה" />
       {state.error && (
         <p role="alert" className="text-danger text-[13px]">

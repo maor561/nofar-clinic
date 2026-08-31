@@ -274,11 +274,12 @@ describe("invite → session end to end", () => {
 });
 
 describe("password policy", () => {
-  it("requires length + a letter + a digit", () => {
-    expect(passwordSchema.safeParse("short1").success).toBe(false);
-    expect(passwordSchema.safeParse("alllettersnodigit").success).toBe(false);
-    expect(passwordSchema.safeParse("1234567890").success).toBe(false);
+  it("only enforces a 10-character minimum", () => {
+    expect(passwordSchema.safeParse("short1").success).toBe(false); // < 10
+    expect(passwordSchema.safeParse("1234567890").success).toBe(true); // digits-only ok
+    expect(passwordSchema.safeParse("alllettersok").success).toBe(true); // letters-only ok
     expect(passwordSchema.safeParse("goodpassword1").success).toBe(true);
     expect(passwordSchema.safeParse("סיסמהתקינה12").success).toBe(true);
+    expect(passwordSchema.safeParse("a".repeat(201)).success).toBe(false); // > 200
   });
 });
