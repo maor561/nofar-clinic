@@ -523,3 +523,39 @@ argon2id, נעילת חשבון, throttle IP, ו-TOTP אופציונלי — ל�
 הכתיבה (`bookSelfAppointment`) נשארת מאחורי ה-guard המלא. זהו חריג צר ומכוון ל-guard (בדומה ל-
 `PatientDb.self()`), מתועד כאן, ולא מרחיב את משטח הכתיבה. `authz/internal` כבר מייבא סכימות דומיין
 (`patient` ב-`scoped-db`), כך שכיוון התלות עקבי.
+
+## ADR-041 — Google Calendar: דחיפה חד-כיוונית + free/busy (WP-32)
+**תאריך:** 2026-08-31 · **סטטוס:** נעול · לבקשת הלקוח (יומן — חלק ב׳)
+
+4 החלטות מהדיון: **A+B** — דחיפת פגישות Nofar→Google + קריאת "תפוס" מ-Google לתוך מנוע החלונות
+(ללא דו-כיווני מלא) · **שם פרטי בלבד** בכותרת האירוע ("פגישה — דנה") + קישור חזרה בתיאור, ללא
+הערות קליניות · חיבור חד-פעמי דרך OAuth של המטפלת.
+
+- **מודול `modules/calendar-sync/`** — מודול תשתית (getDb-backed, פטור מ-`no-restricted-imports` כמו
+  `core/email`/`core/notifications`). כל פונקציה ציבורית ממופתחת ב-`therapistId` שמגיע תמיד מ-scoped
+  handle מאומת (`tdb.therapistId`/`pdb.therapistId`), לעולם לא מ-input.
+- **טבלה `calendar_connection`** (מיגרציה `0014`, therapist-scoped, שורה אחת): `refresh_token_enc`
+  (**מוצפן AES-256-GCM**, מפתח `CALENDAR_TOKEN_KEY` base64/32B — הטוקן לא יושב אף פעם בבירור ב-DB),
+  `calendar_id`, `sync_enabled`, `last_sync_at`, `last_error`.
+- **`internal/google.ts`** — לקוח REST כתוב-יד (בלי `googleapis`): authUrl · exchangeCode · refresh →
+  access token · insert/patch/delete event · freeBusy. Scopes: `calendar.events` + `calendar.freebusy`.
+- **מסלולים:** `GET /api/integrations/google/connect` (therapist, state ב-cookie httpOnly, redirect ל-Google) ·
+  `GET /api/integrations/google/callback` (אימות state, `exchangeCode`, שמירה מוצפנת, redirect ל-`/t/settings?google=…`).
+- **סנכרון best-effort:** `syncAppointment(therapistId, appt)` נקרא **fire-and-forget** (`void`) מ-4 ה-actions
+  (`create`/`update`/`setStatus:cancelled` של המטפלת + `bookSlot` של המטופל). כישלון → `last_error` בלבד,
+  לעולם לא מפיל כתיבת פגישה. `gcal_event_id` (עמודה קיימת מ-WP-12) נכתב חזרה על שורת ה-appointment.
+- **free/busy:** `googleBusy(therapistId, from, to)` — מוזג ל-`SchedulingView.busyRanges` במסך הקביעה
+  ובאימות ה-action. מחזיר `[]` כשלא מחובר / שגיאה.
+- **`/t/settings` → כרטיס "יומן Google":** מצב (לא-מוגדר / לא-מחובר / מחובר + `last_error`), כפתור חיבור,
+  `disconnectGoogleAction`. באנר לפי `?google=`.
+- **פרטיות / DPA:** Google הופך sub-processor. שם פרטי בלבד יוצא (לא שם מלא, לא הערות). מכוסה ע"י
+  הסכמת `data_transfer_abroad` (WP-10). → לעדכן `OPERATIONS.md §DPAs` ולהוסיף Google לרשימת המעבדים.
+
+**חסמי לקוח:** (1) OAuth client ב-Google Cloud — Client ID/Secret + הוספת scopes ב-Data Access +
+הוספת המטפלת כ-Test user; (2) פרסום האפליקציה ("Publish app") לשימוש קבוע — במצב Testing הטוקן
+פג כל 7 ימים; (3) הוספת `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` / `CALENDAR_TOKEN_KEY`
+ל-Vercel env.
+
+**DoD:** קוד + מסלולים + כרטיס הגדרות ✓ · הצפנת טוקן (4 בדיקות) ✓ · degradation חלק ללא env/חיבור
+(אומת — הקביעה העצמית עובדת) ✓ · `/api/…/connect` מפנה ל-Google עם client_id/redirect/scopes נכונים
+(אומת בדפדפן) · **round-trip חי מול Google — ממתין לפרסום + env בלקוח.** 133 בדיקות · build ✓.

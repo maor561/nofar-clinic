@@ -189,6 +189,11 @@ GitHub Action / Vercel Cron → dump ל-Blob/יעד מוצפן · שמירת 4 �
 **DoD:** מטופל רואה חלונות פנויים בלבד ✓ · קובע → פגישה ביומן המטפלת + בפגישות שלו + timeline + התראה לשני הצדדים ✓ · שעה שנתפסה נעלמת מהרשת + נדחית ב-action ✓ · 6 בדיקות בידוד ✓ · נבדק בדפדפן מול Neon מקצה לקצה.
 **תלוי:** WP-28, WP-12 · **הבא:** WP-32 (Google Calendar — חסום על credentials מהלקוח)
 
+### WP-32 · Google Calendar — דחיפה + free/busy 🟡
+`modules/calendar-sync` (ADR-041, מיגרציה `0014`): `calendar_connection` (טוקן refresh מוצפן AES-256-GCM) · `internal/google.ts` לקוח REST כתוב-יד (OAuth + events + freeBusy) · מסלולי `/api/integrations/google/{connect,callback}` · `syncAppointment` best-effort (`void`) מ-4 actions, `gcal_event_id` נכתב חזרה · `googleBusy` מוזג ל-`SchedulingView` · כרטיס `/t/settings`. 4 בדיקות crypto.
+**DoD:** קוד + מסלולים + הגדרות + degradation ✓ · `/connect` מפנה ל-Google עם פרמטרים נכונים (אומת) · **round-trip חי — חסום על הלקוח:** scopes+test-user ב-Google Cloud, Publish app, env ב-Vercel (`GOOGLE_OAUTH_CLIENT_ID/SECRET`, `CALENDAR_TOKEN_KEY`).
+**תלוי:** WP-28, WP-29, WP-12
+
 ### WP-22 · חומרת בידוד — סקירה סופית ✅
 סקירה מלאה (ADR-034): route+module+guard+auth · `tests/isolation` 67/67 · probes זיוף URL/ID/Request על ה-deploy החי כמטופל. **2 פערי הגנה-בעומק נסגרו:** `getFieldValues` scoped ל-`patient_id` (לא רק therapist); `createSession/Appointment/Task/Document` מאמתים patient scope. +3 בדיקות.
 **DoD:** אפס ממצאי בידוד ניתנים לניצול ✓ · דוח חתום ב-`STATUS.md` + ADR-034 ✓.
@@ -198,6 +203,6 @@ GitHub Action / Vercel Cron → dump ל-Blob/יעד מוצפן · שמירת 4 �
 
 ## שלב 2 (רק כותרות)
 
-WP-32 Google Calendar sync (דחיפה Nofar→Google + קריאת "תפוס"; שם פרטי בלבד בכותרת האירוע; ADR עתידי — **חסום על OAuth credentials מהלקוח**) · WP-33 מנוע שאלונים מלא · WP-36 2FA למטופל · WP-37 תבניות טיפול · WP-38 גרפים ומגמות · WP-39 מדדים + הזנה יומית · WP-40 תזונה.
+WP-33 מנוע שאלונים מלא · WP-36 2FA למטופל · WP-37 תבניות טיפול · WP-38 גרפים ומגמות · WP-39 מדדים + הזנה יומית · WP-40 תזונה.
 
-*(WP-28/29 = זמינות + קביעה עצמית — הושלמו, ראו למעלה. WP-30/31/34/35 מוזגו/מוספרו מחדש כדי למנוע התנגשות.)*
+*(WP-28/29 = זמינות + קביעה עצמית · WP-32 = Google Calendar — ראו למעלה. WP-30/31/34/35 מוזגו/מוספרו מחדש.)*

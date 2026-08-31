@@ -23,6 +23,7 @@ const eslintConfig = defineConfig([
       "modules/core/fields/**",
       "modules/core/notifications/**",
       "modules/core/email/**",
+      "modules/calendar-sync/**",
       "**/*.test.{ts,tsx}",
       "**/*.spec.{ts,tsx}",
     ],

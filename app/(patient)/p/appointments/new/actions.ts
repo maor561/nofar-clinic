@@ -7,6 +7,7 @@ import { getTherapistUserId, getPatientUserId } from "@/modules/core/auth";
 import { notify } from "@/modules/core/notifications";
 import { bookSelfAppointment } from "@/modules/appointments";
 import { computeOpenSlots } from "@/modules/availability";
+import { googleBusy, syncAppointment } from "@/modules/calendar-sync";
 import { clinicDateFmt } from "@/lib/tz";
 
 const whenFmt = clinicDateFmt({ dateStyle: "full", timeStyle: "short" });
@@ -41,7 +42,11 @@ export async function bookSlotAction(_prev: BookState, fd: FormData): Promise<Bo
 
   const from = new Date(start.getTime() - DAY);
   const to = new Date(start.getTime() + DAY);
-  const busy = await view.busyRanges(from, to);
+  const [internalBusy, gBusy] = await Promise.all([
+    view.busyRanges(from, to),
+    googleBusy(view.therapistId, from, to),
+  ]);
+  const busy = [...internalBusy, ...gBusy];
   const open = computeOpenSlots({
     rules,
     blockedDates,
@@ -62,6 +67,15 @@ export async function bookSlotAction(_prev: BookState, fd: FormData): Promise<Bo
   } catch {
     return { error: "קביעת הפגישה נכשלה. נסו שוב." };
   }
+
+  const me = await pdb.self();
+  void syncAppointment(pdb.therapistId, {
+    id,
+    startsAt: start,
+    endsAt: end,
+    patientFirstName: me?.firstName ?? "מטופל/ת",
+    gcalEventId: null,
+  });
 
   const therapistUserId = await getTherapistUserId(pdb.therapistId);
   if (therapistUserId) {

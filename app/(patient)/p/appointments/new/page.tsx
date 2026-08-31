@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getSchedulingView } from "@/modules/core/authz/server";
 import { computeOpenSlots } from "@/modules/availability";
+import { googleBusy } from "@/modules/calendar-sync";
 import { Card, CardContent, EmptyState, Icon } from "@/modules/core/design-system";
 import { clinicWeekStart, clinicDateFmt, toClinicFields } from "@/lib/tz";
 import { BookGrid, type DaySlots } from "./book-grid";
@@ -69,7 +70,11 @@ export default async function NewBookingPage({
     horizonDays: policy.horizonDays,
     bufferMinutes: policy.bufferMinutes,
   };
-  const busy = await view.busyRanges(weekStart, weekEnd);
+  const [internalBusy, gBusy] = await Promise.all([
+    view.busyRanges(weekStart, weekEnd),
+    googleBusy(view.therapistId, weekStart, weekEnd),
+  ]);
+  const busy = [...internalBusy, ...gBusy];
   const slots = computeOpenSlots({
     rules,
     blockedDates,

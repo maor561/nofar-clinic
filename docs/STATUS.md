@@ -7,11 +7,12 @@
 ## מצב נוכחי
 
 שלב **סגירה** + דיוקי מוצר לפי שימוש של הלקוח. **WP-00..22 ✓ · WP-23 קוד ✓** (Blob EU = פעולת לקוח).
-**129 בדיקות ירוקות**, הפריסה חיה, פונקציות רצות ב-`fra1`.
+**133 בדיקות ירוקות**, הפריסה חיה, פונקציות רצות ב-`fra1`.
 **מודול ההודעות (WP-16) מוסתר** מאחורי `lib/features.ts` (`messaging: false`) — קוד נשמר, ניווט+מסלולים כבויים (ADR-038).
-**היומן — חלק א׳ נגמר (WP-28 + WP-29 ✓):** זמינות מטפלת (`/t/settings/availability`) + מנוע חלונות טהור + קביעת תור עצמית למטופל (`/p/appointments/new`, אישור אוטומטי). `SchedulingView` ב-`core/authz` (ADR-040). נבדק מקצה לקצה מול Neon. מיגרציה `0013` הוחלה.
-**היומן — חלק ב׳ (WP-32, Google Calendar):** דחיפה Nofar→Google + קריאת "תפוס", שם פרטי בכותרת. **חסום על הלקוח** — הקמת OAuth client ב-Google Cloud (הלקוח באמצע ההקמה; ממתין ל-`GOOGLE_OAUTH_CLIENT_ID/SECRET`).
-**הבא: WP-32 (Google, כשה-credentials יגיעו) · WP-24..27 (לא חוסמי v1).**
+**היומן — חלק א׳ (WP-28 + WP-29 ✓):** זמינות מטפלת (`/t/settings/availability`) + מנוע חלונות טהור + קביעת תור עצמית למטופל (`/p/appointments/new`, אישור אוטומטי). `SchedulingView` ב-`core/authz` (ADR-040). נבדק מקצה לקצה מול Neon. מיגרציה `0013`.
+**היומן — חלק ב׳ (WP-32, Google Calendar ✓ קוד):** מודול `calendar-sync` — דחיפה Nofar→Google (best-effort, `void`), free/busy למנוע החלונות, טוקן refresh מוצפן AES-256-GCM (`0014`), מסלולי OAuth, כרטיס `/t/settings`. degradation חלק ללא env. ADR-041.
+**חסמי לקוח ל-Google:** (1) ב-Google Cloud — הוספת scopes ב-Data Access + הוספת המטפלת כ-Test user + (לשימוש קבוע) Publish app; (2) הוספת `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` / `CALENDAR_TOKEN_KEY` ל-Vercel env (הערכים אצל הלקוח/ב-`.env.local` המקומי). round-trip חי מול Google — אחרי זה.
+**הבא: חיבור Google חי (לקוח) · WP-24..27 (לא חוסמי v1).**
 
 ## קישורים
 
@@ -133,6 +134,11 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-31 — WP-32: Google Calendar (קוד)
+מודול `modules/calendar-sync` (תשתית, getDb-backed, פטור מ-lint כמו core/email). `calendar_connection` (מיגרציה `0014`) — `refresh_token_enc` מוצפן AES-256-GCM (`CALENDAR_TOKEN_KEY`). `internal/google.ts` — לקוח REST כתוב-יד (authUrl/exchange/refresh/insert/patch/delete/freeBusy), scopes `calendar.events`+`calendar.freebusy`. מסלולים `/api/integrations/google/{connect,callback}` (state ב-cookie httpOnly). `syncAppointment(therapistId, appt)` נקרא `void` מ-4 actions (create/update/cancel של המטפלת + bookSlot של המטופל) — best-effort, `last_error` בלבד, `gcal_event_id` נכתב חזרה. `googleBusy()` מוזג ל-`SchedulingView.busyRanges` במסך הקביעה + ב-action. כרטיס "יומן Google" ב-`/t/settings` (מצב + חיבור + `disconnectGoogleAction`). ADR-041.
+4 בדיקות crypto (round-trip / IV / GCM tamper / no-key). 133 בדיקות · lint · build ✓. **נבדק בדפדפן:** כרטיס ההגדרות מזהה `configured`, `/api/…/connect` מפנה ל-`accounts.google.com` עם client_id + redirect_uri (`http://localhost:3000/api/integrations/google/callback`) + שני ה-scopes + `access_type=offline`. degradation: ללא חיבור `googleBusy`→`[]`, `syncAppointment`→`null`, הקביעה העצמית עובדת.
+**חסום על הלקוח:** scopes+test-user ב-Google Cloud · Publish app (Testing = טוקן פג כל 7 ימים) · env ב-Vercel. round-trip חי — אחרי זה.
 
 ### 2026-08-31 — WP-28 + WP-29: זמינות + קביעת תור עצמית
 **WP-28 (זמינות + מנוע):** מודול `modules/availability` — `availability_rule` / `availability_exception` / `booking_policy` (מיגרציה `0013`, therapist-scoped). `computeOpenSlots` פונקציה טהורה ב-`slots.ts` (9 בדיקות) — rules − blocked − busy − buffer − lead − horizon. מסך `/t/settings/availability` (טוגל, 7 ימים, מדיניות, תאריכים חסומים).

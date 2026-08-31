@@ -8,12 +8,14 @@ import { notify } from "@/modules/core/notifications";
 import {
   createAppointment,
   updateAppointment,
+  getAppointment,
   setAppointmentStatus,
   appointmentStatus,
   type AppointmentInput,
   type AppointmentStatus,
 } from "@/modules/appointments";
-import { treatmentType, type TreatmentType } from "@/modules/patients";
+import { getPatient, treatmentType, type TreatmentType } from "@/modules/patients";
+import { syncAppointment } from "@/modules/calendar-sync";
 import { fromClinicWallTime, clinicDateFmt } from "@/lib/tz";
 import type { AppointmentFormState } from "./appointment-form";
 
@@ -64,6 +66,15 @@ export async function createAppointmentAction(
     return { error: "קביעת הפגישה נכשלה. נסו שוב." };
   }
 
+  const p = await getPatient(tdb, input.patientId);
+  void syncAppointment(tdb.therapistId, {
+    id,
+    startsAt: input.startsAt,
+    endsAt: input.endsAt,
+    patientFirstName: p?.firstName ?? "מטופל/ת",
+    gcalEventId: null,
+  });
+
   const patientUserId = await getPatientUserId(input.patientId);
   if (patientUserId) {
     await notify({
@@ -101,6 +112,17 @@ export async function updateAppointmentAction(
     return { error: "עדכון הפגישה נכשל." };
   }
 
+  const appt = await getAppointment(tdb, id);
+  if (appt) {
+    void syncAppointment(tdb.therapistId, {
+      id,
+      startsAt: appt.startsAt,
+      endsAt: appt.endsAt,
+      patientFirstName: appt.patientName.split(" ")[0] || "מטופל/ת",
+      gcalEventId: appt.gcalEventId,
+    });
+  }
+
   const patientUserId = await getPatientUserId(input.patientId);
   if (patientUserId) {
     await notify({
@@ -131,6 +153,18 @@ export async function setStatusAction(id: string, status: string): Promise<void>
   }
 
   if (status === "cancelled") {
+    const appt = await getAppointment(tdb, id);
+    if (appt?.gcalEventId) {
+      void syncAppointment(tdb.therapistId, {
+        id,
+        startsAt: appt.startsAt,
+        endsAt: appt.endsAt,
+        patientFirstName: "",
+        gcalEventId: appt.gcalEventId,
+        cancelled: true,
+      });
+    }
+
     const patientUserId = await getPatientUserId(patientId);
     if (patientUserId) {
       await notify({

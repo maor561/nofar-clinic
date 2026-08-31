@@ -2,6 +2,7 @@
 
 import QRCode from "qrcode";
 import { requireTherapist } from "@/modules/core/auth/server";
+import { disconnect as disconnectGoogle } from "@/modules/calendar-sync";
 import {
   changePassword,
   getAccountInfo,
@@ -63,4 +64,11 @@ export async function confirmTotpAction(
 
   revalidatePath("/t/settings");
   return { ok: Date.now() };
+}
+
+/** Drop the stored Google Calendar connection. */
+export async function disconnectGoogleAction(): Promise<void> {
+  const session = await requireTherapist();
+  await disconnectGoogle(session.therapistId);
+  revalidatePath("/t/settings");
 }
