@@ -16,6 +16,7 @@ export const notificationType = [
   "task_assigned",
   "task_completed",
   "message_received",
+  "document_shared",
   "questionnaire_submitted",
   "generic",
 ] as const;

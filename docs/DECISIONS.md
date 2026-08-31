@@ -308,3 +308,18 @@ Spike מול Neon (endpoint pooled, פרנקפורט) — `modules/core/data/scr
 - **נבדק בדפדפן מול Neon:** מטפלת→"בדיקה התראה" הודעה; המטופל התחבר, ראה **רק** את השיחה שלו, סימון "נקרא" חזר למטפלת; המטופל השיב → בתיבת המטפלת badge "1" + ההודעה האחרונה. (שליחה בבדיקה בוצעה דרך `form.requestSubmit()` — לחיצה על כפתור קטן ב-automation לא הפעילה submit; הטופס תקין ועובד.)
 
 **נדחו:** WebSocket/SSE · קבצים בהודעות (שלב עתידי, DATA_MODEL) · יותר מ-thread אחד למטופל · הקלדה/typing indicators · אירוע Timeline להודעה.
+
+## ADR-029 — Files: Vercel Blob (private) behind a scoped route; visibility enforced on every read
+**תאריך:** 2026-08-31 · **סטטוס:** נעול · **מממש WP-08 + WP-17**
+
+- **`@vercel/blob` v2.8, `access: "private"` בלבד.** אין URL ציבורי לקובץ אף פעם. `core/files`: `putFile(key, body, contentType)` · `getFileStream(key)` (מחזיר `ReadableStream` + `contentType`/`size`, `useCache:false`) · `deleteFile(key)`. אילוצים (`MAX_FILE_BYTES=15MB`, `ALLOWED_MIME`) ב-`core/files/labels.ts` טהור לייבוא מ-client. הדלי `nofar-clinic-blob` (private, IAD1) נוצר וחובר לפרויקט Vercel — `BLOB_READ_WRITE_TOKEN` מוזרק אוטומטית ל-deploy.
+- **schema:** `document` (מיגרציה `0011`, dual-scoped) — `name`/`kind` (`lab_result`/`summary`/`referral`/`image`/`form`/`other`)/`file_key`/`mime`/`size`/`uploaded_by` (`therapist`/`patient`)/`visibility` (`therapist_only`/`therapist_and_patient`, ברירת מחדל `therapist_only`).
+- **`therapist_only` לא נגיש למטופל בשום נתיב:** `scopedWhere(db, base)` ב-`modules/documents` מוסיף `visibility = therapist_and_patient` כש-`db.role === "patient"` — חל על `listDocuments` ו-`getDocument` כאחד. `createDocument` כופה `visibility = therapist_and_patient` + `uploadedBy = patient` כשמטופל מעלה.
+- **נתיב יחיד לבייטים:** `GET /api/documents/[id]` — `getScopedDb()` → `getDocument(db, id)` (null אם scope שגוי או מטופל+`therapist_only`) → `getFileStream` → stream עם `content-disposition: inline; filename*=UTF-8''…` ו-`cache-control: private, no-store`. `audit("view","document")`. ללא session → 401.
+- **פעולה אחת לשני הצדדים:** `uploadDocumentAction(patientId, ...)` דרך `getScopedDb()` — key `p/<patientId>/<uuid>_<safeName>` · validate mime+size · `putFile` → `createDocument` → `recordEvent("document_added")` → התראת `document_shared` (סוג חדש, union) לצד השני כשהמסמך משותף. `/p/documents` מייבא את הפעולה + `UploadForm`. `setDocVisibilityAction` / `deleteDocumentAction` — מטפלת בלבד; מחיקה מוחקת גם את ה-blob (best-effort).
+- **מסכים:** `/t/patients/[id]/documents` (רשימה + טופס העלאה עם סוג+נראות + toggle נראות + מחיקה) · `/p/documents` (רשימה של הנראים + טופס העלאה, נראות כפויה). כפתור "מסמכים" בתיק.
+- **תשתית בדיקות:** `vitest.config` — `testTimeout: 20000` · `hookTimeout: 30000` · `retry: 1` (חבילת ה-auth נגעה מדי פעם ב-5s תחת עומס argon2+PGlite של 16 קבצים במקביל — לא באג, תזמון).
+- **בדיקות:** `tests/isolation/documents-module.test.ts` (5, blob מוקד) — cross-therapist (list/get/delete) · מטופל לא רואה `therapist_only` ב-list ו-get · flip ל-`therapist_only` מסתיר שוב · העלאת מטופל = shared + uploadedBy patient · create → `document_added` + audit. 103 סה"כ.
+- **נבדק בדפדפן (ללא token):** מסך `/t/.../documents` נטען (טופס + סוג + נראות) · `/api/documents/<uuid>` בלי session → 401 · העלאה בלי token → "העלאת הקובץ נכשלה." inline, בלי 500. **תלוי:** round-trip אמיתי (העלאה→הורדה→נראות) מול הדלי — דורש `BLOB_READ_WRITE_TOKEN` ב-`.env.local` (ב-deploy מוזרק). הבידוד עצמו מוכח בבדיקות.
+
+**נדחו:** קבצים מרובים בהעלאה אחת · thumbnails/preview · `putFromUrl` · צירוף מסמך להודעה (בהמשך) · הצפנת קבצים at-rest מעבר לפרטיות של Blob.

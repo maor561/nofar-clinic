@@ -6,9 +6,9 @@
 
 ## מצב נוכחי
 
-שלב **דומיין**. Core: WP-00..09 ✓ (למעט WP-08). **WP-10..16 ✓** (Patients · Timeline · Appointments · Sessions · Plans · Tasks · Messaging).
-98 בדיקות ירוקות, הפריסה חיה, Neon + Resend מחוברים.
-**הבא: WP-17 — Documents (דורש Vercel Blob — WP-08) או WP-18 — Questionnaires.**
+שלב **דומיין**. Core: WP-00..09 ✓. **WP-10..17 ✓** (Patients · Timeline · Appointments · Sessions · Plans · Tasks · Messaging · **WP-08 Files + WP-17 Documents**).
+103 בדיקות ירוקות, הפריסה חיה, Neon + Resend + Blob מחוברים.
+**הבא: WP-18 — Questionnaire (שאלון קליטה על WP-09).**
 
 ## קישורים
 
@@ -27,8 +27,9 @@
 
 ## בעבודה
 
-- **WP-17 — Documents** (הבא, **חסום** — דורש Vercel Blob store מהלקוח / WP-08). או להקדים את **WP-18 — Questionnaires** (שאלון קליטה, לא חסום).
-- **WP-16 — Messaging** ✓ — `message_thread`/`message` (מיגרציה 0010, dual-scoped); `read_at` = הצד השני קרא; polling ב-`router.refresh()`; פעולה אחת לשני התפקידים; `/t/messages` תיבה + `/p/messages`. אין WebSocket, אין קבצים בהודעות.
+- **WP-18 — Questionnaire** (הבא). שאלון קליטה אחד בנוי על Field Registry; המטופל ממלא בקליטה, המטפל צופה; תשובות ב-`field_value` (`entity='questionnaire'`); Timeline + התראה; בדיקת בידוד.
+- **WP-08 Files + WP-17 Documents** ✓ — `@vercel/blob` private בלבד, נגיש רק דרך `/api/documents/[id]` scoped; `visibility` (`therapist_only`/`therapist_and_patient`) נאכף בכל קריאה של מטופל; מסכים `/t/patients/[id]/documents` + `/p/documents`. **פתוח:** round-trip העלאה/הורדה אמיתי דורש `BLOB_READ_WRITE_TOKEN` ב-`.env.local` (מהלקוח); ב-deploy מוזרק אוטומטית.
+- **WP-16 — Messaging** ✓ — `message_thread`/`message` (מיגרציה 0010, dual-scoped); polling ב-`router.refresh()`; `/t/messages` תיבה + `/p/messages`.
 - **WP-15 — Tasks** ✓ — `task` dual-scoped (מיגרציה 0009); `setTaskStatus` לשני התפקידים; `task_created`/`task_completed` ל-Timeline; `/p/tasks`.
 - **WP-14 — Treatment Plans** ✓ — `treatment_plan_version` append-only (מיגרציה 0008); תוכן דרך Field Registry; `/p/plan`.
 - **WP-13 — Treatment Sessions** ✓ — `treatment_session` (מיגרציה 0007) + מסך "זרימה אחת". שלב "משימות" מהזרימה — יחווט ב-WP-15.
@@ -123,6 +124,15 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-31 — WP-08 File Storage + WP-17 Documents
+`@vercel/blob` v2.8 נוסף · `core/files` (ADR-029): `putFile`/`getFileStream`/`deleteFile` — `access: "private"` בלבד, **אין URL ציבורי**. אילוצים ב-`core/files/labels.ts` טהור. הדלי `nofar-clinic-blob` (private, IAD1) נוצר וחובר לפרויקט; `BLOB_READ_WRITE_TOKEN` מוזרק ב-deploy (עדיין לא ב-`.env.local` מקומי).
+`modules/documents` (מיגרציה `0011`, dual-scoped): `document` + service list/get/create/setVisibility/delete. `scopedWhere(db,base)` מוסיף `visibility=therapist_and_patient` בכל קריאה של `PatientDb` — `therapist_only` לא נגיש למטופל ב-list, ב-get, וב-route. `createDocument` כופה shared+uploadedBy=patient כשמטופל מעלה. `document_added` ל-Timeline. סוג התראה `document_shared` (union).
+`GET /api/documents/[id]` — `getScopedDb()` → `getDocument` → `getFileStream` → stream (`inline`, `private, no-store`, `audit view`). בלי session → 401.
+העלאה = פעולה אחת לשני התפקידים (`uploadDocumentAction` + `getScopedDb()`); `/p/documents` מייבא אותה + `UploadForm`. מסכים `/t/patients/[id]/documents` (סוג + נראות + toggle + מחיקה) · `/p/documents` (נראות כפויה). כפתור "מסמכים" בתיק.
+`vitest.config`: `testTimeout 20000` · `hookTimeout 30000` · `retry 1` — חבילת auth נגעה מדי פעם ב-5s תחת עומס (16 קבצים, argon2+PGlite); לא באג.
+5 בדיקות isolation (blob מוקד) → 103 סה"כ. lint/typecheck/build ירוקים (build ללא env).
+**נבדק בדפדפן (ללא token):** מסך המסמכים נטען (טופס + סוג + נראות) · `/api/documents/<uuid>` בלי session → 401 · העלאה בלי token → "העלאת הקובץ נכשלה." inline, בלי 500. **פתוח:** round-trip אמיתי מול הדלי — צריך את ה-token ב-`.env.local`.
 
 ### 2026-08-30 — WP-16 Messaging
 `modules/messaging` (ADR-028): `message_thread` (unique patient) + `message` (מיגרציה `0010`, הוחלה על Neon; dual-scoped). `read_at` = מתי הצד השני קרא — `markThreadRead` נוגע רק בהודעות `sender != db.role`; `unreadCountFor` (מטפלת: כל המטופלים; מטופל: ה-thread שלו). `sendMessage` יוצר thread בפעם ראשונה, מטפלת מוגבלת ל-`findOne(patient)` scoped לפני יצירה.

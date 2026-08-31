@@ -14,3 +14,4 @@ export * from "@/modules/sessions/schema";
 export * from "@/modules/plans/schema";
 export * from "@/modules/tasks/schema";
 export * from "@/modules/messaging/schema";
+export * from "@/modules/documents/schema";

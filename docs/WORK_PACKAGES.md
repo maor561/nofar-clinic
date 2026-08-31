@@ -64,9 +64,9 @@ Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפ
 **DoD:** 4 תבניות נשלחות RTL ✓ · כשל נרשם ולא מפיל ✓. **פתוח:** לקוח מגדיר env ב-Vercel + מאפס key.
 **תלוי:** WP-00
 
-### WP-08 · File Storage ⬜
-`core/files`: העלאה/הורדה חתומה, הרשאה פר-מסמך, מגבלות סוג/גודל.
-**DoD:** העלאה+הורדה עובדות; קובץ לא נגיש בלי scope + visibility; URL חתום פג-תוקף.
+### WP-08 · File Storage ✅
+`core/files` (ADR-029): `@vercel/blob` private בלבד — `putFile`/`getFileStream`/`deleteFile` · אילוצים (`MAX_FILE_BYTES`/`ALLOWED_MIME`) ב-`labels.ts` טהור · הדלי `nofar-clinic-blob` חובר, `BLOB_READ_WRITE_TOKEN` מוזרק ב-deploy.
+**DoD:** אין URL ציבורי · הבייטים רק דרך `/api/documents/[id]` scoped · מגבלות סוג/גודל נאכפות ✓ (round-trip אמיתי תלוי token מקומי; הבידוד מוכח בבדיקות).
 **תלוי:** WP-03
 
 ### WP-09 · Field Registry ✅ 🔑
@@ -124,10 +124,10 @@ Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפ
 **DoD:** שני הצדדים מתכתבים ✓ · badge מתעדכן ✓ · שרשור מבודד למטופל ✓ (נבדק בדפדפן מול Neon) · 5 בדיקות isolation ✓.
 **תלוי:** WP-06 · **הבא:** WP-17 (Documents — צריך Vercel Blob) / WP-18 (Questionnaires)
 
-### WP-17 · Documents ⬜
-UI מעל WP-08: העלאה ע"י מטפל/מטופל, visibility, רשימה בתיק.
-**DoD:** הערה פנימית (`therapist_only`) לא נגישה למטופל בשום נתיב; אירוע Timeline; בדיקת בידוד.
-**תלוי:** WP-08, WP-11
+### WP-17 · Documents ✅
+`modules/documents` (ADR-029, מיגרציה `0011`, dual-scoped): `listDocuments`/`getDocument`/`createDocument`/`setDocumentVisibility`/`deleteDocument` — `scopedWhere` מוסיף `visibility=therapist_and_patient` לכל קריאה של מטופל · העלאה כפעולה אחת לשני התפקידים דרך `getScopedDb()` · `document_added` ל-Timeline · מסכים `/t/patients/[id]/documents` + `/p/documents`.
+**DoD:** `therapist_only` לא נגיש למטופל ב-list/get/route ✓ · אירוע Timeline ✓ · 5 בדיקות isolation ✓ (round-trip העלאה→הורדה תלוי token).
+**תלוי:** WP-08, WP-11 · **הבא:** WP-18 (Questionnaires)
 
 ### WP-18 · Questionnaire — שאלון קליטה ⬜
 שאלון אחד בנוי על WP-09, המטופל ממלא בקליטה, המטפל צופה, אירוע Timeline + התראה.
