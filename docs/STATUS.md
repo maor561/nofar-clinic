@@ -6,9 +6,9 @@
 
 ## מצב נוכחי
 
-שלב **סגירה**. **WP-00..20 ✓** — כל מודולי הדומיין + שני הדשבורדים.
+שלב **סגירה**. **WP-00..21 ✓** — כל מודולי הדומיין, שני הדשבורדים, ונספח הרגולציה/תפעול.
 111 בדיקות ירוקות, הפריסה חיה, Neon + Resend + Blob מחוברים.
-**הבא: WP-21 — נספח רגולציה ותפעול (המסמך הסוגר).**
+**הבא: WP-22 (סקירת בידוד סופית) + WP-23 (מיקום EU + Blob) — שניהם חוסמי פרודקשן. אחריהם WP-24..27.**
 
 ## קישורים
 
@@ -27,7 +27,10 @@
 
 ## בעבודה
 
-- **WP-21 — נספח רגולציה ותפעול** (הבא, סוגר). מדיניות שמירה 7ש'/2ש', הצפנת `totp_secret`, checklist תפעולי, README פריסה.
+- **WP-22 — סקירת בידוד סופית** (הבא, חוסם). `/security-review`, מעבר endpoint-by-endpoint, זיוף URL/ID/Request ידני, הרצת `tests/isolation` מלאה.
+- **WP-23 — מיקום מידע EU + Blob** (חוסם). Vercel `fra1` + אזור EU ל-Blob (או S3 פרנקפורט) + גיבוי Blob.
+- **WP-24..27** — הצפנת `totp_secret` at-rest · retention cron · anonymize+lock · `pg_dump` שבועי (לא חוסמי v1).
+- **WP-21 — נספח רגולציה ותפעול** ✓ — `docs/OPERATIONS.md`. תיקון 13: רישום ברשם בוטל; חובת ניהול/אבטחה רובה מיושמת; DPO כנראה לא נדרש (אישור עו"ד). פערי-קוד → WP-23..27. **ממתין לאישור הלקוח.**
 - **WP-20 — Therapist Dashboard** ✓ — `/t` tiles חיים + לוח היום + משימות + טבלת מטופלים אחרונים. מולאו `/t/documents` ו-`/t/settings` (stub).
 - **WP-19 — Patient App Shell + Dashboard** ✓ — דשבורד `/p` (פגישה הבאה / משימות / עדכונים / באנר שאלון) + `/p/profile` (קריאה) + nav מלא (8). responsive נבדק.
 - **WP-18 — Questionnaire** ✓ — `questionnaire_response` (מיגרציה 0012) + תשובות ב-`field_value` (8 שאלות ב-Registry); `/p/questionnaire` (טופס→קריאה, re-submit) + `/t/patients/[id]/questionnaire`; timeline + התראה.
@@ -109,7 +112,7 @@
 
 ## שאלות פתוחות
 
-- **שמירת מידע:** 7 שנים רשומות / שנתיים Audit — לאישור ב-WP-21.
+- **שמירת מידע:** 7 שנים רשומות / שנתיים Audit — מדיניות אושרה עקרונית ב-WP-21 (`docs/OPERATIONS.md` §6); מימוש cron/anonymize → WP-25/WP-26.
 - **דומיין:** יסופק ע"י הלקוח לפני WP-07.
 - **push ל-GitHub:** אין `gh` במכונה; ה-remote נוסף. ה-push הראשון דורש credentials של הלקוח (Git Credential Manager) — אם נכשל, הלקוח מריץ `git push` פעם אחת ידנית.
 
@@ -127,6 +130,12 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-31 — WP-21 נספח רגולציה ותפעול
+נכתב `docs/OPERATIONS.md` (ADR-033) — המסמך הסוגר: גיבוי + תרגיל שחזור רבעוני · monitoring (Vercel/Neon/Resend + UptimeRobot על `/api/version`) · Dependabot · incident response (ה-audit append-only ככלי תחקיר) · DPAs + מיקום מידע (DB בפרנקפורט ✓, Blob ב-IAD1 ✗) · מדיניות שמירה 7ש'/2ש' מול anonymize+lock · "תיק חירום" להמשכיות · **תיקון 13 לחוק הגנת הפרטיות** (14.8.2025 — רישום ברשם בוטל, חובת ניהול/אבטחה, DPO כנראה לא נדרש למטפלת יחידה — טעון אישור עו"ד) · טבלת מיפוי מול תקנות אבטחת מידע · Data flow · checklist עלייה לפרודקשן.
+**פערים → WP חדשים:** WP-23 (EU + Blob, חוסם) · WP-24 (`totp_secret` at-rest) · WP-25 (retention cron) · WP-26 (anonymize+lock) · WP-27 (`pg_dump` שבועי).
+מסמך בלבד — אין קוד/מיגרציה/בדיקות. 111 סה"כ נשאר. `README.md` קיבל הפניה ל-`OPERATIONS.md`.
+**DoD:** כל נושאי ה-spec מכוסים ✓ · פערי-קוד הפכו ל-WP ✓ · **ממתין לקריאה ואישור של הלקוח.**
 
 ### 2026-08-31 — WP-20 Therapist Dashboard
 דשבורד `/t` (ADR-032): 6 קריאות מקבילות + `myUnreadCount()` — tiles (מטופלים פעילים / פגישות היום / הודעות שלא נקראו / התראות, מודגש כשיש) · "לוח היום" + "קרוב" (`listAppointments` from/to) · משימות פתוחות (עם שם מטופל) · טבלת "מטופלים אחרונים" (6 לפי joinedAt desc) עם `StatusPill` + פגישה אחרונה/הבאה (קבוצה לפי patientId).

@@ -19,6 +19,7 @@
 | [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) | ישויות וקשרים |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | לוג החלטות (ADR) — append-only. מה, מתי, למה, אילו חלופות נדחו |
 | [`docs/WORK_PACKAGES.md`](docs/WORK_PACKAGES.md) | חבילות עבודה: סטטוס, תלויות, הגדרת "גמור" |
+| [`docs/OPERATIONS.md`](docs/OPERATIONS.md) | רגולציה ותפעול (WP-21): גיבוי/שחזור, incident response, DPAs, שמירת מידע, תיקון 13, checklist פרודקשן |
 
 ## נוהל עבודה בכל סשן
 

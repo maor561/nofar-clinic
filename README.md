@@ -31,4 +31,14 @@ tests/isolation/     חבילת בידוד cross-tenant (מ-WP-03) — הגדר�
 docs/                מסמכי קונטקסט + מוקאפים
 ```
 
-תיעוד מלא: `docs/STATUS.md` (התחל כאן), `docs/ARCHITECTURE.md`, `docs/WORK_PACKAGES.md`.
+תיעוד מלא: `docs/STATUS.md` (התחל כאן), `docs/ARCHITECTURE.md`, `docs/WORK_PACKAGES.md`,
+`docs/OPERATIONS.md` (רגולציה, גיבוי, incident response, checklist פרודקשן).
+
+## פריסה ותפעול
+
+- **פריסה:** git↔Vercel, auto-deploy מ-`main`. Framework Preset = Next.js.
+- **מיגרציות:** `pnpm db:migrate` (דרך `DATABASE_URL_UNPOOLED`). `pnpm db:registry` לטעינת Field Registry.
+- **חותמת גרסה:** `GET /api/version` מחזיר את ה-SHA שנפרס — להשוואה מול הקומיט האחרון ב-`main`.
+- **סביבה:** `.env.local` (gitignored) — `DATABASE_URL(_UNPOOLED)`, `RESEND_API_KEY`, `EMAIL_FROM`,
+  `APP_URL`, `BLOB_READ_WRITE_TOKEN`. ב-Vercel מוגדרים דרך Project Settings / אינטגרציות.
+- **גיבוי / שחזור / אירוע אבטחה / רגולציה:** `docs/OPERATIONS.md`.
