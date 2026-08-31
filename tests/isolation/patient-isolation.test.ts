@@ -12,6 +12,7 @@ import { PatientDb, TherapistDb, scopedDbFor } from "@/modules/core/authz";
 import { therapist, user, session as sessionTable } from "@/modules/core/auth/schema";
 import { patient } from "@/modules/patients/schema";
 import { timelineEvent } from "@/modules/patient-file/schema";
+import { getMyProfile } from "@/modules/patients";
 
 let db: Db;
 let t1: string;
@@ -99,6 +100,13 @@ describe("patient scope — reads see only own rows", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].patientId).toBe(A);
     expect(await pdb.count(timelineEvent)).toBe(1);
+  });
+
+  it("getMyProfile (WP-19) returns only the caller's own profile", async () => {
+    const pdbA = scopedDbFor(db, patientSession(t1, A)) as PatientDb;
+    expect((await getMyProfile(pdbA))?.id).toBe(A);
+    const pdbC = scopedDbFor(db, patientSession(t2, C)) as PatientDb;
+    expect((await getMyProfile(pdbC))?.id).toBe(C);
   });
 });
 

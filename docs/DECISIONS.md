@@ -337,3 +337,14 @@ Spike מול Neon (endpoint pooled, פרנקפורט) — `modules/core/data/scr
 - **נבדק בדפדפן מול Neon:** "בדיקה התראה" מילא/ה 6 שדות (scale/number/select/text) → הוגש → תצוגת קריאה · מטפלת רואה ב-`/t/patients/[id]/questionnaire` · התראה "שאלון קליטה מולא" ב-`/t/alerts` · אירוע "שאלון קליטה הוגש" בציר הזמן (סינון "שאלון"). console נקי.
 
 **נדחו:** יותר משאלון אחד · שאלון מותאם למטפל (הגדרות דרך ה-Registry ידנית ב-v1) · חתימה/הסכמה בתוך השאלון (יש `consent` נפרד ב-WP-10) · autosave של טיוטה (submit יחיד).
+
+## ADR-031 — Patient dashboard + profile: read-only aggregation over existing scoped services
+**תאריך:** 2026-08-31 · **סטטוס:** נעול · **מממש WP-19**
+
+- **דשבורד `/p`:** מרכיב ארבע קריאות מקבילות דרך `getPatientDb()` — `listAppointmentRows({from:now, status:"scheduled", limit:1})` (הפגישה הבאה) · `listTaskRows({status:"open", limit:4})` · `listTimeline(pdb, me.id, {limit:4})` ("עדכונים אחרונים") · `getQuestionnaire(pdb)` (באנר "שאלון ממתין" אם `!submitted`). אין service/טבלה חדשים — הכול מודולים קיימים שכבר מכוסים בבדיקות בידוד שלהם.
+- **פרופיל `/p/profile`:** קריאה בלבד. נוסף `getMyProfile(pdb: PatientDb)` ל-`modules/patients` — `pdb.self()` + `findMany(patient_treatment_type / consent)` דרך ה-guard. עדכון פרטים = "שלחו הודעה לנופר" (אין טופס עריכה למטופל ב-v1 — דוא"ל ההתחברות מסתבך).
+- **nav מטופל:** נוספו "שאלון קליטה" ו-"פרופיל" ל-`patient-shell` `DEFAULT_NAV` (8 פריטים). ה-`TopNav` גולש למספר שורות במובייל.
+- **בדיקות:** case ל-`getMyProfile` ב-`patient-isolation.test.ts` (מחזיר רק את הפרופיל של הקורא). 110 סה"כ.
+- **נבדק בדפדפן מול Neon:** מטופל "בדיקה התראה" — דשבורד מציג "אין פגישה קרובה" (הפגישה שלו כבר עברה), "0 משימות פתוחות", ו-4 עדכונים אחרונים עם אייקונים · פרופיל מציג שם + תאריך הצטרפות + "—" לשדות ריקים · nav מלא (8) · **נבדק responsive** ב-375px — הכרטיסים נערמים, ה-nav גולש. console נקי.
+
+**נדחו:** עריכת פרטי מטופל · widget-ים נוספים (מדדים/גרפים) · התאמה אישית של הדשבורד.

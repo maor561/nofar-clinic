@@ -6,9 +6,9 @@
 
 ## מצב נוכחי
 
-שלב **דומיין**. Core: WP-00..09 ✓. **WP-08 + WP-10..18 ✓** (Patients · Timeline · Appointments · Sessions · Plans · Tasks · Messaging · Documents · **Questionnaire**).
-109 בדיקות ירוקות, הפריסה חיה, Neon + Resend + Blob מחוברים.
-**הבא: WP-19 — Patient App Shell + Dashboard.**
+שלב **דומיין**. Core ✓. **WP-08 + WP-10..19 ✓** — כל מודולי הדומיין + מרחב המטופל.
+110 בדיקות ירוקות, הפריסה חיה, Neon + Resend + Blob מחוברים.
+**הבא: WP-20 — Therapist App Shell + Dashboard.**
 
 ## קישורים
 
@@ -27,7 +27,8 @@
 
 ## בעבודה
 
-- **WP-19 — Patient App Shell + Dashboard** (הבא). מרחב המטופל: דשבורד עם הפגישה הבאה / משימות פתוחות / עדכונים; ליטוש ניווט המטופל.
+- **WP-20 — Therapist App Shell + Dashboard** (הבא). דשבורד מטפלת: מטופלים פעילים, פגישות היום/קרובות, הודעות שלא נקראו, התראות, משימות; ליטוש ניווט המטפלת.
+- **WP-19 — Patient App Shell + Dashboard** ✓ — דשבורד `/p` (פגישה הבאה / משימות / עדכונים / באנר שאלון) + `/p/profile` (קריאה) + nav מלא (8). responsive נבדק.
 - **WP-18 — Questionnaire** ✓ — `questionnaire_response` (מיגרציה 0012) + תשובות ב-`field_value` (8 שאלות ב-Registry); `/p/questionnaire` (טופס→קריאה, re-submit) + `/t/patients/[id]/questionnaire`; timeline + התראה.
 - **WP-08 Files + WP-17 Documents** ✓ — `@vercel/blob` private בלבד, נגיש רק דרך `/api/documents/[id]` scoped; `visibility` (`therapist_only`/`therapist_and_patient`) נאכף בכל קריאה של מטופל; מסכים `/t/patients/[id]/documents` + `/p/documents`. round-trip אמיתי אומת על ה-deploy החי (העלאה→הורדה→404 למטופל זר). מקומית אפשר להוסיף `BLOB_READ_WRITE_TOKEN` ל-`.env.local` לבדיקות מקומיות.
 - **WP-16 — Messaging** ✓ — `message_thread`/`message` (מיגרציה 0010, dual-scoped); polling ב-`router.refresh()`; `/t/messages` תיבה + `/p/messages`.
@@ -125,6 +126,12 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-31 — WP-19 Patient App Shell + Dashboard
+דשבורד `/p` (ADR-031): מרכיב 4 קריאות מקבילות דרך `getPatientDb()` — הפגישה הבאה (`listAppointmentRows`) · משימות פתוחות (`listTaskRows`) · עדכונים אחרונים (`listTimeline` scoped) · באנר "שאלון ממתין" (`getQuestionnaire`). ללא service/טבלה חדשים.
+`/p/profile` — קריאה בלבד; נוסף `getMyProfile(pdb: PatientDb)` ל-`modules/patients` (`self()` + `findMany` דרך ה-guard). nav מטופל הושלם: +"שאלון קליטה" +"פרופיל" (8 פריטים).
+case ל-`getMyProfile` ב-`patient-isolation.test.ts` → 110 סה"כ. lint/typecheck/build ירוקים.
+**נבדק בדפדפן מול Neon:** דשבורד "בדיקה התראה" — "אין פגישה קרובה" (הפגישה עברה), "0 משימות", 4 עדכונים עם אייקונים · פרופיל מציג שם + הצטרפות · nav מלא · **responsive 375px** — כרטיסים נערמים, nav גולש. console נקי.
 
 ### 2026-08-31 — WP-18 Questionnaire (שאלון קליטה)
 `modules/questionnaires` (ADR-030): `questionnaire_response` (מיגרציה `0012`, הוחלה על Neon; dual-scoped, unique patient) — רק `status` (open/submitted) + `submitted_at`. **התשובות ב-`field_value`** (`entity='questionnaire'`, `entity_id=response.id`). נוספו 5 הגדרות `questionnaire` ל-`FIELD_REGISTRY` (סה"כ 8); `db:registry` הורץ.

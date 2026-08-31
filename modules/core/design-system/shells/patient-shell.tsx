@@ -11,6 +11,7 @@ const DEFAULT_NAV: NavItem[] = [
   { label: "הודעות", icon: "chat", href: "/p/messages" },
   { label: "מסמכים", icon: "doc", href: "/p/documents" },
   { label: "שאלון קליטה", icon: "form", href: "/p/questionnaire" },
+  { label: "פרופיל", icon: "settings", href: "/p/profile" },
 ];
 
 function initials(name: string) {

@@ -1,5 +1,5 @@
 import { and, asc, eq, ilike, inArray, or, type SQL } from "drizzle-orm";
-import type { TherapistDb } from "@/modules/core/authz";
+import type { TherapistDb, PatientDb } from "@/modules/core/authz";
 import { recordEvent } from "@/modules/patient-file";
 import {
   patient,
@@ -124,6 +124,21 @@ export async function getPatient(tdb: TherapistDb, id: string): Promise<PatientD
   const [tt, cs] = await Promise.all([
     tdb.findMany(patientTreatmentType, eq(patientTreatmentType.patientId, id)),
     tdb.findMany(consent, eq(consent.patientId, id)),
+  ]);
+  return {
+    ...p,
+    treatmentTypes: tt.map((r) => r.treatmentType),
+    consents: cs.map((r) => r.kind),
+  };
+}
+
+/** The signed-in patient's own profile (WP-19), through the patient guard. */
+export async function getMyProfile(pdb: PatientDb): Promise<PatientDetail | null> {
+  const p = await pdb.self();
+  if (!p) return null;
+  const [tt, cs] = await Promise.all([
+    pdb.findMany(patientTreatmentType, eq(patientTreatmentType.patientId, p.id)),
+    pdb.findMany(consent, eq(consent.patientId, p.id)),
   ]);
   return {
     ...p,

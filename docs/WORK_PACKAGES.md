@@ -134,10 +134,10 @@ Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפ
 **DoD:** מילוי מקצה-לקצה ✓ (נבדק בדפדפן מול Neon) · תשובות ב-`field_value` ✓ · 6 בדיקות isolation ✓.
 **תלוי:** WP-09, WP-11 · **הבא:** WP-19 (Patient App Shell + Dashboard)
 
-### WP-19 · Patient App Shell + Dashboard ⬜
-ניווט מטופל (דשבורד / התוכנית שלי / המשימות שלי / הפגישות שלי / הודעות / מסמכים / פרופיל), דשבורד: פגישה הבאה, משימות פתוחות, עדכון אחרון מהמטפל.
-**DoD:** מטופל רואה רק את שלו בכל מסך; ריצת `tests/isolation` מלאה ירוקה; responsive נבדק.
-**תלוי:** WP-11..WP-18
+### WP-19 · Patient App Shell + Dashboard ✅
+דשבורד `/p` (ADR-031): הפגישה הבאה · משימות פתוחות · עדכונים אחרונים (`listTimeline` scoped) · באנר שאלון-ממתין — הרכבה מעל מודולים קיימים, ללא service/טבלה חדשים. `/p/profile` (קריאה בלבד, `getMyProfile(pdb)`). nav מטופל הושלם ל-8 פריטים (+"שאלון קליטה" +"פרופיל").
+**DoD:** מטופל רואה רק את שלו ✓ · `tests/isolation` מלאה ירוקה (110) ✓ · responsive נבדק (375px) ✓.
+**תלוי:** WP-11..WP-18 · **הבא:** WP-20 (Therapist App Shell + Dashboard)
 
 ### WP-20 · Therapist App Shell + Dashboard ⬜
 ניווט מטפל (Dashboard / מטופלים / יומן / הודעות / התראות / מסמכים / הגדרות), דשבורד: מטופלים פעילים, פגישות היום/קרובות, הודעות שלא נקראו, התראות, משימות.
