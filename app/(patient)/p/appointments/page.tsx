@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { getPatientDb } from "@/modules/core/authz/server";
+import Link from "next/link";
+import { getPatientDb, getSchedulingView } from "@/modules/core/authz/server";
 import { listAppointmentRows, APPT_STATUS_LABEL, treatmentLabel } from "@/modules/appointments";
-import { Card, EmptyState, cn } from "@/modules/core/design-system";
+import { Button, Card, EmptyState, cn } from "@/modules/core/design-system";
 import { clinicDateFmt } from "@/lib/tz";
 
 export const metadata: Metadata = { title: "הפגישות שלי — נופר" };
@@ -11,7 +12,11 @@ const timeFmt = clinicDateFmt({ hour: "2-digit", minute: "2-digit" });
 
 export default async function MyAppointmentsPage() {
   const pdb = await getPatientDb();
-  const rows = await listAppointmentRows(pdb, { ascending: true, limit: 500 });
+  const [rows, view] = await Promise.all([
+    listAppointmentRows(pdb, { ascending: true, limit: 500 }),
+    getSchedulingView(),
+  ]);
+  const canBook = !!(await view?.config())?.policy?.selfSchedulingEnabled;
 
   // server render — "now" splits upcoming from past
   /* eslint-disable-next-line react-hooks/purity */
@@ -21,9 +26,16 @@ export default async function MyAppointmentsPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold">הפגישות שלי</h1>
-        <p className="text-ink-soft text-sm">הפגישות הקרובות והקודמות שלך אצל נופר.</p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold">הפגישות שלי</h1>
+          <p className="text-ink-soft text-sm">הפגישות הקרובות והקודמות שלך אצל נופר.</p>
+        </div>
+        {canBook && (
+          <Button asChild size="sm">
+            <Link href="/p/appointments/new">קביעת תור חדש</Link>
+          </Button>
+        )}
       </header>
 
       <section className="space-y-2">

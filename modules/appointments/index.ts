@@ -121,6 +121,36 @@ export async function createAppointment(
   return { id: row.id };
 }
 
+/**
+ * A patient books their own appointment from an open slot (WP-29). The guard
+ * forces `patient_id` + `therapist_id` from the scope, so the caller cannot
+ * book for anyone else. Availability / lead-time / overlap are validated by the
+ * caller (server action) against a fresh `SchedulingView` right before this.
+ * Auto-confirmed — status is `scheduled` immediately.
+ */
+export async function bookSelfAppointment(
+  pdb: PatientDb,
+  input: { startsAt: Date; endsAt: Date; treatmentType?: TreatmentType | null },
+): Promise<{ id: string }> {
+  const [row] = await pdb.insert(appointment, {
+    startsAt: input.startsAt,
+    endsAt: input.endsAt,
+    treatmentType: input.treatmentType ?? null,
+    notes: null,
+    status: "scheduled",
+  });
+
+  await recordEvent(pdb, {
+    patientId: pdb.patientId,
+    type: "appointment",
+    summary: `פגישה נקבעה — ${fmtWhen(input.startsAt)}`,
+    occurredAt: input.startsAt,
+    refId: row.id,
+  });
+
+  return { id: row.id };
+}
+
 export async function updateAppointment(
   tdb: TherapistDb,
   id: string,

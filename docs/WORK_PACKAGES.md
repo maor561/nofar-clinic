@@ -179,6 +179,16 @@ GitHub Action / Vercel Cron → dump ל-Blob/יעד מוצפן · שמירת 4 �
 **DoD:** dump שבועי רץ ונשמר; שחזור ממנו נבדק.
 **תלוי:** WP-04, WP-21
 
+### WP-28 · זמינות מטפלת + מנוע חלונות ✅
+`modules/availability` (ADR-039, מיגרציה `0013`, therapist-scoped): `availability_rule` (חלון שבועי חוזר) · `availability_exception` (תאריך חסום) · `booking_policy` (שורה אחת: טוגל, משך, granularity, lead, horizon, buffer). `computeOpenSlots` **פונקציה טהורה** (9 בדיקות יחידה) — כל שעון-קיר דרך `lib/tz`. `getAvailabilitySettings`/`saveAvailability`/`addBlockedDate`/`removeBlockedDate` (מקבלים `TherapistDb`). מסך `/t/settings/availability` + קישור מ-`/t/settings`.
+**DoD:** מטפלת מגדירה שעות + מדיניות + תאריכים חסומים ✓ · המנוע מכבד rules/blocked/busy/buffer/lead/horizon ✓ · 9 בדיקות מנוע + 6 בידוד ✓ · נבדק בדפדפן מול Neon.
+**תלוי:** WP-12 · **הבא:** WP-29
+
+### WP-29 · קביעת תור עצמית למטופל ✅
+`SchedulingView` ב-`core/authz` (ADR-040) — משטח קריאה צר: config של המטפלת + `busyRanges` אטומים (`{start,end}` בלבד, ללא PII). `getSchedulingView()` — `therapistId` מה-session בלבד. `bookSelfAppointment(pdb,…)` ב-`modules/appointments` — insert דרך ה-guard, status `scheduled` (**אישור אוטומטי**), `recordEvent`. `bookSlotAction` מאמת מחדש את השעה מול view טרי לפני ה-insert. מסך `/p/appointments/new` (ניווט שבועי, שעה=כפתור, `confirm`) + כפתור "קביעת תור חדש" ב-`/p/appointments` (מותנה בטוגל).
+**DoD:** מטופל רואה חלונות פנויים בלבד ✓ · קובע → פגישה ביומן המטפלת + בפגישות שלו + timeline + התראה לשני הצדדים ✓ · שעה שנתפסה נעלמת מהרשת + נדחית ב-action ✓ · 6 בדיקות בידוד ✓ · נבדק בדפדפן מול Neon מקצה לקצה.
+**תלוי:** WP-28, WP-12 · **הבא:** WP-32 (Google Calendar — חסום על credentials מהלקוח)
+
 ### WP-22 · חומרת בידוד — סקירה סופית ✅
 סקירה מלאה (ADR-034): route+module+guard+auth · `tests/isolation` 67/67 · probes זיוף URL/ID/Request על ה-deploy החי כמטופל. **2 פערי הגנה-בעומק נסגרו:** `getFieldValues` scoped ל-`patient_id` (לא רק therapist); `createSession/Appointment/Task/Document` מאמתים patient scope. +3 בדיקות.
 **DoD:** אפס ממצאי בידוד ניתנים לניצול ✓ · דוח חתום ב-`STATUS.md` + ADR-034 ✓.
@@ -188,4 +198,6 @@ GitHub Action / Vercel Cron → dump ל-Blob/יעד מוצפן · שמירת 4 �
 
 ## שלב 2 (רק כותרות)
 
-WP-30 מדדים + הזנה יומית · WP-31 תזונה · WP-32 Google Calendar sync · WP-33 מנוע שאלונים מלא · WP-34 תבניות טיפול · WP-35 גרפים ומגמות · WP-36 2FA למטופל.
+WP-32 Google Calendar sync (דחיפה Nofar→Google + קריאת "תפוס"; שם פרטי בלבד בכותרת האירוע; ADR עתידי — **חסום על OAuth credentials מהלקוח**) · WP-33 מנוע שאלונים מלא · WP-36 2FA למטופל · WP-37 תבניות טיפול · WP-38 גרפים ומגמות · WP-39 מדדים + הזנה יומית · WP-40 תזונה.
+
+*(WP-28/29 = זמינות + קביעה עצמית — הושלמו, ראו למעלה. WP-30/31/34/35 מוזגו/מוספרו מחדש כדי למנוע התנגשות.)*

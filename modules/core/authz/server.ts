@@ -10,6 +10,7 @@ import { recordAudit } from "@/modules/core/audit";
 import type { ActiveSession } from "@/modules/core/auth";
 import { scopedDbFor, type ScopedAuditSink } from "./index";
 import type { PatientDb, TherapistDb, ScopedDb } from "./internal/scoped-db";
+import { SchedulingView } from "./internal/scheduling-view";
 
 /**
  * Request-scoped entry points. A route / RSC loader / server action calls one of
@@ -52,3 +53,16 @@ export async function getScopedDb(): Promise<ScopedDb | null> {
   const { ip } = await requestContext();
   return scopedDbFor(getDb(), session, auditSink(session, ip));
 }
+
+/**
+ * Read-only view of the current user's therapist scheduling surface (config +
+ * opaque busy ranges), for the patient self-booking screen. `therapistId` is
+ * taken from the session. Null when signed out. See ADR-040.
+ */
+export async function getSchedulingView(): Promise<SchedulingView | null> {
+  const session = await getCurrentSession();
+  if (!session) return null;
+  return new SchedulingView(getDb(), session.therapistId);
+}
+
+export { SchedulingView };

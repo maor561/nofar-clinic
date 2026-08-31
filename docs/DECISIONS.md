@@ -456,3 +456,70 @@ Vercel מכבד לכל ה-Serverless Functions. (`preferredRegion` route-segment
 של ספרות בלבד, ביטוי בעברית בלבד, או שילוב. הנימוק: אורך נושא את האנטרופיה; כפיית מחלקות תווים
 דוחפת דווקא לתבניות צפויות. עודכנו רמזי ה-UI (invite / reset / settings) ובדיקת המדיניות.
 argon2id, נעילת חשבון, throttle IP, ו-TOTP אופציונלי — ללא שינוי.
+
+## ADR-038 — הסתרת מודול ההודעות (WP-16) מאחורי feature flag
+**תאריך:** 2026-08-31 · **סטטוס:** נעול · לבקשת הלקוח
+
+הלקוח ביקש להסיר את אפשרות ההתכתבות מהממשק **בלי למחוק קוד** ("בשלב הזה רק תוריד את האפשרות
+לשימוש והסתר אותה"). המימוש:
+
+- **`lib/features.ts` חדש** — אובייקט `FEATURES` עם `messaging: false` (const). דגל יחיד להיפוך.
+- **ניווט:** פריט "הודעות" מוסתר בשני ה-shells (`therapist-shell` / `patient-shell`) כשהדגל כבוי.
+- **דשבורד מטפל:** אריח "הודעות שלא נקראו" הוסר; ה-grid ירד ל-3 עמודות; `unreadCountFor` כבר לא נקרא.
+- **מסלולים:** `/t/messages`, `/t/messages/[patientId]`, `/p/messages` → `notFound()` כשהדגל כבוי (404).
+- **Server action:** `sendMessageAction` מחזיר "התכונה אינה זמינה כרגע." כשהדגל כבוי (הגנה בעומק — ה-UI ממילא לא קיים).
+- **מה שלא נגע:** `modules/messaging/` על שלמותו, מיגרציה 0010, `message_thread`/`message`, בדיקות הבידוד (`messaging-module.test.ts` — 5, עדיין ירוקות), רכיבי `chat.tsx`/`message-list.tsx`.
+- שוכתבו 3 מחרוזות תיאור (מסך auth, empty-state של התראות + ציר זמן) שהזכירו "הודעות" כדוגמה.
+
+**החזרה:** `FEATURES.messaging = true` מחזיר ניווט + מסלולים. אריח הדשבורד — הוספה ידנית (יש הערה בקוד).
+114 בדיקות · lint · build — ירוקים. אומת בדפדפן: אין "הודעות" בניווט מטפל/מטופל, `/t/messages` + `/p/messages` → 404.
+
+## ADR-039 — זמינות מטפלת + קביעת תור עצמית למטופל (WP-28 / WP-29)
+**תאריך:** 2026-08-31 · **סטטוס:** נעול · לבקשת הלקוח (יומן — חלק א׳)
+
+הלקוח ביקש שמטופל יוכל לקבוע פגישה לפי חלונות הזמן הפנויים. 4 החלטות שנסגרו בדיון: אישור
+**אוטומטי** (הפגישה `scheduled` מיד, ללא סטטוס `pending`) · Google Calendar בשלב נפרד (ADR עתידי) ·
+טווח החלטות המדיניות ניתן לשיקול המטפלת.
+
+- **מודול `modules/availability/`** — 3 טבלאות therapist-scoped (מיגרציה `0013`):
+  `availability_rule` (חלון שבועי חוזר — weekday 0–6, דקות מחצות; unique לכל weekday, חלון אחד ליום ב-v1) ·
+  `availability_exception` (תאריך חסום בודד) · `booking_policy` (שורה אחת למטפלת:
+  `self_scheduling_enabled` כבוי כברירת מחדל, `slot_minutes`, `granularity_minutes`,
+  `lead_hours`, `horizon_days`, `buffer_minutes`).
+- **מנוע חלונות `slots.ts`** — פונקציה **טהורה** `computeOpenSlots({rules, blockedDates, busy, policy, from, to, now})`.
+  כל חישוב שעון-קיר דרך `lib/tz` (עוגן צהריים ל-DST). מחזירה רשימת instants ל-start.
+  ריווח (`buffer`) מכרסם גם מקצוות החלון וגם סביב טווחי busy. leadHours / horizonDays נאכפים.
+  9 בדיקות יחידה.
+- **כתיבה `bookSelfAppointment(pdb, {startsAt, endsAt})`** ב-`modules/appointments` — insert דרך ה-guard
+  (`PatientDb` כופה `patient_id` + `therapist_id`), status `scheduled`, `recordEvent("appointment")`.
+- **Server action `bookSlotAction`** (`/p/appointments/new`) — מאמת מחדש את השעה מול `SchedulingView`
+  טרי (זמינות + lead + חפיפה עם busy) לפני ה-insert; שעה שנתפסה בינתיים → "השעה כבר לא פנויה".
+  אחרי הקביעה: התראה למטפלת (`appointment_scheduled`) + התראת אישור למטופל (`email: true`).
+- **מסכים:** `/t/settings/availability` (טוגל, שבעה ימים, מדיניות, תאריכים חסומים) עם קישור מ-`/t/settings` ·
+  `/p/appointments/new` (ניווט שבועי, כפתור לכל שעה פנויה, `confirm` לפני קביעה) עם כפתור "קביעת תור חדש"
+  ב-`/p/appointments` (מוצג רק כשהטוגל דלוק).
+- **מרוץ תפיסה:** re-check אפליקטיבי ב-action מספיק לקליניקה של מטפלת אחת. constraint EXCLUDE ב-Postgres
+  (`btree_gist`) — שיפור עתידי (PGlite בבדיקות לא תומך → הושאר בחוץ).
+
+**DoD:** מטפלת מגדירה זמינות ✓ · מטופל רואה חלונות פנויים בלבד (ללא פרטי מטופלים אחרים) ✓ ·
+קובע → פגישה ביומן המטפלת + בפגישות שלו + התראה ✓ · שעה שנקבעה נעלמת מהרשת ✓ ·
+15 בדיקות (9 מנוע + 6 בידוד) ✓ · נבדק בדפדפן מול Neon מקצה לקצה.
+**תלוי:** WP-12, WP-09 · **הבא:** WP-32 (Google Calendar — ממתין ל-OAuth credentials מהלקוח).
+
+## ADR-040 — `SchedulingView`: משטח קריאה צר לקביעה עצמית
+**תאריך:** 2026-08-31 · **סטטוס:** נעול
+
+**הבעיה:** מסך הקביעה של המטופל צריך לקרוא את הגדרת הזמינות של המטפלת ואת השעות התפוסות, אבל
+`PatientDb` **לא יכול אפילו לנקוב** בטבלה therapist-scoped (הגנת ה-guard), ואסור שמטופל יראה
+*מי* קבע שעה — רק *שהיא* תפוסה.
+
+**ההחלטה:** מחלקת קריאה-בלבד `SchedulingView` ב-`modules/core/authz/internal/`, שנחשפת דרך
+`getSchedulingView()` ב-`authz/server.ts`. היא מקבלת `therapistId` **מה-session בלבד** (לעולם לא מ-input)
+ומספקת שתי פעולות ותו לא:
+1. `config()` — `booking_policy` + `availability_rule` + תאריכים חסומים של אותה מטפלת.
+2. `busyRanges(from, to)` — `{ start, end }` בלבד של פגישות שאינן מבוטלות. ללא `patient_id`, ללא הערות,
+   ללא סוג טיפול. אין נתיב לזליגת PII של מטופל אחר.
+
+הכתיבה (`bookSelfAppointment`) נשארת מאחורי ה-guard המלא. זהו חריג צר ומכוון ל-guard (בדומה ל-
+`PatientDb.self()`), מתועד כאן, ולא מרחיב את משטח הכתיבה. `authz/internal` כבר מייבא סכימות דומיין
+(`patient` ב-`scoped-db`), כך שכיוון התלות עקבי.

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { requireTherapist, getDisplayName } from "@/modules/core/auth/server";
 import { getAccountInfo } from "@/modules/core/auth";
 import { Card, CardContent, CardHeader, CardTitle, Icon } from "@/modules/core/design-system";
@@ -45,6 +46,24 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <TotpEnroll enabled={acc?.totpEnabled ?? false} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>זמינות וקביעת תורים</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <p className="text-ink-soft">
+            הגדרת שעות העבודה השבועיות, תאריכים חסומים, והאם מטופלים יכולים לקבוע תור בעצמם לפי
+            החלונות הפנויים.
+          </p>
+          <Link
+            href="/t/settings/availability"
+            className="text-sage-deep inline-flex items-center gap-1 font-semibold hover:underline"
+          >
+            לניהול הזמינות ←
+          </Link>
         </CardContent>
       </Card>
 

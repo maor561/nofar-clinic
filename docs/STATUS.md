@@ -1,14 +1,17 @@
 # STATUS
 
-**עודכן:** 2026-08-29
+**עודכן:** 2026-08-31
 
 ---
 
 ## מצב נוכחי
 
-שלב **סגירה**. **WP-00..22 ✓ · WP-23 קוד ✓** (Blob EU = פעולת לקוח).
-**114 בדיקות ירוקות** (`tests/isolation` 67/67), הפריסה חיה, פונקציות רצות ב-`fra1`.
-**הבא: WP-24..27 (לא חוסמי v1) — או משימות שהלקוח יגדיר.**
+שלב **סגירה** + דיוקי מוצר לפי שימוש של הלקוח. **WP-00..22 ✓ · WP-23 קוד ✓** (Blob EU = פעולת לקוח).
+**129 בדיקות ירוקות**, הפריסה חיה, פונקציות רצות ב-`fra1`.
+**מודול ההודעות (WP-16) מוסתר** מאחורי `lib/features.ts` (`messaging: false`) — קוד נשמר, ניווט+מסלולים כבויים (ADR-038).
+**היומן — חלק א׳ נגמר (WP-28 + WP-29 ✓):** זמינות מטפלת (`/t/settings/availability`) + מנוע חלונות טהור + קביעת תור עצמית למטופל (`/p/appointments/new`, אישור אוטומטי). `SchedulingView` ב-`core/authz` (ADR-040). נבדק מקצה לקצה מול Neon. מיגרציה `0013` הוחלה.
+**היומן — חלק ב׳ (WP-32, Google Calendar):** דחיפה Nofar→Google + קריאת "תפוס", שם פרטי בכותרת. **חסום על הלקוח** — הקמת OAuth client ב-Google Cloud (הלקוח באמצע ההקמה; ממתין ל-`GOOGLE_OAUTH_CLIENT_ID/SECRET`).
+**הבא: WP-32 (Google, כשה-credentials יגיעו) · WP-24..27 (לא חוסמי v1).**
 
 ## קישורים
 
@@ -35,7 +38,7 @@
 - **WP-19 — Patient App Shell + Dashboard** ✓ — דשבורד `/p` (פגישה הבאה / משימות / עדכונים / באנר שאלון) + `/p/profile` (קריאה) + nav מלא (8). responsive נבדק.
 - **WP-18 — Questionnaire** ✓ — `questionnaire_response` (מיגרציה 0012) + תשובות ב-`field_value` (8 שאלות ב-Registry); `/p/questionnaire` (טופס→קריאה, re-submit) + `/t/patients/[id]/questionnaire`; timeline + התראה.
 - **WP-08 Files + WP-17 Documents** ✓ — `@vercel/blob` private בלבד, נגיש רק דרך `/api/documents/[id]` scoped; `visibility` (`therapist_only`/`therapist_and_patient`) נאכף בכל קריאה של מטופל; מסכים `/t/patients/[id]/documents` + `/p/documents`. round-trip אמיתי אומת על ה-deploy החי (העלאה→הורדה→404 למטופל זר). מקומית אפשר להוסיף `BLOB_READ_WRITE_TOKEN` ל-`.env.local` לבדיקות מקומיות.
-- **WP-16 — Messaging** ✓ — `message_thread`/`message` (מיגרציה 0010, dual-scoped); polling ב-`router.refresh()`; `/t/messages` תיבה + `/p/messages`.
+- **WP-16 — Messaging** ✓ **(מוסתר מ-2026-08-31, ADR-038)** — `message_thread`/`message` (מיגרציה 0010, dual-scoped); polling ב-`router.refresh()`; `/t/messages` תיבה + `/p/messages`. הדגל `lib/features.ts` `messaging: false` מסתיר ניווט + אריח דשבורד, המסלולים מחזירים 404. `messaging: true` מחזיר.
 - **WP-15 — Tasks** ✓ — `task` dual-scoped (מיגרציה 0009); `setTaskStatus` לשני התפקידים; `task_created`/`task_completed` ל-Timeline; `/p/tasks`.
 - **WP-14 — Treatment Plans** ✓ — `treatment_plan_version` append-only (מיגרציה 0008); תוכן דרך Field Registry; `/p/plan`.
 - **WP-13 — Treatment Sessions** ✓ — `treatment_session` (מיגרציה 0007) + מסך "זרימה אחת". שלב "משימות" מהזרימה — יחווט ב-WP-15.
@@ -130,6 +133,17 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-31 — WP-28 + WP-29: זמינות + קביעת תור עצמית
+**WP-28 (זמינות + מנוע):** מודול `modules/availability` — `availability_rule` / `availability_exception` / `booking_policy` (מיגרציה `0013`, therapist-scoped). `computeOpenSlots` פונקציה טהורה ב-`slots.ts` (9 בדיקות) — rules − blocked − busy − buffer − lead − horizon. מסך `/t/settings/availability` (טוגל, 7 ימים, מדיניות, תאריכים חסומים).
+**WP-29 (קביעה עצמית):** `SchedulingView` ב-`core/authz/internal` + `getSchedulingView()` (ADR-040) — קורא config של המטפלת + `busyRanges` אטומים (`{start,end}` בלבד). `bookSelfAppointment(pdb,…)` — insert דרך ה-guard, `scheduled` מיד (אישור אוטומטי). `bookSlotAction` מאמת מחדש מול view טרי. מסך `/p/appointments/new` + כפתור ב-`/p/appointments`.
+ADR-039 + ADR-040. 129 בדיקות (114 → +15) · lint · build ✓. **נבדק בדפדפן מול Neon:** מטפלת הגדירה א׳–ה׳ 09:00–16:00 + טוגל → מטופל ראה חלונות (מכבד lead time) → קבע 12:00 → פגישה ביומן המטפלת ("מתוכננת") + בפגישות המטופל + התראה "מטופל/ת קבע/ה פגישה" → השעה נעלמה מהרשת (11:30/12:00/12:30 ירדו).
+Google Calendar (WP-32) — הלקוח מקים OAuth client ב-Google Cloud, ממתין ל-credentials.
+
+### 2026-08-31 — דיון היומן + הסתרת מודול ההודעות
+**דיון (טרם קוד):** הלקוח רוצה (1) יומן מטפל מסונכרן עם Google Calendar, (2) קביעת תור עצמית ע"י מטופל לפי חלונות פנויים.
+4 החלטות נסגרו: סנכרון A+B (דחיפה החוצה + קריאת "תפוס", ללא דו-כיווני מלא) · שם פרטי בלבד בכותרת אירוע Google · אישור אוטומטי לקביעת מטופל · סדר בנייה = לשיקול דעת. → מוקאפ + ADR + WP-32..35.
+**הסתרת ההודעות (ADR-038):** `lib/features.ts` חדש (`FEATURES.messaging=false`). ניווט "הודעות" מוסתר בשני ה-shells · אריח "הודעות שלא נקראו" הוסר מדשבורד המטפל (grid→3) · `/t/messages`,`/t/messages/[patientId]`,`/p/messages` → `notFound()` · `sendMessageAction` מסרב · `modules/messaging/` + מיגרציה 0010 + בדיקות — נשמרו כמות שהם. 3 מחרוזות תיאור עודכנו. אומת בדפדפן (מטפל+מטופל: אין "הודעות" בניווט, שני המסלולים → 404). typecheck/lint/build/114 בדיקות ✓.
 
 ### 2026-08-31 — מסך הגדרות + front door
 `/` (היה placeholder של WP-01) → front door אמיתי: מחובר→`/t`/`/p`, אחרת נחיתה ממותגת + כפתור "כניסה".
