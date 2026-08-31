@@ -129,10 +129,10 @@ Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפ
 **DoD:** `therapist_only` לא נגיש למטופל ב-list/get/route ✓ · אירוע Timeline ✓ · 5 בדיקות isolation ✓ · round-trip אמיתי אומת על ה-deploy החי.
 **תלוי:** WP-08, WP-11 · **הבא:** WP-18 (Questionnaires)
 
-### WP-18 · Questionnaire — שאלון קליטה ⬜
-שאלון אחד בנוי על WP-09, המטופל ממלא בקליטה, המטפל צופה, אירוע Timeline + התראה.
-**DoD:** מילוי מקצה לקצה; תשובות ב-`field_value`; בדיקת בידוד.
-**תלוי:** WP-09, WP-11
+### WP-18 · Questionnaire — שאלון קליטה ✅
+`modules/questionnaires` (ADR-030): `questionnaire_response` (מיגרציה `0012`, dual-scoped, unique patient) — רק מצב הגשה; **תשובות ב-`field_value`** (`entity='questionnaire'`, 8 הגדרות ב-Registry). `getQuestionnaire`/`startResponse`/`submitQuestionnaire` · מסכים `/p/questionnaire` (טופס → תצוגת קריאה, re-submit) · `/t/patients/[id]/questionnaire` (קריאה) · nav "שאלון קליטה" + כפתור בתיק · timeline + התראה.
+**DoD:** מילוי מקצה-לקצה ✓ (נבדק בדפדפן מול Neon) · תשובות ב-`field_value` ✓ · 6 בדיקות isolation ✓.
+**תלוי:** WP-09, WP-11 · **הבא:** WP-19 (Patient App Shell + Dashboard)
 
 ### WP-19 · Patient App Shell + Dashboard ⬜
 ניווט מטופל (דשבורד / התוכנית שלי / המשימות שלי / הפגישות שלי / הודעות / מסמכים / פרופיל), דשבורד: פגישה הבאה, משימות פתוחות, עדכון אחרון מהמטפל.

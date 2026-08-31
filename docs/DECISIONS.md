@@ -324,3 +324,16 @@ Spike מול Neon (endpoint pooled, פרנקפורט) — `modules/core/data/scr
 - **נבדק על ה-deploy החי** (שם ה-token מוזרק): העלאת PDF אמיתית לדנה → נשמר ל-Blob פרטי · הורדה דרך `/api/documents/[id]` → 200, `application/pdf`, `content-length` נכון, `content-disposition: inline; filename*=UTF-8''…`, `cache-control: private, no-store`, הגוף מתחיל ב-`%PDF` · toggle נראות משותף↔פנימי · `/p/documents` של מטופל אחר → ריק · **מטופל אחר שמושך את ה-URL של מסמך `therapist_only` → 404** (כלל הזהב).
 
 **נדחו:** קבצים מרובים בהעלאה אחת · thumbnails/preview · `putFromUrl` · צירוף מסמך להודעה (בהמשך) · הצפנת קבצים at-rest מעבר לפרטיות של Blob.
+
+## ADR-030 — Intake questionnaire: thin response row, answers in field_value
+**תאריך:** 2026-08-31 · **סטטוס:** נעול · **מממש WP-18**
+
+- **schema:** `questionnaire_response` (מיגרציה `0012`, dual-scoped, unique `patient_id`) — רק מיכל + מצב הגשה (`status` open/submitted, `submitted_at`). **התשובות ב-`field_value`** (`entity='questionnaire'`, `entity_id = response.id`) דרך ה-Field Registry (WP-09) — בדיוק כמו ב-DoD.
+- **registry:** נוספו 5 הגדרות `questionnaire` ל-`FIELD_REGISTRY` (main_goal / allergies / meals_per_day / exercise_freq / sleep_hours) לצד 3 הקיימות — 8 שאלות. `pnpm db:registry` הורץ מול Neon.
+- **service** (`modules/questionnaires`): `startResponse(pdb)` (יוצר open בביקור ראשון) · `getQuestionnaire(db)` (`TherapistDb | PatientDb` — response + fields; `null` אם לא התחיל) · `submitQuestionnaire(pdb, patientId, answers)` — מטופל בלבד: `setFieldValuesIn` → status `submitted` + `submitted_at` → `recordEvent("questionnaire_submitted")`. re-submit מותר (עדכון + אירוע נוסף).
+- **מסכים:** `/p/questionnaire` — טופס `<FieldInput>` per def; אחרי הגשה → תצוגת קריאה (`AnswersList`) + "עריכה ושליחה מחדש" (`?edit=1`) · `/t/patients/[id]/questionnaire` — קריאה בלבד + `audit("view","questionnaire_response")`. פריט nav "שאלון קליטה" ב-patient shell · כפתור "שאלון" בתיק.
+- ה-action (`getPatientDb()` ישירות — מטופל בלבד) מתריע למטפל (`questionnaire_submitted`, in-app).
+- **בדיקות:** `tests/isolation/questionnaires-module.test.ts` (6) — הגשה נוחתת ב-`field_value` + status + timeline · re-submit = עדכון + אירוע נוסף, response יחיד · ערך מחוץ לסכימה נדחה · מטפל רואה רק את המטופל שלו · `field_value` scoped למטפל הבעלים · patient handle עם id זר כותב רק את ה-response שלו. 109 סה"כ.
+- **נבדק בדפדפן מול Neon:** "בדיקה התראה" מילא/ה 6 שדות (scale/number/select/text) → הוגש → תצוגת קריאה · מטפלת רואה ב-`/t/patients/[id]/questionnaire` · התראה "שאלון קליטה מולא" ב-`/t/alerts` · אירוע "שאלון קליטה הוגש" בציר הזמן (סינון "שאלון"). console נקי.
+
+**נדחו:** יותר משאלון אחד · שאלון מותאם למטפל (הגדרות דרך ה-Registry ידנית ב-v1) · חתימה/הסכמה בתוך השאלון (יש `consent` נפרד ב-WP-10) · autosave של טיוטה (submit יחיד).

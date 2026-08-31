@@ -6,9 +6,9 @@
 
 ## מצב נוכחי
 
-שלב **דומיין**. Core: WP-00..09 ✓. **WP-10..17 ✓** (Patients · Timeline · Appointments · Sessions · Plans · Tasks · Messaging · **WP-08 Files + WP-17 Documents**).
-103 בדיקות ירוקות, הפריסה חיה, Neon + Resend + Blob מחוברים.
-**הבא: WP-18 — Questionnaire (שאלון קליטה על WP-09).**
+שלב **דומיין**. Core: WP-00..09 ✓. **WP-08 + WP-10..18 ✓** (Patients · Timeline · Appointments · Sessions · Plans · Tasks · Messaging · Documents · **Questionnaire**).
+109 בדיקות ירוקות, הפריסה חיה, Neon + Resend + Blob מחוברים.
+**הבא: WP-19 — Patient App Shell + Dashboard.**
 
 ## קישורים
 
@@ -27,7 +27,8 @@
 
 ## בעבודה
 
-- **WP-18 — Questionnaire** (הבא). שאלון קליטה אחד בנוי על Field Registry; המטופל ממלא בקליטה, המטפל צופה; תשובות ב-`field_value` (`entity='questionnaire'`); Timeline + התראה; בדיקת בידוד.
+- **WP-19 — Patient App Shell + Dashboard** (הבא). מרחב המטופל: דשבורד עם הפגישה הבאה / משימות פתוחות / עדכונים; ליטוש ניווט המטופל.
+- **WP-18 — Questionnaire** ✓ — `questionnaire_response` (מיגרציה 0012) + תשובות ב-`field_value` (8 שאלות ב-Registry); `/p/questionnaire` (טופס→קריאה, re-submit) + `/t/patients/[id]/questionnaire`; timeline + התראה.
 - **WP-08 Files + WP-17 Documents** ✓ — `@vercel/blob` private בלבד, נגיש רק דרך `/api/documents/[id]` scoped; `visibility` (`therapist_only`/`therapist_and_patient`) נאכף בכל קריאה של מטופל; מסכים `/t/patients/[id]/documents` + `/p/documents`. round-trip אמיתי אומת על ה-deploy החי (העלאה→הורדה→404 למטופל זר). מקומית אפשר להוסיף `BLOB_READ_WRITE_TOKEN` ל-`.env.local` לבדיקות מקומיות.
 - **WP-16 — Messaging** ✓ — `message_thread`/`message` (מיגרציה 0010, dual-scoped); polling ב-`router.refresh()`; `/t/messages` תיבה + `/p/messages`.
 - **WP-15 — Tasks** ✓ — `task` dual-scoped (מיגרציה 0009); `setTaskStatus` לשני התפקידים; `task_created`/`task_completed` ל-Timeline; `/p/tasks`.
@@ -124,6 +125,13 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-08-31 — WP-18 Questionnaire (שאלון קליטה)
+`modules/questionnaires` (ADR-030): `questionnaire_response` (מיגרציה `0012`, הוחלה על Neon; dual-scoped, unique patient) — רק `status` (open/submitted) + `submitted_at`. **התשובות ב-`field_value`** (`entity='questionnaire'`, `entity_id=response.id`). נוספו 5 הגדרות `questionnaire` ל-`FIELD_REGISTRY` (סה"כ 8); `db:registry` הורץ.
+service: `startResponse(pdb)` · `getQuestionnaire(db)` (שני scopes) · `submitQuestionnaire(pdb, patientId, answers)` — מטופל בלבד: `setFieldValuesIn` → status submitted → `recordEvent("questionnaire_submitted")`; re-submit מותר.
+מסכים `/p/questionnaire` (`<FieldInput>` per def → אחרי הגשה `AnswersList` + "עריכה ושליחה מחדש" `?edit=1`) · `/t/patients/[id]/questionnaire` (קריאה + `audit view`). nav "שאלון קליטה" ב-patient shell · כפתור "שאלון" בתיק. ה-action מתריע למטפל (`questionnaire_submitted`).
+6 בדיקות isolation → 109 סה"כ. lint/typecheck/build ירוקים.
+**נבדק בדפדפן מול Neon:** "בדיקה התראה" מילא/ה 6 שדות → הוגש → תצוגת קריאה · מטפלת רואה ב-`/t/patients/[id]/questionnaire` · התראה "שאלון קליטה מולא" ב-`/t/alerts` · אירוע "שאלון קליטה הוגש" בציר הזמן. console נקי.
 
 ### 2026-08-31 — WP-08 File Storage + WP-17 Documents
 `@vercel/blob` v2.8 נוסף · `core/files` (ADR-029): `putFile`/`getFileStream`/`deleteFile` — `access: "private"` בלבד, **אין URL ציבורי**. אילוצים ב-`core/files/labels.ts` טהור. הדלי `nofar-clinic-blob` (private, IAD1) נוצר וחובר לפרויקט; `BLOB_READ_WRITE_TOKEN` מוזרק ב-deploy (עדיין לא ב-`.env.local` מקומי).

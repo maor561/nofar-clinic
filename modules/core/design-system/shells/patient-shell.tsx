@@ -10,6 +10,7 @@ const DEFAULT_NAV: NavItem[] = [
   { label: "הפגישות שלי", icon: "calendar", href: "/p/appointments" },
   { label: "הודעות", icon: "chat", href: "/p/messages" },
   { label: "מסמכים", icon: "doc", href: "/p/documents" },
+  { label: "שאלון קליטה", icon: "form", href: "/p/questionnaire" },
 ];
 
 function initials(name: string) {
