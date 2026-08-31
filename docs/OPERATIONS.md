@@ -118,7 +118,7 @@ pg_dump "$DATABASE_URL_UNPOOLED" -Fc -f "nofar-$(date +%Y%m%d).dump"
 
 | ספק | תפקיד | מיקום מידע | DPA | הערות |
 |-----|-------|-----------|-----|-------|
-| **Vercel** | אירוח, הרצת קוד, לוגים | Functions: לפי אזור; יש להצמיד ל-EU (`fra1`/`arn1`). Blob: **IAD1 (ארה״ב)** בהגדרה הנוכחית | Vercel DPA סטנדרטי (בקישור בתחתית ה-Legal) — לאשר בחשבון | **פעולה:** Blob באזור ארה״ב — ר׳ §10 |
+| **Vercel** | אירוח, הרצת קוד, לוגים | Functions: **`fra1` (פרנקפורט)** — נכפה ב-`vercel.json` (`regions`) מ-WP-23. Blob: **IAD1 (ארה״ב)** — פתוח | Vercel DPA סטנדרטי — לאשר בחשבון | Function Region ב-Dashboard מומלץ גם הוא = Frankfurt (חגורה+שלייקס). Blob EU — ר׳ §10 |
 | **Neon** | Postgres | **פרנקפורט (`eu-central-1`)** ✓ | Neon DPA — לאשר | מיקום EU תקין |
 | **Resend** | דוא״ל טרנזקציוני (הזמנה/איפוס/תזכורת) | ארה״ב (Resend) + ספק תשתית | Resend DPA — לאשר | הדוא״ל מכיל שם פרטי + קישור; לא מכיל מידע רפואי |
 | **GitHub** | קוד + CI (ללא מידע מטופל) | ארה״ב | לא נדרש DPA — אין PII בקוד | לוודא שאין secrets/PII ב-repo |
@@ -128,7 +128,7 @@ pg_dump "$DATABASE_URL_UNPOOLED" -Fc -f "nofar-$(date +%Y%m%d).dump"
 אך עדיף לתקן את מיקום ה-Blob).
 
 **החלטה:**
-1. להצמיד את פונקציות Vercel לאזור EU (`fra1`) — ר׳ §10 (WP-23).
+1. פונקציות Vercel — **נכפו ל-`fra1` ב-`vercel.json`** (WP-23). לוודא ב-Dashboard → Settings → Functions → Function Region = Frankfurt.
 2. Blob — לבדוק אפשרות אזור EU; אם אין, לשקול S3 תואם באזור פרנקפורט. עד אז — לוודא שהסכמת
    `data_transfer_abroad` נאספת מכל מטופל (השדה קיים ב-WP-10).
 3. לאשר את שלושת ה-DPAs (Vercel/Neon/Resend) — פעולה חד-פעמית של הלקוח.
@@ -248,7 +248,7 @@ pg_dump "$DATABASE_URL_UNPOOLED" -Fc -f "nofar-$(date +%Y%m%d).dump"
 
 | WP | תיאור | חוסם פרודקשן עם מטופלים? |
 |----|-------|--------------------------|
-| **WP-23** | הצמדת פונקציות Vercel ל-EU (`fra1`) + פתרון אזור ל-Blob (EU / S3 פרנקפורט) + גיבוי Blob | **כן** (העברה לחו״ל) |
+| **WP-23** | ✅ פונקציות Vercel ל-`fra1` (`vercel.json`). **פתוח:** Blob store באזור EU (ליצור חדש + לעדכן `BLOB_READ_WRITE_TOKEN`; קובץ הבדיקה היחיד יאבד) או S3 פרנקפורט; גיבוי Blob | Blob עדיין US → העברה לחו״ל |
 | **WP-24** | הצפנת `totp_secret` at-rest (מפתח ב-env, `crypto.subtle` / libsodium) | מומלץ לפני פרודקשן |
 | **WP-25** | Retention cron: `/api/cron/purge` מוגן ב-`CRON_SECRET` → `purgeOldAudit` + גיזום `login_attempt`/הזמנות פגות; הגדרת `crons` ב-`vercel.ts` | לא (v1 רק צובר) |
 | **WP-26** | Anonymize + lock flow למחיקת מטופל מבוקרת (מסך + audit) | לא |

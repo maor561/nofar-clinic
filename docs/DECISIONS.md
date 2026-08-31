@@ -416,3 +416,23 @@ Spike מול Neon (endpoint pooled, פרנקפורט) — `modules/core/data/scr
 מסלולי המטופל ב-URL **חסרי `[id]`** (הכול "me") פרט ל-`/api/documents/[id]` שמוגן ונבדק.
 
 **נותר ל-WP-23** (חוסם פרודקשן): מיקום מידע EU + Blob.
+
+## ADR-035 — WP-23: פונקציות Vercel נכפו ל-`fra1`; Blob EU נותר פעולת לקוח
+**תאריך:** 2026-08-31 · **סטטוס:** נעול · **מממש WP-23 (חלק קוד)**
+
+לפני: `x-vercel-id` = `fra1::iad1::…` — הבקשה נכנסת בפרנקפורט אבל **הקוד רץ ב-iad1 (ארה״ב)**.
+עיבוד ה-PII (קריאה מ-Neon, טיפול בבקשות) התבצע מחוץ ל-EU.
+
+**תיקון קוד:** `vercel.json` → `{ "regions": ["fra1"] }`. זה ה-lever שה-Next.js build adapter של
+Vercel מכבד לכל ה-Serverless Functions. (`preferredRegion` route-segment — deprecated ב-Next 16,
+לא בשימוש.) מומלץ ללקוח לוודא גם Dashboard → Functions → Function Region = Frankfurt.
+
+**נותר לפעולת לקוח (לא ניתן בקוד):**
+1. **Blob store באזור EU.** אזור נקבע ביצירה ואינו ניתן לשינוי. יש ליצור store חדש (אם Vercel
+   מציעה `fra1` ל-Blob) ולעדכן `BLOB_READ_WRITE_TOKEN`; קובץ הבדיקה היחיד (`בדיקת-דם-אוגוסט.pdf`)
+   יאבד — זניח. חלופה: S3 תואם בפרנקפורט (`core/files` מופשט מספיק להחלפה).
+   **עד אז:** הסכמת `data_transfer_abroad` (מיושמת ב-WP-10) היא הבסיס החוקי הזמני.
+2. **גיבוי Blob** — משולב ב-WP-27 (`pg_dump` + list+copy של blobs ליעד מוצפן).
+
+**DoD:** קוד — פונקציות ב-EU ✓. אין מידע מטופל מחוץ ל-EU — **חלקי:** DB ✓, compute ✓, Blob ✗
+(פעולת לקוח + הסכמה זמנית).

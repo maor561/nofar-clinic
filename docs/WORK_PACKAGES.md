@@ -153,9 +153,10 @@ Drizzle + Neon (postgres.js, פרנקפורט). `client.ts` בוחר driver לפ
 **DoD:** כל נושאי ה-spec מכוסים ✓ · פערי-קוד → WP-23..27 ✓ · ממתין לאישור הלקוח.
 **תלוי:** WP-04
 
-### WP-23 · מיקום מידע EU + Blob ⬜ 🔒
-הצמדת פונקציות Vercel ל-`fra1` · פתרון אזור EU ל-Vercel Blob (או S3 תואם בפרנקפורט) · גיבוי Blob.
-**DoD:** אין מידע מטופל מחוץ ל-EU; הסכמת `data_transfer_abroad` עד אז. **חוסם פרודקשן.**
+### WP-23 · מיקום מידע EU + Blob 🟡 🔒
+`vercel.json` → `regions: ["fra1"]` — פונקציות רצות בפרנקפורט (היה `iad1`). DB + compute ב-EU ✓ (ADR-035).
+**פתוח (פעולת לקוח, לא ניתן בקוד):** Blob store באזור EU (יצירה + `BLOB_READ_WRITE_TOKEN` חדש) או S3 פרנקפורט · גיבוי Blob (→ WP-27). עד אז: הסכמת `data_transfer_abroad` (WP-10).
+**DoD:** compute+DB ב-EU ✓ · Blob ב-EU — פתוח.
 **תלוי:** WP-08, WP-21
 
 ### WP-24 · הצפנת `totp_secret` at-rest ⬜
