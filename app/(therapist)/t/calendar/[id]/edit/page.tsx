@@ -3,8 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTherapistDb } from "@/modules/core/authz/server";
 import { getAppointment } from "@/modules/appointments";
+import { getConnectionStatus } from "@/modules/calendar-sync";
 import { toClinicFields } from "@/lib/tz";
 import { AppointmentForm } from "../../appointment-form";
+import { buildGoogleBlocks } from "../../google-blocks";
 import { updateAppointmentAction } from "../../actions";
 
 export const metadata: Metadata = { title: "עריכת פגישה — נופר" };
@@ -14,6 +16,9 @@ export default async function EditAppointmentPage({ params }: { params: Promise<
   const tdb = await getTherapistDb();
   const a = await getAppointment(tdb, id);
   if (!a) notFound();
+
+  const gcal = await getConnectionStatus(tdb.therapistId);
+  const googleBlocks = gcal.connected ? await buildGoogleBlocks(tdb.therapistId) : undefined;
 
   const { date, time } = toClinicFields(a.startsAt);
   const durationMin = Math.round((a.endsAt.getTime() - a.startsAt.getTime()) / 60_000);
@@ -43,6 +48,7 @@ export default async function EditAppointmentPage({ params }: { params: Promise<
           treatmentType: a.treatmentType,
           notes: a.notes,
         }}
+        googleBlocks={googleBlocks}
       />
     </div>
   );

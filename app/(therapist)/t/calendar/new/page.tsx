@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getTherapistDb } from "@/modules/core/authz/server";
 import { listPatients } from "@/modules/patients";
+import { getConnectionStatus } from "@/modules/calendar-sync";
 import { toClinicFields } from "@/lib/tz";
 import { AppointmentForm } from "../appointment-form";
+import { buildGoogleBlocks } from "../google-blocks";
 import { createAppointmentAction } from "../actions";
 
 export const metadata: Metadata = { title: "פגישה חדשה — נופר" };
@@ -13,10 +15,13 @@ type SP = { patient?: string; date?: string };
 export default async function NewAppointmentPage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
   const tdb = await getTherapistDb();
-  const patients = (await listPatients(tdb, { status: "active", limit: 200 })).map((p) => ({
-    id: p.id,
-    name: `${p.firstName} ${p.lastName}`,
-  }));
+
+  const [patientsRaw, gcal] = await Promise.all([
+    listPatients(tdb, { status: "active", limit: 200 }),
+    getConnectionStatus(tdb.therapistId),
+  ]);
+  const patients = patientsRaw.map((p) => ({ id: p.id, name: `${p.firstName} ${p.lastName}` }));
+  const googleBlocks = gcal.connected ? await buildGoogleBlocks(tdb.therapistId) : undefined;
 
   // server render — default date is "today"
   const today = toClinicFields(new Date()).date;
@@ -36,6 +41,7 @@ export default async function NewAppointmentPage({ searchParams }: { searchParam
           date: sp.date && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : today,
         }}
         lockPatient={Boolean(sp.patient)}
+        googleBlocks={googleBlocks}
       />
     </div>
   );

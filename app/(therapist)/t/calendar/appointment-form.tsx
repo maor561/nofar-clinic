@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import {
   Button,
   Label,
   Input,
+  Icon,
   Select,
   SelectContent,
   SelectItem,
@@ -16,6 +17,9 @@ import { treatmentType, TREATMENT_LABEL } from "@/modules/patients";
 export type AppointmentFormState = { error?: string };
 
 export type PatientOption = { id: string; name: string };
+
+/** Google Calendar busy blocks for one clinic day, pre-formatted on the server. */
+export type GoogleDayBlocks = { date: string; label: string; ranges: string[] };
 
 export type AppointmentFormValues = {
   patientId?: string;
@@ -34,15 +38,19 @@ export function AppointmentForm({
   values,
   submitLabel,
   lockPatient = false,
+  googleBlocks,
 }: {
   action: (prev: AppointmentFormState, fd: FormData) => Promise<AppointmentFormState>;
   patients: PatientOption[];
   values?: AppointmentFormValues;
   submitLabel: string;
   lockPatient?: boolean;
+  googleBlocks?: GoogleDayBlocks[];
 }) {
   const [state, formAction, pending] = useActionState<AppointmentFormState, FormData>(action, {});
   const v = values ?? {};
+  const [date, setDate] = useState(v.date ?? "");
+  const dayBlocks = googleBlocks?.find((b) => b.date === date);
 
   return (
     <form action={formAction} className="max-w-xl space-y-5">
@@ -74,7 +82,14 @@ export function AppointmentForm({
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="grid gap-1.5">
           <Label htmlFor="date">תאריך</Label>
-          <Input id="date" name="date" type="date" defaultValue={v.date ?? ""} required />
+          <Input
+            id="date"
+            name="date"
+            type="date"
+            defaultValue={v.date ?? ""}
+            onChange={(e) => setDate(e.target.value)}
+            required
+          />
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="time">שעה</Label>
@@ -96,6 +111,31 @@ export function AppointmentForm({
           </Select>
         </div>
       </div>
+
+      {googleBlocks && (
+        <div className="border-line bg-surface-2/50 max-w-xl rounded-lg border px-3 py-2.5 text-[13px]">
+          <p className="text-ink-faint mb-1.5 flex items-center gap-1.5 font-semibold">
+            <Icon name="lock" size={12} /> תפוס ביומן Google
+            {dayBlocks ? ` — ${dayBlocks.label}` : ""}
+          </p>
+          {!date ? (
+            <p className="text-ink-faint">בחרו תאריך כדי לראות חסימות מהיומן.</p>
+          ) : dayBlocks && dayBlocks.ranges.length > 0 ? (
+            <ul className="flex flex-wrap gap-1.5">
+              {dayBlocks.ranges.map((r) => (
+                <li
+                  key={r}
+                  className="border-line bg-surface text-ink-soft rounded-md border px-2 py-0.5 tabular-nums"
+                >
+                  {r}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-ink-faint">אין חסימות ביומן Google ביום זה.</p>
+          )}
+        </div>
+      )}
 
       <div className="grid max-w-xs gap-1.5">
         <Label htmlFor="treatmentType">סוג טיפול</Label>
