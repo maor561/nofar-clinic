@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getSchedulingView } from "@/modules/core/authz/server";
+import { getSchedulingView, getPatientDb } from "@/modules/core/authz/server";
 import { computeOpenSlots } from "@/modules/availability";
 import { googleBusy } from "@/modules/calendar-sync";
 import { Card, CardContent, EmptyState, Icon } from "@/modules/core/design-system";
 import { clinicWeekStart, clinicDateFmt, toClinicFields } from "@/lib/tz";
 import { BookGrid, type DaySlots } from "./book-grid";
+import { seriesBookableLeft } from "./series-cap";
 
 export const metadata: Metadata = { title: "קביעת תור" };
 
@@ -50,6 +51,21 @@ export default async function NewBookingPage({
           icon="calendar"
           title="קביעת תורים עצמית אינה פעילה"
           description="לתיאום פגישה פנו לנופר ישירות."
+        />
+      </div>
+    );
+  }
+
+  const pdb = await getPatientDb();
+  const bookableLeft = await seriesBookableLeft(pdb, pdb.patientId);
+  if (bookableLeft !== null && bookableLeft <= 0) {
+    return (
+      <div className="space-y-5">
+        <Header />
+        <EmptyState
+          icon="calendar"
+          title="השתמשת בכל המפגשים בסדרה"
+          description="כל המפגשים בסדרה שלך נקבעו או בוצעו. לתיאום המשך פני/ה לנופר."
         />
       </div>
     );

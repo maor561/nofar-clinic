@@ -182,6 +182,11 @@ export async function assignPatientSeries(
   });
 }
 
+/** One-time flag so the "series ending" notice (WP-59) isn't sent twice. */
+export async function markSeriesEndingNotified(tdb: TherapistDb, seriesId: string): Promise<void> {
+  await tdb.update(patientSeries, { endingNotifiedAt: new Date() }, eq(patientSeries.id, seriesId));
+}
+
 export async function cancelPatientSeries(tdb: TherapistDb, seriesId: string): Promise<void> {
   const [row] = await tdb.update(
     patientSeries,

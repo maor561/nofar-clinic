@@ -16,7 +16,7 @@ import {
   type AppointmentInput,
   type AppointmentStatus,
 } from "@/modules/appointments";
-import { getPatient } from "@/modules/patients";
+import { getPatient, markSeriesEndingNotified } from "@/modules/patients";
 import { syncAppointment, googleBusy } from "@/modules/calendar-sync";
 import { fromClinicWallTime, clinicDateFmt } from "@/lib/tz";
 import type { AppointmentFormState } from "./appointment-form";
@@ -197,14 +197,47 @@ export async function setStatusAction(id: string, status: string): Promise<void>
   const tdb = await getTherapistDb();
 
   let patientId: string;
+  let series: Awaited<ReturnType<typeof setAppointmentStatus>>["series"] = null;
   try {
-    ({ patientId } = await setAppointmentStatus(tdb, id, status as AppointmentStatus));
+    ({ patientId, series } = await setAppointmentStatus(tdb, id, status as AppointmentStatus));
   } catch {
     return;
   }
 
   revalidatePath(`/t/patients/${patientId}`);
   revalidatePath("/p");
+
+  // WP-59 — tell the patient when the series is (almost) done.
+  if (series) {
+    const patientUserId = await getPatientUserId(patientId);
+    if (patientUserId && series.justCompleted) {
+      await notify({
+        recipientUserId: patientUserId,
+        therapistId: tdb.therapistId,
+        type: "series_completed",
+        titleHe: "סיימת את סדרת הטיפול 🎉",
+        bodyHe: `${series.name} — כל ${series.sessionCount} המפגשים הושלמו. נתאם המשך?`,
+        link: "/p",
+        email: true,
+      });
+    } else if (
+      patientUserId &&
+      series.remaining > 0 &&
+      series.remaining <= 2 &&
+      !series.endingNotifiedAt
+    ) {
+      await notify({
+        recipientUserId: patientUserId,
+        therapistId: tdb.therapistId,
+        type: "series_ending",
+        titleHe: `נותרו ${series.remaining} מפגשים בסדרה`,
+        bodyHe: `${series.name} — בוצעו ${series.usedCount} מתוך ${series.sessionCount}. כדאי לתאם את ההמשך.`,
+        link: "/p",
+        email: true,
+      });
+      await markSeriesEndingNotified(tdb, series.id);
+    }
+  }
 
   if (status === "cancelled") {
     const appt = await getAppointment(tdb, id);

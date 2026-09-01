@@ -6,6 +6,7 @@ import { getPatientDb, getSchedulingView } from "@/modules/core/authz/server";
 import { getTherapistUserId, getPatientUserId } from "@/modules/core/auth";
 import { notify } from "@/modules/core/notifications";
 import { bookSelfAppointment } from "@/modules/appointments";
+import { seriesBookableLeft } from "./series-cap";
 import { computeOpenSlots } from "@/modules/availability";
 import { googleBusy, syncAppointment } from "@/modules/calendar-sync";
 import { clinicDateFmt } from "@/lib/tz";
@@ -61,6 +62,12 @@ export async function bookSlotAction(_prev: BookState, fd: FormData): Promise<Bo
   }
 
   const pdb = await getPatientDb();
+
+  const bookableLeft = await seriesBookableLeft(pdb, pdb.patientId);
+  if (bookableLeft !== null && bookableLeft <= 0) {
+    return { error: "השתמשת בכל המפגשים בסדרה. לתיאום המשך פני/ה לנופר." };
+  }
+
   let id: string;
   try {
     ({ id } = await bookSelfAppointment(pdb, { startsAt: start, endsAt: end }));

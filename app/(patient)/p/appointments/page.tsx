@@ -4,6 +4,7 @@ import { getPatientDb, getSchedulingView } from "@/modules/core/authz/server";
 import { listAppointmentRows, APPT_STATUS_LABEL, treatmentLabel } from "@/modules/appointments";
 import { Button, Card, EmptyState, cn } from "@/modules/core/design-system";
 import { clinicDateFmt } from "@/lib/tz";
+import { seriesBookableLeft } from "./new/series-cap";
 
 export const metadata: Metadata = { title: "הפגישות שלי" };
 
@@ -12,11 +13,13 @@ const timeFmt = clinicDateFmt({ hour: "2-digit", minute: "2-digit" });
 
 export default async function MyAppointmentsPage() {
   const pdb = await getPatientDb();
-  const [rows, view] = await Promise.all([
+  const [rows, view, bookableLeft] = await Promise.all([
     listAppointmentRows(pdb, { ascending: true, limit: 500 }),
     getSchedulingView(),
+    seriesBookableLeft(pdb, pdb.patientId),
   ]);
-  const canBook = !!(await view?.config())?.policy?.selfSchedulingEnabled;
+  const selfScheduling = !!(await view?.config())?.policy?.selfSchedulingEnabled;
+  const canBook = selfScheduling && (bookableLeft === null || bookableLeft > 0);
 
   // server render — "now" splits upcoming from past
   /* eslint-disable-next-line react-hooks/purity */
@@ -30,6 +33,13 @@ export default async function MyAppointmentsPage() {
         <div>
           <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold">הפגישות שלי</h1>
           <p className="text-ink-soft text-sm">הפגישות הקרובות והקודמות שלך אצל נופר.</p>
+          {bookableLeft !== null && (
+            <p className="text-ink-faint mt-0.5 text-[13px]">
+              {bookableLeft > 0
+                ? `אפשר לקבוע עוד ${bookableLeft} מפגשים בסדרה.`
+                : "כל המפגשים בסדרה נקבעו — לתיאום המשך פני/ה לנופר."}
+            </p>
+          )}
         </div>
         {canBook && (
           <Button asChild size="sm">

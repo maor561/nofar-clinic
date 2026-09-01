@@ -5,6 +5,7 @@ import { listTaskRows } from "@/modules/tasks";
 import { listTimeline, TIMELINE_LABEL, type TimelineEventType } from "@/modules/patient-file";
 import { getQuestionnaire } from "@/modules/questionnaires";
 import { treatmentLabel } from "@/modules/appointments";
+import { getActivePatientSeries } from "@/modules/patients";
 import {
   Button,
   Card,
@@ -47,13 +48,15 @@ export default async function PatientDashboard() {
   // "now" for splitting upcoming appointments — per request
   const now = new Date();
 
-  const [appts, openTasks, updates, questionnaire] = await Promise.all([
+  const [appts, openTasks, updates, questionnaire, series] = await Promise.all([
     listAppointmentRows(pdb, { from: now, status: "scheduled", ascending: true, limit: 1 }),
     listTaskRows(pdb, { status: "open", limit: 4 }),
     listTimeline(pdb, me.id, { limit: 4 }),
     getQuestionnaire(pdb, me.id),
+    getActivePatientSeries(pdb, me.id),
   ]);
   const nextAppt = appts[0] ?? null;
+  const seriesRemaining = series ? Math.max(0, series.sessionCount - series.usedCount) : 0;
   const needsQuestionnaire = !questionnaire || questionnaire.response.status !== "submitted";
 
   return (
@@ -75,6 +78,35 @@ export default async function PatientDashboard() {
             <Button asChild size="sm">
               <Link href="/p/questionnaire">למילוי השאלון</Link>
             </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {series && (
+        <Card>
+          <CardHeader>
+            <CardTitle>סדרת הטיפול שלך</CardTitle>
+            <span className="text-ink-faint text-xs">{series.name}</span>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <p className="text-sm">
+              בוצעו <b className="tabular-nums">{series.usedCount}</b> מתוך{" "}
+              <b className="tabular-nums">{series.sessionCount}</b> · נותרו{" "}
+              <b className="text-sage-deep tabular-nums">{seriesRemaining}</b>
+            </p>
+            <div className="bg-line-soft h-2 overflow-hidden rounded-full">
+              <div
+                className="bg-sage h-full rounded-full"
+                style={{
+                  width: `${Math.min(100, (series.usedCount / series.sessionCount) * 100)}%`,
+                }}
+              />
+            </div>
+            {seriesRemaining > 0 && seriesRemaining <= 2 && (
+              <p className="text-amber-ink text-[13px]">
+                נותרו {seriesRemaining} מפגשים — כדאי לתאם עם נופר את ההמשך.
+              </p>
+            )}
           </CardContent>
         </Card>
       )}

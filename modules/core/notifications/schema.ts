@@ -18,6 +18,8 @@ export const notificationType = [
   "message_received",
   "document_shared",
   "questionnaire_submitted",
+  "series_ending",
+  "series_completed",
   "generic",
 ] as const;
 export type NotificationType = (typeof notificationType)[number];
