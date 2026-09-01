@@ -5,7 +5,7 @@ import { listPatients } from "@/modules/patients";
 import { getConnectionStatus } from "@/modules/calendar-sync";
 import { toClinicFields } from "@/lib/tz";
 import { AppointmentForm } from "../appointment-form";
-import { buildGoogleBlocks } from "../google-blocks";
+import { buildDayBlocks } from "../day-blocks";
 import { createAppointmentAction } from "../actions";
 
 export const metadata: Metadata = { title: "פגישה חדשה — נופר" };
@@ -21,7 +21,7 @@ export default async function NewAppointmentPage({ searchParams }: { searchParam
     getConnectionStatus(tdb.therapistId),
   ]);
   const patients = patientsRaw.map((p) => ({ id: p.id, name: `${p.firstName} ${p.lastName}` }));
-  const googleBlocks = gcal.connected ? await buildGoogleBlocks(tdb.therapistId) : undefined;
+  const dayBlocks = gcal.connected ? await buildDayBlocks(tdb) : undefined;
 
   // server render — default date is "today"
   const today = toClinicFields(new Date()).date;
@@ -41,7 +41,7 @@ export default async function NewAppointmentPage({ searchParams }: { searchParam
           date: sp.date && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : today,
         }}
         lockPatient={Boolean(sp.patient)}
-        googleBlocks={googleBlocks}
+        dayBlocks={dayBlocks}
       />
     </div>
   );

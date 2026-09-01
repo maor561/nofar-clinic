@@ -6,7 +6,7 @@ import { getAppointment } from "@/modules/appointments";
 import { getConnectionStatus } from "@/modules/calendar-sync";
 import { toClinicFields } from "@/lib/tz";
 import { AppointmentForm } from "../../appointment-form";
-import { buildGoogleBlocks } from "../../google-blocks";
+import { buildDayBlocks } from "../../day-blocks";
 import { updateAppointmentAction } from "../../actions";
 
 export const metadata: Metadata = { title: "עריכת פגישה — נופר" };
@@ -18,7 +18,7 @@ export default async function EditAppointmentPage({ params }: { params: Promise<
   if (!a) notFound();
 
   const gcal = await getConnectionStatus(tdb.therapistId);
-  const googleBlocks = gcal.connected ? await buildGoogleBlocks(tdb.therapistId) : undefined;
+  const dayBlocks = gcal.connected ? await buildDayBlocks(tdb, id) : undefined;
 
   const { date, time } = toClinicFields(a.startsAt);
   const durationMin = Math.round((a.endsAt.getTime() - a.startsAt.getTime()) / 60_000);
@@ -48,7 +48,7 @@ export default async function EditAppointmentPage({ params }: { params: Promise<
           treatmentType: a.treatmentType,
           notes: a.notes,
         }}
-        googleBlocks={googleBlocks}
+        dayBlocks={dayBlocks}
       />
     </div>
   );

@@ -5,7 +5,6 @@ import {
   Button,
   Label,
   Input,
-  Icon,
   Select,
   SelectContent,
   SelectItem,
@@ -13,13 +12,20 @@ import {
   SelectValue,
 } from "@/modules/core/design-system";
 import { treatmentType, TREATMENT_LABEL } from "@/modules/patients";
+import { DayTimeline } from "./day-timeline";
 
 export type AppointmentFormState = { error?: string };
 
 export type PatientOption = { id: string; name: string };
 
-/** Google Calendar busy blocks for one clinic day, pre-formatted on the server. */
-export type GoogleDayBlocks = { date: string; label: string; ranges: string[] };
+/** One busy span on a clinic day, as minute offsets from midnight. */
+export type DayBusyItem = {
+  startMin: number;
+  endMin: number;
+  kind: "google" | "appt";
+  label: string;
+};
+export type DayBlocks = { date: string; label: string; items: DayBusyItem[] };
 
 export type AppointmentFormValues = {
   patientId?: string;
@@ -38,19 +44,20 @@ export function AppointmentForm({
   values,
   submitLabel,
   lockPatient = false,
-  googleBlocks,
+  dayBlocks,
 }: {
   action: (prev: AppointmentFormState, fd: FormData) => Promise<AppointmentFormState>;
   patients: PatientOption[];
   values?: AppointmentFormValues;
   submitLabel: string;
   lockPatient?: boolean;
-  googleBlocks?: GoogleDayBlocks[];
+  dayBlocks?: DayBlocks[];
 }) {
   const [state, formAction, pending] = useActionState<AppointmentFormState, FormData>(action, {});
   const v = values ?? {};
   const [date, setDate] = useState(v.date ?? "");
-  const dayBlocks = googleBlocks?.find((b) => b.date === date);
+  const [time, setTime] = useState(v.time ?? "09:00");
+  const [durationMin, setDurationMin] = useState(v.durationMin ?? 60);
 
   return (
     <form action={formAction} className="max-w-xl space-y-5">
@@ -93,11 +100,22 @@ export function AppointmentForm({
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="time">שעה</Label>
-          <Input id="time" name="time" type="time" defaultValue={v.time ?? "09:00"} required />
+          <Input
+            id="time"
+            name="time"
+            type="time"
+            defaultValue={v.time ?? "09:00"}
+            onChange={(e) => setTime(e.target.value)}
+            required
+          />
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="durationMin">משך (דק׳)</Label>
-          <Select name="durationMin" defaultValue={String(v.durationMin ?? 60)}>
+          <Select
+            name="durationMin"
+            defaultValue={String(v.durationMin ?? 60)}
+            onValueChange={(val) => setDurationMin(Number(val))}
+          >
             <SelectTrigger id="durationMin">
               <SelectValue />
             </SelectTrigger>
@@ -112,29 +130,8 @@ export function AppointmentForm({
         </div>
       </div>
 
-      {googleBlocks && (
-        <div className="border-line bg-surface-2/50 max-w-xl rounded-lg border px-3 py-2.5 text-[13px]">
-          <p className="text-ink-faint mb-1.5 flex items-center gap-1.5 font-semibold">
-            <Icon name="lock" size={12} /> תפוס ביומן Google
-            {dayBlocks ? ` — ${dayBlocks.label}` : ""}
-          </p>
-          {!date ? (
-            <p className="text-ink-faint">בחרו תאריך כדי לראות חסימות מהיומן.</p>
-          ) : dayBlocks && dayBlocks.ranges.length > 0 ? (
-            <ul className="flex flex-wrap gap-1.5">
-              {dayBlocks.ranges.map((r) => (
-                <li
-                  key={r}
-                  className="border-line bg-surface text-ink-soft rounded-md border px-2 py-0.5 tabular-nums"
-                >
-                  {r}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-ink-faint">אין חסימות ביומן Google ביום זה.</p>
-          )}
-        </div>
+      {dayBlocks && (
+        <DayTimeline dayBlocks={dayBlocks} date={date} time={time} durationMin={durationMin} />
       )}
 
       <div className="grid max-w-xs gap-1.5">
@@ -168,6 +165,13 @@ export function AppointmentForm({
         <p role="alert" className="bg-danger-soft/60 text-danger rounded-[10px] px-3 py-2 text-sm">
           {state.error}
         </p>
+      )}
+
+      {dayBlocks && (
+        <label className="text-ink-faint flex items-center gap-2 text-[12.5px]">
+          <input type="checkbox" name="allowConflict" className="accent-sage size-3.5" />
+          אפשר קביעה גם אם יש חפיפה לחסימה קיימת
+        </label>
       )}
 
       <Button type="submit" disabled={pending}>
