@@ -38,18 +38,22 @@ export type PatientFormValues = {
   consents?: ConsentKind[];
 };
 
+export type SeriesOption = { id: string; name: string; sessionCount: number };
+
 export function PatientForm({
   action,
   values,
   submitLabel,
   showStatus = false,
   treatmentTypes,
+  seriesOptions = [],
 }: {
   action: (prev: PatientFormState, fd: FormData) => Promise<PatientFormState>;
   values?: PatientFormValues;
   submitLabel: string;
   showStatus?: boolean;
   treatmentTypes: string[];
+  seriesOptions?: SeriesOption[];
 }) {
   const [state, formAction, pending] = useActionState<PatientFormState, FormData>(action, {});
   const v = values ?? {};
@@ -66,6 +70,25 @@ export function PatientForm({
         <Field label="דוא״ל" name="email" type="email" defaultValue={v.email ?? ""} />
         <Field label="כתובת" name="address" defaultValue={v.address ?? ""} />
       </div>
+
+      {seriesOptions.length > 0 && (
+        <div className="grid max-w-xs gap-1.5">
+          <Label htmlFor="seriesTemplateId">סדרת טיפול (רשות)</Label>
+          <select
+            id="seriesTemplateId"
+            name="seriesTemplateId"
+            defaultValue=""
+            className="border-line bg-surface h-9 rounded-lg border px-2.5 text-sm"
+          >
+            <option value="">— ללא —</option>
+            {seriesOptions.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name} ({s.sessionCount} מפגשים)
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <fieldset className="space-y-2">
         <legend className="text-ink-soft text-xs font-bold">סוגי טיפול</legend>

@@ -2,9 +2,19 @@ import { and, asc, desc, eq, gte, inArray, lte, type SQL } from "drizzle-orm";
 import type { InferSelectModel } from "drizzle-orm";
 import { TherapistDb, type PatientDb } from "@/modules/core/authz";
 import type { TreatmentType } from "@/modules/patients";
-import { patient } from "@/modules/patients/schema";
+import { patient, patientSeries } from "@/modules/patients/schema";
 import { recordEvent } from "@/modules/patient-file";
 import { appointment, type AppointmentStatus } from "./schema";
+
+export type SeriesProgress = {
+  id: string;
+  name: string;
+  sessionCount: number;
+  usedCount: number;
+  remaining: number;
+  justCompleted: boolean;
+  endingNotifiedAt: Date | null;
+};
 
 export type { AppointmentStatus } from "./schema";
 export { appointmentStatus } from "./schema";
@@ -199,7 +209,7 @@ export async function setAppointmentStatus(
   tdb: TherapistDb,
   id: string,
   status: AppointmentStatus,
-): Promise<{ patientId: string }> {
+): Promise<{ patientId: string; series: SeriesProgress | null }> {
   const existing = await tdb.findOne(appointment, eq(appointment.id, id));
   if (!existing) throw new Error("appointment_not_found");
 
@@ -219,7 +229,55 @@ export async function setAppointmentStatus(
       refId: id,
     });
   }
-  return { patientId: existing.patientId };
+
+  // WP-56: a "done" appointment advances the patient's active series counter.
+  let series: SeriesProgress | null = null;
+  const delta = status === "done" ? 1 : existing.status === "done" ? -1 : 0;
+  if (delta !== 0) {
+    const [active] = await tdb.findMany(
+      patientSeries,
+      and(eq(patientSeries.patientId, existing.patientId), eq(patientSeries.status, "active")),
+    );
+    // when re-opening a completed series, look for the most recent completed one
+    const target =
+      active ??
+      (delta < 0
+        ? (
+            await tdb.findMany(
+              patientSeries,
+              and(
+                eq(patientSeries.patientId, existing.patientId),
+                eq(patientSeries.status, "completed"),
+              ),
+            )
+          ).at(-1)
+        : undefined);
+    if (target) {
+      const usedCount = Math.max(0, target.usedCount + delta);
+      const completed = usedCount >= target.sessionCount;
+      const wasCompleted = target.status === "completed";
+      await tdb.update(
+        patientSeries,
+        {
+          usedCount,
+          status: completed ? "completed" : "active",
+          completedAt: completed ? (wasCompleted ? target.completedAt : new Date()) : null,
+        },
+        eq(patientSeries.id, target.id),
+      );
+      series = {
+        id: target.id,
+        name: target.name,
+        sessionCount: target.sessionCount,
+        usedCount,
+        remaining: Math.max(0, target.sessionCount - usedCount),
+        justCompleted: completed && !wasCompleted,
+        endingNotifiedAt: target.endingNotifiedAt,
+      };
+    }
+  }
+
+  return { patientId: existing.patientId, series };
 }
 
 /** The stored value is already the type's display name (WP-55). */

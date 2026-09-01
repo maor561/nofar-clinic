@@ -8,6 +8,8 @@ import {
   patientTreatmentType,
   consent,
   treatmentType as treatmentTypeTable,
+  treatmentSeriesTemplate,
+  patientSeries,
   type PatientStatus,
   type TreatmentType,
   type ConsentKind,
@@ -86,6 +88,114 @@ export async function setTreatmentTypeActive(
 ): Promise<void> {
   await tdb.update(treatmentTypeTable, { active }, eq(treatmentTypeTable.id, id));
 }
+
+// ---- treatment series (WP-56) ----
+
+export type SeriesTemplateRow = typeof treatmentSeriesTemplate.$inferSelect;
+export type PatientSeriesRow = typeof patientSeries.$inferSelect;
+
+export async function listSeriesTemplates(
+  tdb: TherapistDb,
+  opts: { includeInactive?: boolean } = {},
+): Promise<SeriesTemplateRow[]> {
+  return tdb.list(treatmentSeriesTemplate, {
+    where: opts.includeInactive ? undefined : eq(treatmentSeriesTemplate.active, true),
+    orderBy: [asc(treatmentSeriesTemplate.sortOrder), asc(treatmentSeriesTemplate.name)],
+  });
+}
+
+export async function createSeriesTemplate(
+  tdb: TherapistDb,
+  input: { name: string; sessionCount: number; treatmentType?: string | null },
+): Promise<void> {
+  const name = input.name.trim();
+  const count = Math.round(Number(input.sessionCount));
+  if (!name || name.length > 80) throw new Error("invalid_name");
+  if (!Number.isFinite(count) || count < 1 || count > 100) throw new Error("invalid_count");
+  const existing = await tdb.list(treatmentSeriesTemplate, {});
+  if (existing.some((r) => r.name === name)) throw new Error("duplicate");
+  await tdb.insert(treatmentSeriesTemplate, {
+    name,
+    sessionCount: count,
+    treatmentType: input.treatmentType?.trim() || null,
+    sortOrder: existing.length,
+  });
+}
+
+export async function updateSeriesTemplate(
+  tdb: TherapistDb,
+  id: string,
+  patch: { name?: string; sessionCount?: number; active?: boolean },
+): Promise<void> {
+  const set: Record<string, unknown> = {};
+  if (patch.name !== undefined) {
+    const n = patch.name.trim();
+    if (!n || n.length > 80) throw new Error("invalid_name");
+    set.name = n;
+  }
+  if (patch.sessionCount !== undefined) {
+    const c = Math.round(Number(patch.sessionCount));
+    if (!Number.isFinite(c) || c < 1 || c > 100) throw new Error("invalid_count");
+    set.sessionCount = c;
+  }
+  if (patch.active !== undefined) set.active = patch.active;
+  if (Object.keys(set).length === 0) return;
+  await tdb.update(treatmentSeriesTemplate, set, eq(treatmentSeriesTemplate.id, id));
+}
+
+/** The patient's current active series, or null. Works for either scope. */
+export async function getActivePatientSeries(
+  db: TherapistDb | PatientDb,
+  patientId: string,
+): Promise<PatientSeriesRow | null> {
+  const rows = await (db as TherapistDb).findMany(
+    patientSeries,
+    and(eq(patientSeries.patientId, patientId), eq(patientSeries.status, "active")),
+  );
+  return rows[0] ?? null;
+}
+
+/** Snapshot a template onto a patient as their active series. Rejects if one
+ *  is already active. */
+export async function assignPatientSeries(
+  tdb: TherapistDb,
+  patientId: string,
+  templateId: string,
+): Promise<void> {
+  const existing = await getActivePatientSeries(tdb, patientId);
+  if (existing) throw new Error("series_active_exists");
+  const tpl = await tdb.findOne(
+    treatmentSeriesTemplate,
+    eq(treatmentSeriesTemplate.id, templateId),
+  );
+  if (!tpl) throw new Error("template_not_found");
+  await tdb.insert(patientSeries, {
+    patientId,
+    name: tpl.name,
+    sessionCount: tpl.sessionCount,
+    treatmentType: tpl.treatmentType,
+  });
+  await recordEvent(tdb, {
+    patientId,
+    type: "status_changed",
+    summary: `סדרת טיפול שויכה: ${tpl.name} (${tpl.sessionCount} מפגשים)`,
+  });
+}
+
+export async function cancelPatientSeries(tdb: TherapistDb, seriesId: string): Promise<void> {
+  const [row] = await tdb.update(
+    patientSeries,
+    { status: "cancelled" },
+    and(eq(patientSeries.id, seriesId), eq(patientSeries.status, "active")),
+  );
+  if (row) {
+    await recordEvent(tdb, {
+      patientId: row.patientId,
+      type: "status_changed",
+      summary: `סדרת טיפול בוטלה: ${row.name}`,
+    });
+  }
+}
 export const CONSENT_LABEL: Record<ConsentKind, string> = {
   data_processing: "עיבוד מידע רפואי",
   data_transfer_abroad: "העברת מידע לחו״ל (EU)",
@@ -110,6 +220,8 @@ export type PatientInput = {
   status?: PatientStatus;
   treatmentTypes?: TreatmentType[];
   consents?: ConsentKind[];
+  /** WP-56 — assign a series at intake. */
+  seriesTemplateId?: string | null;
 };
 
 async function typesByPatient(
@@ -246,6 +358,10 @@ export async function createPatient(
     type: "status_changed",
     summary: "המטופל/ת נוספ/ה למערכת",
   });
+
+  if (input.seriesTemplateId) {
+    await assignPatientSeries(tdb, p.id, input.seriesTemplateId).catch(() => undefined);
+  }
 
   return { id: p.id };
 }

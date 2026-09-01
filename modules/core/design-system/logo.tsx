@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 import { BRAND } from "@/lib/brand";
-import { Icon } from "./icon";
 
 type LogoProps = {
   /** show the wordmark next to the mark */
@@ -13,12 +12,8 @@ type LogoProps = {
 export function Logo({ withWordmark = true, subtitle, className }: LogoProps) {
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
-      <span
-        className="bg-sage-soft text-sage-deep grid size-9 place-items-center rounded-[11px]"
-        aria-hidden
-      >
-        <Icon name="leaf" size={20} />
-      </span>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo-mark.png" alt="" aria-hidden className="size-9 rounded-[11px] object-cover" />
       {withWordmark && (
         <span className="leading-tight">
           <span className="text-ink block font-[family-name:var(--font-display)] text-lg font-bold">

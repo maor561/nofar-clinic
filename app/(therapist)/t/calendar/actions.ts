@@ -203,6 +203,9 @@ export async function setStatusAction(id: string, status: string): Promise<void>
     return;
   }
 
+  revalidatePath(`/t/patients/${patientId}`);
+  revalidatePath("/p");
+
   if (status === "cancelled") {
     const appt = await getAppointment(tdb, id);
     if (appt?.gcalEventId) {

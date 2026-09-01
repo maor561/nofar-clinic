@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/modules/core/auth/server";
-import { Button, Logo } from "@/modules/core/design-system";
-import { BRAND_SLOGAN, THERAPIST_NAME } from "@/lib/brand";
+import { Button } from "@/modules/core/design-system";
+import { BRAND, BRAND_SLOGAN } from "@/lib/brand";
 import { buildInfo } from "@/lib/build-info";
 
 /**
@@ -23,15 +23,18 @@ export default async function Home() {
 
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-md flex-1 flex-col items-center justify-center gap-7 px-6 py-16 text-center">
-      <Logo />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/logo-full.png"
+        alt="נופר כהן — ליווי נטורופתי לירידה במשקל ותזונה נכונה"
+        className="w-72 max-w-full rounded-2xl"
+      />
 
       <div className="space-y-1.5">
-        <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold">
-          {BRAND_SLOGAN}
-        </h1>
         <p className="text-ink-soft text-sm">
-          {THERAPIST_NAME} · נטורופתיה קלינית ותזונה. הכניסה למטפלת ולמטופלים.
+          <b className="text-ink font-semibold">{BRAND}</b> · {BRAND_SLOGAN}
         </p>
+        <p className="text-ink-faint text-[13px]">הכניסה למטפלת ולמטופלים.</p>
       </div>
 
       <Button asChild size="lg">

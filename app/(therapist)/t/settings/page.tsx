@@ -116,6 +116,23 @@ export default async function SettingsPage({
 
       <Card>
         <CardHeader>
+          <CardTitle>סדרות טיפול</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <p className="text-ink-soft">
+            הגדרת חבילות מפגשים (שם + מספר מפגשים) לבחירה בהקמת מטופל או מהתיק שלו.
+          </p>
+          <Link
+            href="/t/settings/series"
+            className="text-sage-deep inline-flex items-center gap-1 font-semibold hover:underline"
+          >
+            לניהול סדרות הטיפול ←
+          </Link>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>יומן Google</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">

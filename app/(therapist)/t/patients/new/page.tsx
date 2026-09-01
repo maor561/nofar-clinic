@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTherapistDb } from "@/modules/core/authz/server";
-import { listTreatmentTypes } from "@/modules/patients";
+import { listTreatmentTypes, listSeriesTemplates } from "@/modules/patients";
 import { PatientForm } from "../patient-form";
 import { createPatientAction } from "../actions";
 
@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "מטופל חדש" };
 
 export default async function NewPatientPage() {
   const tdb = await getTherapistDb();
-  const types = await listTreatmentTypes(tdb);
+  const [types, series] = await Promise.all([listTreatmentTypes(tdb), listSeriesTemplates(tdb)]);
 
   return (
     <div className="space-y-5">
@@ -24,6 +24,11 @@ export default async function NewPatientPage() {
         action={createPatientAction}
         submitLabel="יצירת מטופל"
         treatmentTypes={types.map((t) => t.name)}
+        seriesOptions={series.map((s) => ({
+          id: s.id,
+          name: s.name,
+          sessionCount: s.sessionCount,
+        }))}
       />
     </div>
   );

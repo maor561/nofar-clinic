@@ -47,7 +47,11 @@ _[גרסה מקורית]_ ⬜ 🔑
 **תלוי:** — · **חבילת בסיס לכל שלב 3.**
 **❓** מאשרת החלפת ה-enum בטבלה (נוגע ב-appointments/sessions/patients + מיגרציה + backfill)? השבתת סוג בשימוש = מוסתר לבחירות חדשות אך נשמר ברשומות ישנות — מקובל?
 
-### WP-56 · סדרות טיפול — הגדרה + שיוך בהקמת לקוח (#9) ⬜
+### WP-56 · סדרות טיפול — הגדרה + שיוך בהקמת לקוח (#9) ✅
+**בוצע 2026-09-01.** `treatment_series_template` (therapist-scoped: name/session_count/treatment_type/active) + `patient_series` (dual-scoped: snapshot של name+count, `used_count`, status active/completed/cancelled, `ending_notified_at` מוכן ל-WP-59). מיגרציה `0017`. שירותים ב-`modules/patients`. מסך `/t/settings/series` (CRUD) + card בהגדרות. בחירת סדרה בטופס הקמת מטופל (`seriesOptions`) + card "סדרת טיפול" בתיק המטופל (שיוך / ביטול / התקדמות + progress bar). **`setAppointmentStatus`** מקדם/מוריד את `used_count` במעבר ל/מ-"done", וסוגר את הסדרה אוטומטית במכסה (מחזיר `SeriesProgress` — מוכן ל-WP-59). 5 בדיקות בידוד. אומת בדפדפן מקצה לקצה: יצירת סדרה → שיוך → סימון פגישה "התקיימה" → "בוצעו 1 מתוך 8 · נותרו 7".
+**❓ נותר:** סדרה פעילה אחת בכל רגע (ברירת מחדל). ריבוי במקביל — בהמשך אם יידרש.
+
+_[גרסה מקורית]_ ⬜
 **מה:** "סדרת טיפולים" = חבילה בשם + מספר מפגשים (למשל "סדרת רפלקסולוגיה — 6 מפגשים"). מוגדרת בהגדרות, נבחרת בהקמת מטופל חדש.
 **גישה:** `treatment_series_template` (therapist-scoped: `name`, `treatmentType?`, `sessionCount`, `active`) — CRUD ב-`/t/settings`. `patient_series` (שיוך: `patientId`, `templateId` או snapshot של `name`+`count`, `startedAt`, `status`). מסך הקמת מטופל → בחירת סדרה (אחת או יותר — ראה ❓).
 **תלוי:** WP-55 (בחירת סוג הטיפול לסדרה).

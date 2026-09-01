@@ -3,7 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTherapistDb } from "@/modules/core/authz/server";
 import { audit } from "@/modules/core/audit/server";
-import { getPatient, CONSENT_LABEL } from "@/modules/patients";
+import {
+  getPatient,
+  getActivePatientSeries,
+  listSeriesTemplates,
+  CONSENT_LABEL,
+} from "@/modules/patients";
 import {
   listTimeline,
   countTimeline,
@@ -22,6 +27,7 @@ import {
 } from "@/modules/core/design-system";
 import { StatusPill } from "../status-pill";
 import { PatientTimeline } from "./timeline";
+import { assignSeriesAction, cancelSeriesAction } from "./series-actions";
 
 export const metadata: Metadata = { title: "תיק מטופל" };
 
@@ -45,9 +51,11 @@ export default async function PatientPage({
   const ev = (timelineEventType as readonly string[]).includes(sp.ev ?? "")
     ? (sp.ev as TimelineEventType)
     : undefined;
-  const [events, total] = await Promise.all([
+  const [events, total, series, seriesTemplates] = await Promise.all([
     listTimeline(tdb, id, { types: ev ? [ev] : undefined, limit: 500 }),
     countTimeline(tdb, id),
+    getActivePatientSeries(tdb, id),
+    listSeriesTemplates(tdb),
   ]);
 
   const evHref = (t?: TimelineEventType) => (t ? `/t/patients/${id}?ev=${t}` : `/t/patients/${id}`);
@@ -178,6 +186,67 @@ export default async function PatientPage({
         </div>
 
         <aside className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>סדרת טיפול</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              {series ? (
+                <>
+                  <p className="font-semibold">{series.name}</p>
+                  <p className="text-ink-soft">
+                    בוצעו <b className="text-ink tabular-nums">{series.usedCount}</b> מתוך{" "}
+                    <b className="text-ink tabular-nums">{series.sessionCount}</b> · נותרו{" "}
+                    <b className="text-sage-deep tabular-nums">
+                      {Math.max(0, series.sessionCount - series.usedCount)}
+                    </b>
+                  </p>
+                  <div className="bg-line-soft h-1.5 overflow-hidden rounded-full">
+                    <div
+                      className="bg-sage h-full rounded-full"
+                      style={{
+                        width: `${Math.min(100, (series.usedCount / series.sessionCount) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <form action={cancelSeriesAction.bind(null, id, series.id)}>
+                    <Button type="submit" variant="ghost" size="sm" className="text-ink-faint">
+                      ביטול הסדרה
+                    </Button>
+                  </form>
+                </>
+              ) : seriesTemplates.length === 0 ? (
+                <p className="text-ink-faint">
+                  אין סדרות מוגדרות.{" "}
+                  <Link href="/t/settings/series" className="text-sage-deep hover:underline">
+                    להגדרה
+                  </Link>
+                </p>
+              ) : (
+                <form action={assignSeriesAction.bind(null, id)} className="flex items-end gap-2">
+                  <select
+                    name="templateId"
+                    defaultValue=""
+                    required
+                    className="border-line bg-surface h-9 flex-1 rounded-lg border px-2.5 text-sm"
+                  >
+                    <option value="" disabled>
+                      בחירת סדרה…
+                    </option>
+                    {seriesTemplates.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name} ({s.sessionCount})
+                      </option>
+                    ))}
+                  </select>
+                  <Button type="submit" variant="outline" size="sm">
+                    שיוך
+                  </Button>
+                </form>
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>יצירת קשר</CardTitle>

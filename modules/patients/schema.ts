@@ -88,6 +88,59 @@ export const patientTreatmentType = pgTable(
   ],
 );
 
+/**
+ * Reusable "treatment series" package (WP-56) — a name + number of sessions,
+ * defined once in settings and picked at intake. Therapist-scoped.
+ */
+export const treatmentSeriesTemplate = pgTable(
+  "treatment_series_template",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    therapistId: uuid("therapist_id")
+      .notNull()
+      .references(() => therapist.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    sessionCount: integer("session_count").notNull(),
+    /** optional link to a treatment type name (for display only). */
+    treatmentType: text("treatment_type"),
+    active: boolean("active").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique("treatment_series_template_therapist_name_uq").on(t.therapistId, t.name)],
+);
+
+export const patientSeriesStatus = ["active", "completed", "cancelled"] as const;
+export type PatientSeriesStatus = (typeof patientSeriesStatus)[number];
+
+/**
+ * A series assigned to one patient (WP-56). `name` / `session_count` are a
+ * snapshot at assignment (renaming the template later doesn't rewrite these).
+ * `used_count` moves with appointments marked "done" (modules/appointments).
+ * At most one row per patient is `active`.
+ */
+export const patientSeries = pgTable(
+  "patient_series",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    therapistId: uuid("therapist_id")
+      .notNull()
+      .references(() => therapist.id, { onDelete: "restrict" }),
+    patientId: uuid("patient_id")
+      .notNull()
+      .references(() => patient.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    sessionCount: integer("session_count").notNull(),
+    usedCount: integer("used_count").notNull().default(0),
+    treatmentType: text("treatment_type"),
+    status: text("status", { enum: patientSeriesStatus }).notNull().default("active"),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    endingNotifiedAt: timestamp("ending_notified_at", { withTimezone: true }),
+  },
+  (t) => [index("patient_series_patient_idx").on(t.patientId, t.status)],
+);
+
 export const consent = pgTable(
   "consent",
   {

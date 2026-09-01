@@ -46,6 +46,7 @@ function parse(fd: FormData): PatientInput {
       .getAll("treatmentTypes")
       .filter((x): x is string => typeof x === "string" && x.trim().length > 0)
       .map((x) => x.trim()),
+    seriesTemplateId: str("seriesTemplateId"),
     consents: list<ConsentKind>("consents", consentKind),
   };
 }
