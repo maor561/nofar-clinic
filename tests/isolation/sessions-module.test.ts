@@ -114,7 +114,7 @@ describe("side-effects", () => {
       {
         patientId: A,
         date: "2026-08-03",
-        treatmentType: "naturopathy",
+        treatmentTypes: ["נטורופתיה", "תזונה"],
         patientReport: "מרגישה טוב יותר",
         recommendations: "להמשיך שתייה",
       },
@@ -133,6 +133,7 @@ describe("side-effects", () => {
 
     const full = await getSession(tdb(t1), id);
     expect(full?.patientReport).toBe("מרגישה טוב יותר");
+    expect(full?.treatmentTypes).toEqual(["נטורופתיה", "תזונה"]);
     expect(full?.fields.find((f) => f.key === "weight_kg")?.value).toBe(70.5);
   });
 

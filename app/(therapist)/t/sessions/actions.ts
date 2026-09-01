@@ -20,13 +20,15 @@ function str(fd: FormData, k: string): string | null {
 }
 
 function baseInput(fd: FormData, patientId: string, appointmentId: string | null): SessionInput {
-  const ttRaw = String(fd.get("treatmentType") ?? "none");
-  const tt = ttRaw.trim() && ttRaw !== "none" ? ttRaw.trim() : null;
+  const treatmentTypes = fd
+    .getAll("treatmentTypes")
+    .filter((x): x is string => typeof x === "string" && x.trim().length > 0)
+    .map((x) => x.trim());
   return {
     patientId,
     appointmentId,
     date: str(fd, "date") ?? "",
-    treatmentType: tt,
+    treatmentTypes,
     patientReport: str(fd, "patientReport"),
     complaints: str(fd, "complaints"),
     changesSinceLast: str(fd, "changesSinceLast"),
@@ -118,7 +120,7 @@ export async function updateSessionAction(
       id,
       {
         date: input.date,
-        treatmentType: input.treatmentType,
+        treatmentTypes: input.treatmentTypes,
         patientReport: input.patientReport,
         complaints: input.complaints,
         changesSinceLast: input.changesSinceLast,

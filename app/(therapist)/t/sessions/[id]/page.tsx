@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { getTherapistDb } from "@/modules/core/authz/server";
 import { audit } from "@/modules/core/audit/server";
 import { getSession, SESSION_SECTIONS } from "@/modules/sessions";
-import { treatmentLabel } from "@/modules/appointments";
 import {
   Button,
   Card,
@@ -55,7 +54,7 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
           </h1>
           <p className="text-ink-soft mt-1 text-sm">
             {s.patientName}
-            {treatmentLabel(s.treatmentType) && <> · {treatmentLabel(s.treatmentType)}</>}
+            {s.treatmentTypes.length > 0 && <> · {s.treatmentTypes.join(" · ")}</>}
             {s.appointmentId && (
               <>
                 {" · "}

@@ -1,16 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import {
-  Button,
-  Label,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/modules/core/design-system";
+import { Button, Label, Input, Checkbox } from "@/modules/core/design-system";
 import { FieldInput, type RenderableFieldDef } from "@/modules/core/fields/field-input";
 import { SESSION_SECTIONS } from "@/modules/sessions/sections";
 
@@ -20,7 +11,7 @@ export type SessionFieldDef = RenderableFieldDef & { definitionId: string };
 
 export type SessionFormValues = {
   date?: string;
-  treatmentType?: string | null;
+  treatmentTypes?: string[];
   patientReport?: string | null;
   complaints?: string | null;
   changesSinceLast?: string | null;
@@ -56,6 +47,7 @@ export function SessionForm({
   const v = values ?? {};
   const secByGroup = (g: string) => SESSION_SECTIONS.filter((s) => s.group === g);
   const metricDefs = fieldDefs;
+  const chosen = new Set(v.treatmentTypes ?? []);
 
   return (
     <form action={formAction} className="max-w-2xl space-y-8">
@@ -64,22 +56,21 @@ export function SessionForm({
           <Label htmlFor="date">תאריך המפגש</Label>
           <Input id="date" name="date" type="date" defaultValue={v.date ?? ""} required />
         </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="treatmentType">סוג טיפול</Label>
-          <Select name="treatmentType" defaultValue={v.treatmentType ?? "none"}>
-            <SelectTrigger id="treatmentType">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">— ללא —</SelectItem>
-              {treatmentTypes.map((t) => (
-                <SelectItem key={t} value={t}>
+        <fieldset className="grid gap-1.5">
+          <legend className="text-ink-soft mb-1 text-xs font-bold">סוגי טיפול</legend>
+          <div className="flex flex-wrap gap-3">
+            {treatmentTypes.length === 0 ? (
+              <p className="text-ink-faint text-[13px]">אין סוגי טיפול מוגדרים.</p>
+            ) : (
+              treatmentTypes.map((t) => (
+                <label key={t} className="flex items-center gap-2 text-sm">
+                  <Checkbox name="treatmentTypes" value={t} defaultChecked={chosen.has(t)} />
                   {t}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+                </label>
+              ))
+            )}
+          </div>
+        </fieldset>
       </div>
 
       {GROUPS.map((g, i) => (

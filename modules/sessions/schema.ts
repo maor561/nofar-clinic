@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { pgTable, uuid, text, date, timestamp, index } from "drizzle-orm/pg-core";
 import { therapist } from "@/modules/core/auth/schema";
 import { patient } from "@/modules/patients/schema";
@@ -25,7 +26,13 @@ export const treatmentSession = pgTable(
       onDelete: "set null",
     }),
     date: date("date").notNull(),
+    /** @deprecated WP-52 — kept for snapshot continuity; use `treatmentTypes`. */
     treatmentType: text("treatment_type"),
+    /** WP-52: a session can span several treatment types. */
+    treatmentTypes: text("treatment_types")
+      .array()
+      .notNull()
+      .default(sql`'{}'`),
     patientReport: text("patient_report"),
     complaints: text("complaints"),
     changesSinceLast: text("changes_since_last"),

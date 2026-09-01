@@ -24,7 +24,7 @@ export type SessionInput = {
   patientId: string;
   date: string;
   appointmentId?: string | null;
-  treatmentType?: SessionRow["treatmentType"];
+  treatmentTypes?: string[];
   patientReport?: string | null;
   complaints?: string | null;
   changesSinceLast?: string | null;
@@ -38,7 +38,7 @@ export type FieldWriteInput = { definitionId: string; value: unknown };
 
 function textCols(input: Partial<SessionInput>) {
   return {
-    treatmentType: input.treatmentType ?? null,
+    ...(input.treatmentTypes !== undefined ? { treatmentTypes: input.treatmentTypes } : {}),
     patientReport: input.patientReport ?? null,
     complaints: input.complaints ?? null,
     changesSinceLast: input.changesSinceLast ?? null,

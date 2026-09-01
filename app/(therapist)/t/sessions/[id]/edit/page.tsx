@@ -17,9 +17,7 @@ export default async function EditSessionPage({ params }: { params: Promise<{ id
   if (!s) notFound();
 
   const [defs, typeRows] = await Promise.all([sessionFieldDefs(tdb), listTreatmentTypes(tdb)]);
-  const treatmentTypes = [
-    ...new Set([...typeRows.map((t) => t.name), s.treatmentType].filter(Boolean) as string[]),
-  ];
+  const treatmentTypes = [...new Set([...typeRows.map((t) => t.name), ...s.treatmentTypes])];
   const fieldDefs: SessionFieldDef[] = defs.map((d) => ({
     definitionId: d.id,
     key: d.key,
@@ -49,7 +47,7 @@ export default async function EditSessionPage({ params }: { params: Promise<{ id
         treatmentTypes={treatmentTypes}
         values={{
           date: s.date,
-          treatmentType: s.treatmentType,
+          treatmentTypes: s.treatmentTypes,
           patientReport: s.patientReport,
           complaints: s.complaints,
           changesSinceLast: s.changesSinceLast,

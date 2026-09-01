@@ -72,11 +72,14 @@ export default async function PatientSessionsPage({ params }: { params: Promise<
             >
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span className="text-sm font-semibold">{dateFmt.format(new Date(s.date))}</span>
-                {s.treatmentType && (
-                  <span className="bg-sage-soft text-sage-deep rounded-md px-2 py-0.5 text-[11px] font-semibold">
-                    {s.treatmentType}
+                {s.treatmentTypes.map((t) => (
+                  <span
+                    key={t}
+                    className="bg-sage-soft text-sage-deep rounded-md px-2 py-0.5 text-[11px] font-semibold"
+                  >
+                    {t}
                   </span>
-                )}
+                ))}
               </div>
               {excerpt(s) && (
                 <p className="text-ink-soft mt-1 line-clamp-2 text-[13px]">{excerpt(s)}</p>

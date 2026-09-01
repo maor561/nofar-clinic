@@ -1,4 +1,4 @@
-import { and, asc, eq, ilike, inArray, or, type SQL } from "drizzle-orm";
+import { and, asc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 import type { TherapistDb, PatientDb } from "@/modules/core/authz";
 import { recordEvent } from "@/modules/patient-file";
 import { appointment } from "@/modules/appointments/schema";
@@ -74,8 +74,8 @@ export async function renameTreatmentType(
   await tdb.update(appointment, { treatmentType: clean }, eq(appointment.treatmentType, old));
   await tdb.update(
     treatmentSession,
-    { treatmentType: clean },
-    eq(treatmentSession.treatmentType, old),
+    { treatmentTypes: sql`array_replace(${treatmentSession.treatmentTypes}, ${old}, ${clean})` },
+    sql`${old} = ANY(${treatmentSession.treatmentTypes})`,
   );
 }
 
