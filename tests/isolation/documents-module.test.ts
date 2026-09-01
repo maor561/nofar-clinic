@@ -29,6 +29,7 @@ import {
   createDocument,
   setDocumentVisibility,
   deleteDocument,
+  shareDocumentWithPatients,
 } from "@/modules/documents";
 
 let db: Db;
@@ -140,6 +141,56 @@ describe("visibility — a patient never reaches therapist_only", () => {
 
     await setDocumentVisibility(tdb(t1), id, "therapist_only");
     expect(await getDocument(pdb(t1, A), id)).toBeNull();
+  });
+});
+
+describe("share to many patients (WP-63)", () => {
+  let A2: string;
+  beforeEach(async () => {
+    [A2] = (
+      await db
+        .insert(patient)
+        .values([{ therapistId: t1, firstName: "איי2", lastName: "בדיקה" }])
+        .returning({ id: patient.id })
+    ).map((r) => r.id);
+  });
+
+  it("creates one shared, independent row per patient + a timeline event each", async () => {
+    const created = await shareDocumentWithPatients(
+      tdb(t1),
+      [A, A2],
+      { name: "המלצות כלליות.pdf", kind: "summary", mime: "application/pdf", size: 999 },
+      (pid) => `p/${pid}/copy-${pid}`,
+    );
+    expect(created).toHaveLength(2);
+
+    for (const pid of [A, A2]) {
+      const rows = await listDocuments(tdb(t1), pid);
+      expect(rows).toHaveLength(1);
+      expect(rows[0].visibility).toBe("therapist_and_patient");
+      expect(rows[0].uploadedBy).toBe("therapist");
+      // each patient sees its own copy
+      expect(await listDocuments(pdb(t1, pid), pid)).toHaveLength(1);
+      const tl = await db.select().from(timelineEvent).where(eq(timelineEvent.patientId, pid));
+      expect(tl.some((e) => e.type === "document_added")).toBe(true);
+    }
+    // distinct blob keys — a later per-patient delete can't affect the other
+    const keyA = (await listDocuments(tdb(t1), A))[0].fileKey;
+    const keyA2 = (await listDocuments(tdb(t1), A2))[0].fileKey;
+    expect(keyA).not.toBe(keyA2);
+  });
+
+  it("aborts the whole batch if any patient isn't this therapist's", async () => {
+    await expect(
+      shareDocumentWithPatients(
+        tdb(t1),
+        [A, B],
+        { name: "x.pdf", kind: "other", mime: "application/pdf", size: 1 },
+        (pid) => `p/${pid}/k`,
+      ),
+    ).rejects.toThrow("patient_not_found");
+    // nothing was written for the valid patient either
+    expect(await listDocuments(tdb(t1), A)).toEqual([]);
   });
 });
 

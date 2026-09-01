@@ -97,6 +97,56 @@ export async function createDocument(db: AnyScoped, input: DocumentInput): Promi
   return { id: row.id };
 }
 
+export type SharedDocMeta = {
+  name: string;
+  kind: DocumentKind;
+  mime: string;
+  size: number;
+};
+
+/**
+ * Send one file to several patients at once (WP-63). Each patient gets an
+ * independent `document` row (visibility `therapist_and_patient`) pointing at
+ * its own blob key — no shared bytes, so a later per-patient delete (WP-64)
+ * can't affect anyone else. Every `patientId` is verified against this
+ * therapist first; an unknown id aborts the whole batch before any write.
+ */
+export async function shareDocumentWithPatients(
+  tdb: TherapistDb,
+  patientIds: string[],
+  meta: SharedDocMeta,
+  fileKeyFor: (patientId: string) => string,
+): Promise<{ id: string; patientId: string }[]> {
+  const ids = [...new Set(patientIds)];
+  if (ids.length === 0) throw new Error("no_patients");
+
+  const mine = await tdb.findMany(patient, inArray(patient.id, ids));
+  if (mine.length !== ids.length) throw new Error("patient_not_found");
+
+  const name = meta.name.trim().slice(0, 200);
+  const out: { id: string; patientId: string }[] = [];
+  for (const patientId of ids) {
+    const [row] = await tdb.insert(document, {
+      patientId,
+      name,
+      kind: meta.kind,
+      fileKey: fileKeyFor(patientId),
+      mime: meta.mime,
+      size: meta.size,
+      uploadedBy: "therapist",
+      visibility: "therapist_and_patient",
+    });
+    await recordEvent(tdb, {
+      patientId,
+      type: "document_added",
+      summary: `מסמך נוסף — ${row.name}`,
+      refId: row.id,
+    });
+    out.push({ id: row.id, patientId });
+  }
+  return out;
+}
+
 export async function setDocumentVisibility(
   tdb: TherapistDb,
   id: string,

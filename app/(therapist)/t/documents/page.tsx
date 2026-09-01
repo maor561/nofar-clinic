@@ -2,7 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getTherapistDb } from "@/modules/core/authz/server";
 import { listRecentDocuments, DOCUMENT_KIND_LABEL } from "@/modules/documents";
-import { Card, EmptyState, Icon } from "@/modules/core/design-system";
+import { listPatients } from "@/modules/patients";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  EmptyState,
+  Icon,
+} from "@/modules/core/design-system";
+import { ShareForm } from "./share-form";
 
 export const metadata: Metadata = { title: "מסמכים" };
 
@@ -16,16 +25,32 @@ function humanSize(bytes: number): string {
 
 export default async function AllDocumentsPage() {
   const tdb = await getTherapistDb();
-  const docs = await listRecentDocuments(tdb);
+  const [docs, patients] = await Promise.all([
+    listRecentDocuments(tdb),
+    listPatients(tdb, { status: "active", limit: 200 }),
+  ]);
+  const patientOptions = patients.map((p) => ({
+    id: p.id,
+    name: `${p.firstName} ${p.lastName}`,
+  }));
 
   return (
     <div className="space-y-5">
       <header>
         <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold">מסמכים</h1>
         <p className="text-ink-soft text-sm">
-          כל המסמכים לפי סדר העלאה. להעלאה — דרך תיק המטופל/ת.
+          כל המסמכים לפי סדר העלאה. להעלאה לתיק יחיד — דרך תיק המטופל/ת.
         </p>
       </header>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>שליחת מסמך למספר מטופלים</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ShareForm patients={patientOptions} />
+        </CardContent>
+      </Card>
 
       {docs.length === 0 ? (
         <EmptyState
