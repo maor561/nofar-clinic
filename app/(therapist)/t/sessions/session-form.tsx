@@ -19,6 +19,7 @@ export type SessionFormValues = {
   recommendations?: string | null;
   therapistNotes?: string | null;
   nextFocus?: string | null;
+  patientSummary?: string | null;
   fields?: Record<string, unknown>;
 };
 
@@ -26,6 +27,11 @@ const GROUPS: { id: string; title: string; hint?: string }[] = [
   { id: "state", title: "מצב המטופל/ת", hint: "איך הגיע/ה, מה השתנה, מדדים" },
   { id: "treatment", title: "הטיפול שבוצע" },
   { id: "followup", title: "המלצות והמשך" },
+  {
+    id: "share",
+    title: "סיכום למטופל/ת",
+    hint: "יישלח במייל ויוצג באפליקציה — השאירו ריק כדי לא לשתף",
+  },
 ];
 
 export function SessionForm({

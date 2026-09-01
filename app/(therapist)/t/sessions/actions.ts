@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getTherapistDb } from "@/modules/core/authz/server";
+import { getPatientUserId } from "@/modules/core/auth";
+import { notify } from "@/modules/core/notifications";
 import {
   createSession,
   updateSession,
@@ -11,6 +13,25 @@ import {
   type FieldWriteInput,
 } from "@/modules/sessions";
 import type { SessionFormState } from "./session-form";
+
+/** Email + in-app "your session summary" when the therapist shares one (WP-61). */
+async function notifySharedSummary(
+  therapistId: string,
+  patientId: string,
+  text: string,
+): Promise<void> {
+  const patientUserId = await getPatientUserId(patientId);
+  if (!patientUserId) return;
+  await notify({
+    recipientUserId: patientUserId,
+    therapistId,
+    type: "session_summary",
+    titleHe: "סיכום המפגש שלך",
+    bodyHe: text.length > 160 ? `${text.slice(0, 160)}…` : text,
+    link: "/p/sessions",
+    email: true,
+  });
+}
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -36,6 +57,7 @@ function baseInput(fd: FormData, patientId: string, appointmentId: string | null
     recommendations: str(fd, "recommendations"),
     therapistNotes: str(fd, "therapistNotes"),
     nextFocus: str(fd, "nextFocus"),
+    patientSummary: str(fd, "patientSummary"),
   };
 }
 
@@ -87,8 +109,9 @@ export async function createSessionAction(
   const defs = await sessionFieldDefs(tdb);
 
   let id: string;
+  let sharedSummary: string | null;
   try {
-    ({ id } = await createSession(tdb, input, parseFields(fd, defs)));
+    ({ id, sharedSummary } = await createSession(tdb, input, parseFields(fd, defs)));
   } catch (e) {
     return {
       error:
@@ -98,7 +121,10 @@ export async function createSessionAction(
     };
   }
 
+  if (sharedSummary) await notifySharedSummary(tdb.therapistId, patientId, sharedSummary);
+
   revalidatePath(`/t/patients/${patientId}`);
+  revalidatePath("/p/sessions");
   redirect(`/t/sessions/${id}`);
 }
 
@@ -114,8 +140,9 @@ export async function updateSessionAction(
   const tdb = await getTherapistDb();
   const defs = await sessionFieldDefs(tdb);
 
+  let sharedSummary: string | null = null;
   try {
-    await updateSession(
+    ({ sharedSummary } = await updateSession(
       tdb,
       id,
       {
@@ -128,14 +155,18 @@ export async function updateSessionAction(
         recommendations: input.recommendations,
         therapistNotes: input.therapistNotes,
         nextFocus: input.nextFocus,
+        patientSummary: input.patientSummary,
       },
       parseFields(fd, defs),
-    );
+    ));
   } catch {
     return { error: "עדכון המפגש נכשל." };
   }
 
+  if (sharedSummary) await notifySharedSummary(tdb.therapistId, patientId, sharedSummary);
+
   revalidatePath(`/t/patients/${patientId}`);
   revalidatePath(`/t/sessions/${id}`);
+  revalidatePath("/p/sessions");
   redirect(`/t/sessions/${id}`);
 }

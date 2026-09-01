@@ -8,7 +8,12 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { createTestDb } from "@/modules/core/data/testing";
 import type { Db } from "@/modules/core/data/client";
-import { scopedDbFor, type TherapistDb, type ScopedAuditEvent } from "@/modules/core/authz";
+import {
+  scopedDbFor,
+  type TherapistDb,
+  type PatientDb,
+  type ScopedAuditEvent,
+} from "@/modules/core/authz";
 import { therapist } from "@/modules/core/auth/schema";
 import { patient } from "@/modules/patients/schema";
 import { timelineEvent } from "@/modules/patient-file/schema";
@@ -20,6 +25,7 @@ import {
   createSession,
   updateSession,
   sessionFieldDefs,
+  listSharedSummaries,
 } from "@/modules/sessions";
 
 let db: Db;
@@ -67,6 +73,16 @@ beforeEach(async () => {
       .returning({ id: patient.id })
   ).map((r) => r.id);
 });
+
+function pdb(therapistId: string, patientId: string): PatientDb {
+  return scopedDbFor(db, {
+    userId: "u",
+    role: "patient",
+    therapistId,
+    patientId,
+    expiresAt: new Date(Date.now() + 1e4),
+  }) as PatientDb;
+}
 
 async function weightDefId(therapistId: string): Promise<string> {
   const defs = await sessionFieldDefs(tdb(therapistId));
@@ -159,6 +175,42 @@ describe("side-effects", () => {
         { definitionId: wid, value: 5 }, // below min 20
       ]),
     ).rejects.toThrow();
+  });
+});
+
+describe("patient summary (WP-61)", () => {
+  it("only shared summaries reach the patient, and never another patient's", async () => {
+    await createSession(tdb(t1), { patientId: A, date: "2026-08-10" }); // no summary
+    const shared = await createSession(tdb(t1), {
+      patientId: A,
+      date: "2026-08-11",
+      therapistNotes: "פנימי — לא לשיתוף",
+      patientSummary: "  שתי כוסות מים ביום, נתראה בעוד שבועיים.  ",
+    });
+    expect(shared.sharedSummary).toBe("שתי כוסות מים ביום, נתראה בעוד שבועיים.");
+    await createSession(tdb(t2), {
+      patientId: B,
+      date: "2026-08-11",
+      patientSummary: "סיכום של מטופל אחר",
+    });
+
+    const mine = await listSharedSummaries(pdb(t1, A));
+    expect(mine).toHaveLength(1);
+    expect(mine[0].summary).toBe("שתי כוסות מים ביום, נתראה בעוד שבועיים.");
+    // the internal note never crosses to the patient surface
+    expect(JSON.stringify(mine)).not.toContain("פנימי");
+    // another therapist's patient sees only their own
+    expect((await listSharedSummaries(pdb(t2, B)))[0].summary).toBe("סיכום של מטופל אחר");
+  });
+
+  it("re-shares only when the summary text actually changes", async () => {
+    const { id } = await createSession(tdb(t1), { patientId: A, date: "2026-08-12" });
+    const first = await updateSession(tdb(t1), id, { patientSummary: "סיכום ראשון" });
+    expect(first.sharedSummary).toBe("סיכום ראשון");
+    const again = await updateSession(tdb(t1), id, { patientSummary: "סיכום ראשון" });
+    expect(again.sharedSummary).toBeNull();
+    const edited = await updateSession(tdb(t1), id, { patientSummary: "סיכום מעודכן" });
+    expect(edited.sharedSummary).toBe("סיכום מעודכן");
   });
 });
 

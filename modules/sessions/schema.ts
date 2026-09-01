@@ -40,6 +40,8 @@ export const treatmentSession = pgTable(
     therapistNotes: text("therapist_notes"),
     recommendations: text("recommendations"),
     nextFocus: text("next_focus"),
+    /** WP-61: the therapist's explicit "what to share" note — emailed to the patient and shown in /p/sessions. Everything else on this row stays internal. */
+    patientSummary: text("patient_summary"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

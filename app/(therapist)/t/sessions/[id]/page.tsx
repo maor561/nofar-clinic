@@ -37,6 +37,7 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
     { title: "הטיפול שבוצע", keys: SESSION_SECTIONS.filter((x) => x.group === "treatment") },
     { title: "המלצות והמשך", keys: SESSION_SECTIONS.filter((x) => x.group === "followup") },
   ];
+  const shared = s.patientSummary?.trim() || null;
 
   return (
     <div className="space-y-5">
@@ -84,6 +85,26 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
 
       <div className="grid gap-4 lg:grid-cols-[1fr_260px]">
         <div className="space-y-4">
+          <Card className={shared ? "border-sage bg-sage-soft/30" : undefined}>
+            <CardHeader>
+              <CardTitle>סיכום למטופל/ת</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {shared ? (
+                <>
+                  <p className="text-ink text-sm whitespace-pre-wrap">{shared}</p>
+                  <p className="text-ink-faint mt-2 text-[11px]">
+                    נשלח למטופל/ת במייל ומוצג באפליקציה שלו/ה.
+                  </p>
+                </>
+              ) : (
+                <p className="text-ink-faint text-sm">
+                  לא שותף סיכום. אפשר להוסיף בעריכת המפגש — הטקסט יישלח למטופל/ת.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
           {groups.map((g) => (
             <Card key={g.title}>
               <CardHeader>

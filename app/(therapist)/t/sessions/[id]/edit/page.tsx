@@ -55,6 +55,7 @@ export default async function EditSessionPage({ params }: { params: Promise<{ id
           recommendations: s.recommendations,
           therapistNotes: s.therapistNotes,
           nextFocus: s.nextFocus,
+          patientSummary: s.patientSummary,
           fields: fieldValues,
         }}
       />

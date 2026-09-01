@@ -20,6 +20,7 @@ export const notificationType = [
   "questionnaire_submitted",
   "series_ending",
   "series_completed",
+  "session_summary",
   "generic",
 ] as const;
 export type NotificationType = (typeof notificationType)[number];

@@ -10,6 +10,7 @@ export const SESSION_SECTIONS = [
   { key: "recommendations", labelHe: "המלצות", group: "followup" },
   { key: "therapistNotes", labelHe: "הערות מטפלת (פנימי)", group: "followup" },
   { key: "nextFocus", labelHe: "פוקוס שבועי עד המפגש הבא", group: "followup" },
+  { key: "patientSummary", labelHe: "סיכום למטופל/ת", group: "share" },
 ] as const;
 
 export type SessionSectionKey = (typeof SESSION_SECTIONS)[number]["key"];

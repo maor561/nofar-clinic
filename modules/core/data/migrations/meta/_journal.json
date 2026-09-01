@@ -127,6 +127,13 @@
       "when": 1788294096882,
       "tag": "0017_treatment_series",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1788298157856,
+      "tag": "0018_session_patient_summary",
+      "breakpoints": true
     }
   ]
 }

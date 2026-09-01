@@ -9,6 +9,7 @@ const DEFAULT_NAV: NavItem[] = [
   { label: "דשבורד", icon: "grid", href: "/p" },
   { label: "התוכנית שלי", icon: "plan", href: "/p/plan" },
   { label: "המשימות שלי", icon: "task-done", href: "/p/tasks" },
+  { label: "המפגשים שלי", icon: "leaf", href: "/p/sessions" },
   { label: "הפגישות שלי", icon: "calendar", href: "/p/appointments" },
   ...(FEATURES.messaging
     ? [{ label: "הודעות", icon: "chat", href: "/p/messages" } as NavItem]
