@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTherapistDb } from "@/modules/core/authz/server";
-import { listPatients } from "@/modules/patients";
+import { listPatients, listTreatmentTypes } from "@/modules/patients";
 import { getConnectionStatus } from "@/modules/calendar-sync";
 import { toClinicFields } from "@/lib/tz";
 import { AppointmentForm } from "../appointment-form";
@@ -16,9 +16,10 @@ export default async function NewAppointmentPage({ searchParams }: { searchParam
   const sp = await searchParams;
   const tdb = await getTherapistDb();
 
-  const [patientsRaw, gcal] = await Promise.all([
+  const [patientsRaw, gcal, types] = await Promise.all([
     listPatients(tdb, { status: "active", limit: 200 }),
     getConnectionStatus(tdb.therapistId),
+    listTreatmentTypes(tdb),
   ]);
   const patients = patientsRaw.map((p) => ({ id: p.id, name: `${p.firstName} ${p.lastName}` }));
   const dayBlocks = gcal.connected ? await buildDayBlocks(tdb) : undefined;
@@ -42,6 +43,7 @@ export default async function NewAppointmentPage({ searchParams }: { searchParam
         }}
         lockPatient={Boolean(sp.patient)}
         dayBlocks={dayBlocks}
+        treatmentTypes={types.map((t) => t.name)}
       />
     </div>
   );

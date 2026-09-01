@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTherapistDb } from "@/modules/core/authz/server";
-import { getPatient } from "@/modules/patients";
+import { getPatient, listTreatmentTypes } from "@/modules/patients";
 import { PatientForm } from "../../patient-form";
 import { updatePatientAction } from "../../actions";
 
@@ -11,9 +11,10 @@ export const metadata: Metadata = { title: "עריכת מטופל — נופר" 
 export default async function EditPatientPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const tdb = await getTherapistDb();
-  const p = await getPatient(tdb, id);
+  const [p, typeRows] = await Promise.all([getPatient(tdb, id), listTreatmentTypes(tdb)]);
   if (!p) notFound();
 
+  const treatmentTypes = [...new Set([...typeRows.map((t) => t.name), ...p.treatmentTypes])];
   const action = updatePatientAction.bind(null, id);
 
   return (
@@ -31,6 +32,7 @@ export default async function EditPatientPage({ params }: { params: Promise<{ id
         action={action}
         submitLabel="שמירה"
         showStatus
+        treatmentTypes={treatmentTypes}
         values={{
           firstName: p.firstName,
           lastName: p.lastName,

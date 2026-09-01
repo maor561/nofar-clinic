@@ -11,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/core/design-system";
-import { treatmentType, TREATMENT_LABEL } from "@/modules/patients";
 import { DayTimeline } from "./day-timeline";
 
 export type AppointmentFormState = { error?: string };
@@ -45,6 +44,7 @@ export function AppointmentForm({
   submitLabel,
   lockPatient = false,
   dayBlocks,
+  treatmentTypes,
 }: {
   action: (prev: AppointmentFormState, fd: FormData) => Promise<AppointmentFormState>;
   patients: PatientOption[];
@@ -52,6 +52,7 @@ export function AppointmentForm({
   submitLabel: string;
   lockPatient?: boolean;
   dayBlocks?: DayBlocks[];
+  treatmentTypes: string[];
 }) {
   const [state, formAction, pending] = useActionState<AppointmentFormState, FormData>(action, {});
   const v = values ?? {};
@@ -142,9 +143,9 @@ export function AppointmentForm({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="none">— ללא —</SelectItem>
-            {treatmentType.map((t) => (
+            {treatmentTypes.map((t) => (
               <SelectItem key={t} value={t}>
-                {TREATMENT_LABEL[t]}
+                {t}
               </SelectItem>
             ))}
           </SelectContent>

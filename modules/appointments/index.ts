@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, gte, inArray, lte, type SQL } from "drizzle-orm";
 import type { InferSelectModel } from "drizzle-orm";
 import { TherapistDb, type PatientDb } from "@/modules/core/authz";
-import { TREATMENT_LABEL, type TreatmentType } from "@/modules/patients";
+import type { TreatmentType } from "@/modules/patients";
 import { patient } from "@/modules/patients/schema";
 import { recordEvent } from "@/modules/patient-file";
 import { appointment, type AppointmentStatus } from "./schema";
@@ -222,7 +222,7 @@ export async function setAppointmentStatus(
   return { patientId: existing.patientId };
 }
 
-/** Small helper for UI copy. */
-export function treatmentLabel(t: TreatmentType | null): string | null {
-  return t ? TREATMENT_LABEL[t] : null;
+/** The stored value is already the type's display name (WP-55). */
+export function treatmentLabel(t: string | null): string | null {
+  return t?.trim() || null;
 }

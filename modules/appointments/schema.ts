@@ -1,6 +1,6 @@
 import { pgTable, uuid, text, timestamp, index } from "drizzle-orm/pg-core";
 import { therapist } from "@/modules/core/auth/schema";
-import { patient, treatmentType } from "@/modules/patients/schema";
+import { patient } from "@/modules/patients/schema";
 
 /**
  * Internal calendar (WP-12). DATA_MODEL#appointment. Both `therapist_id` and
@@ -22,7 +22,7 @@ export const appointment = pgTable(
       .references(() => patient.id, { onDelete: "cascade" }),
     startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
     endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
-    treatmentType: text("treatment_type", { enum: treatmentType }),
+    treatmentType: text("treatment_type"),
     status: text("status", { enum: appointmentStatus }).notNull().default("scheduled"),
     notes: text("notes"),
     /** Google Calendar linkage — phase 2, always null in v1. */

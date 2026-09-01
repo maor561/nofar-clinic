@@ -3,12 +3,10 @@ import Link from "next/link";
 import { getTherapistDb } from "@/modules/core/authz/server";
 import {
   listPatients,
+  listTreatmentTypes,
   patientStatus,
-  treatmentType,
   STATUS_LABEL,
-  TREATMENT_LABEL,
   type PatientStatus,
-  type TreatmentType,
 } from "@/modules/patients";
 import {
   Button,
@@ -34,12 +32,11 @@ export default async function PatientsPage({ searchParams }: { searchParams: Pro
   const status = (patientStatus as readonly string[]).includes(sp.status ?? "")
     ? (sp.status as PatientStatus)
     : undefined;
-  const tt = (treatmentType as readonly string[]).includes(sp.tt ?? "")
-    ? (sp.tt as TreatmentType)
-    : undefined;
   const q = sp.q?.trim() || undefined;
 
   const tdb = await getTherapistDb();
+  const types = await listTreatmentTypes(tdb, { includeInactive: true });
+  const tt = types.some((t) => t.name === sp.tt) ? sp.tt : undefined;
   const patients = await listPatients(tdb, { search: q, status, treatmentType: tt });
 
   const dtf = new Intl.DateTimeFormat("he-IL", { dateStyle: "medium" });
@@ -95,9 +92,9 @@ export default async function PatientsPage({ searchParams }: { searchParams: Pro
         <FilterChip href={qs({ tt: undefined })} active={!tt}>
           כל הטיפולים
         </FilterChip>
-        {treatmentType.map((t) => (
-          <FilterChip key={t} href={qs({ tt: t })} active={tt === t}>
-            {TREATMENT_LABEL[t]}
+        {types.map((t) => (
+          <FilterChip key={t.id} href={qs({ tt: t.name })} active={tt === t.name}>
+            {t.name}
           </FilterChip>
         ))}
       </div>
@@ -141,7 +138,7 @@ export default async function PatientsPage({ searchParams }: { searchParams: Pro
                             key={t}
                             className="bg-sage-soft text-sage-deep rounded-md px-2 py-0.5 text-[11px] font-semibold"
                           >
-                            {TREATMENT_LABEL[t]}
+                            {t}
                           </span>
                         ))}
                       </span>

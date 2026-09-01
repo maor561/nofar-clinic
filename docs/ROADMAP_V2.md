@@ -44,7 +44,10 @@
 
 ## שלב 3 — סוגי טיפול וסדרות טיפול
 
-### WP-55 · סוגי טיפול דינמיים (#5) ⬜ 🔑
+### WP-55 · סוגי טיפול דינמיים (#5) ✅ 🔑
+**בוצע 2026-09-01.** טבלה `treatment_type` (therapist-scoped: name/active/sort_order, מיגרציה `0015` + seed 3 בעברית + המרת ה-slugs הישנים). הערך המאוחסן על appointments/sessions/patient_treatment_type = **השם**; שינוי שם עושה bulk-update לרשומות. `listTreatmentTypes`/`createTreatmentType`/`renameTreatmentType`/`setTreatmentTypeActive` ב-`modules/patients`. מסך `/t/settings/treatment-types` (הוספה/שינוי שם/השבתה). כל הבוחרים (הקמת מטופל, יומן, מפגש) + הפילטרים + התוויות עברו לרשימה הדינמית. `TreatmentType` type = `string`. 4 בדיקות בידוד. אומת בדפדפן: הוספת "ירידה במשקל" הופיעה מיד בטופס הקמת מטופל; המרת ה-slugs עבדה (מטופלים מציגים "רפלקסולוגיה"/"תזונה").
+
+_[גרסה מקורית]_ ⬜ 🔑
 **מה:** כרגע `treatmentType = ["naturopathy","reflexology","nutrition"]` — enum בקוד (`modules/patients/schema.ts`), בשימוש ב-`patient_treatment_type`, `appointment`, `treatment_session`. הלקוחה רוצה להוסיף/להסיר סוגי טיפול בעצמה מההגדרות.
 **גישה:** טבלה חדשה `treatment_type` (therapist-scoped: `id`, `name`, `active`, `sortOrder`). מיגרציית backfill של 3 הקיימים. החלפת ה-enum במחרוזת חופשית / FK בכל 3 המקומות. מסך `/t/settings/treatment-types` (CRUD, ללא מחיקה קשה של סוג בשימוש — רק השבתה). `TREATMENT_LABEL` הופך ל-lookup.
 **תלוי:** — · **חבילת בסיס לכל שלב 3.**

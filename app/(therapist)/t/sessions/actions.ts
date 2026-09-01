@@ -10,7 +10,6 @@ import {
   type SessionInput,
   type FieldWriteInput,
 } from "@/modules/sessions";
-import { treatmentType, type TreatmentType } from "@/modules/patients";
 import type { SessionFormState } from "./session-form";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -22,9 +21,7 @@ function str(fd: FormData, k: string): string | null {
 
 function baseInput(fd: FormData, patientId: string, appointmentId: string | null): SessionInput {
   const ttRaw = String(fd.get("treatmentType") ?? "none");
-  const tt: TreatmentType | null = (treatmentType as readonly string[]).includes(ttRaw)
-    ? (ttRaw as TreatmentType)
-    : null;
+  const tt = ttRaw.trim() && ttRaw !== "none" ? ttRaw.trim() : null;
   return {
     patientId,
     appointmentId,

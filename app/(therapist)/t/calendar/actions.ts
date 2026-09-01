@@ -16,7 +16,7 @@ import {
   type AppointmentInput,
   type AppointmentStatus,
 } from "@/modules/appointments";
-import { getPatient, treatmentType, type TreatmentType } from "@/modules/patients";
+import { getPatient } from "@/modules/patients";
 import { syncAppointment, googleBusy } from "@/modules/calendar-sync";
 import { fromClinicWallTime, clinicDateFmt } from "@/lib/tz";
 import type { AppointmentFormState } from "./appointment-form";
@@ -83,9 +83,7 @@ function parse(fd: FormData): { input: AppointmentInput; error?: string } {
 
   const startsAt = fromClinicWallTime(date, time);
   const endsAt = new Date(startsAt.getTime() + durationMin * 60_000);
-  const tt: TreatmentType | null = (treatmentType as readonly string[]).includes(ttRaw)
-    ? (ttRaw as TreatmentType)
-    : null;
+  const tt = ttRaw.trim() && ttRaw !== "none" ? ttRaw.trim() : null;
 
   return { input: { patientId, startsAt, endsAt, treatmentType: tt, notes } };
 }

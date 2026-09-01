@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTherapistDb } from "@/modules/core/authz/server";
 import { audit } from "@/modules/core/audit/server";
-import { getPatient, TREATMENT_LABEL, CONSENT_LABEL } from "@/modules/patients";
+import { getPatient, CONSENT_LABEL } from "@/modules/patients";
 import {
   listTimeline,
   countTimeline,
@@ -84,7 +84,7 @@ export default async function PatientPage({
                   key={t}
                   className="bg-sage-soft text-sage-deep rounded-md px-2 py-0.5 text-[11px] font-semibold"
                 >
-                  {TREATMENT_LABEL[t]}
+                  {t}
                 </span>
               ))}
             </div>

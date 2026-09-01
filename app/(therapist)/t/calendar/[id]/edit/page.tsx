@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTherapistDb } from "@/modules/core/authz/server";
 import { getAppointment } from "@/modules/appointments";
+import { listTreatmentTypes } from "@/modules/patients";
 import { getConnectionStatus } from "@/modules/calendar-sync";
 import { toClinicFields } from "@/lib/tz";
 import { AppointmentForm } from "../../appointment-form";
@@ -17,8 +18,14 @@ export default async function EditAppointmentPage({ params }: { params: Promise<
   const a = await getAppointment(tdb, id);
   if (!a) notFound();
 
-  const gcal = await getConnectionStatus(tdb.therapistId);
+  const [gcal, typeRows] = await Promise.all([
+    getConnectionStatus(tdb.therapistId),
+    listTreatmentTypes(tdb),
+  ]);
   const dayBlocks = gcal.connected ? await buildDayBlocks(tdb, id) : undefined;
+  const treatmentTypes = [
+    ...new Set([...typeRows.map((t) => t.name), a.treatmentType].filter(Boolean) as string[]),
+  ];
 
   const { date, time } = toClinicFields(a.startsAt);
   const durationMin = Math.round((a.endsAt.getTime() - a.startsAt.getTime()) / 60_000);
@@ -49,6 +56,7 @@ export default async function EditAppointmentPage({ params }: { params: Promise<
           notes: a.notes,
         }}
         dayBlocks={dayBlocks}
+        treatmentTypes={treatmentTypes}
       />
     </div>
   );

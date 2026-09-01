@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTherapistDb } from "@/modules/core/authz/server";
-import { getPatient } from "@/modules/patients";
+import { getPatient, listTreatmentTypes } from "@/modules/patients";
 import { sessionFieldDefs } from "@/modules/sessions";
 import type { FieldSchema } from "@/modules/core/fields";
 import { toClinicFields } from "@/lib/tz";
@@ -20,7 +20,7 @@ export default async function NewSessionPage({ searchParams }: { searchParams: P
   const p = await getPatient(tdb, patientId);
   if (!p) notFound();
 
-  const defs = await sessionFieldDefs(tdb);
+  const [defs, types] = await Promise.all([sessionFieldDefs(tdb), listTreatmentTypes(tdb)]);
   const fieldDefs: SessionFieldDef[] = defs.map((d) => ({
     definitionId: d.id,
     key: d.key,
@@ -51,6 +51,7 @@ export default async function NewSessionPage({ searchParams }: { searchParams: P
         patientName={`${p.firstName} ${p.lastName}`}
         submitLabel="שמירת המפגש"
         values={{ date: today }}
+        treatmentTypes={types.map((t) => t.name)}
       />
     </div>
   );

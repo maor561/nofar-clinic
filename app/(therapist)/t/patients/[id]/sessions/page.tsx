@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTherapistDb } from "@/modules/core/authz/server";
-import { getPatient, TREATMENT_LABEL } from "@/modules/patients";
+import { getPatient } from "@/modules/patients";
 import { listSessions } from "@/modules/sessions";
 import { Button, Card, EmptyState, Icon } from "@/modules/core/design-system";
 
@@ -74,7 +74,7 @@ export default async function PatientSessionsPage({ params }: { params: Promise<
                 <span className="text-sm font-semibold">{dateFmt.format(new Date(s.date))}</span>
                 {s.treatmentType && (
                   <span className="bg-sage-soft text-sage-deep rounded-md px-2 py-0.5 text-[11px] font-semibold">
-                    {TREATMENT_LABEL[s.treatmentType]}
+                    {s.treatmentType}
                   </span>
                 )}
               </div>

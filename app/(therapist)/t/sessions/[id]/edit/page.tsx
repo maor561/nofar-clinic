@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTherapistDb } from "@/modules/core/authz/server";
 import { getSession, sessionFieldDefs } from "@/modules/sessions";
+import { listTreatmentTypes } from "@/modules/patients";
 import type { FieldSchema } from "@/modules/core/fields";
 import { SessionForm, type SessionFieldDef } from "../../session-form";
 import { updateSessionAction } from "../../actions";
@@ -15,7 +16,10 @@ export default async function EditSessionPage({ params }: { params: Promise<{ id
   const s = await getSession(tdb, id);
   if (!s) notFound();
 
-  const defs = await sessionFieldDefs(tdb);
+  const [defs, typeRows] = await Promise.all([sessionFieldDefs(tdb), listTreatmentTypes(tdb)]);
+  const treatmentTypes = [
+    ...new Set([...typeRows.map((t) => t.name), s.treatmentType].filter(Boolean) as string[]),
+  ];
   const fieldDefs: SessionFieldDef[] = defs.map((d) => ({
     definitionId: d.id,
     key: d.key,
@@ -42,6 +46,7 @@ export default async function EditSessionPage({ params }: { params: Promise<{ id
         fieldDefs={fieldDefs}
         patientName={s.patientName}
         submitLabel="שמירה"
+        treatmentTypes={treatmentTypes}
         values={{
           date: s.date,
           treatmentType: s.treatmentType,

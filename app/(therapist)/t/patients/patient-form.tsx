@@ -14,10 +14,8 @@ import {
 } from "@/modules/core/design-system";
 import {
   patientStatus,
-  treatmentType,
   consentKind,
   STATUS_LABEL,
-  TREATMENT_LABEL,
   CONSENT_LABEL,
   type PatientStatus,
   type TreatmentType,
@@ -45,11 +43,13 @@ export function PatientForm({
   values,
   submitLabel,
   showStatus = false,
+  treatmentTypes,
 }: {
   action: (prev: PatientFormState, fd: FormData) => Promise<PatientFormState>;
   values?: PatientFormValues;
   submitLabel: string;
   showStatus?: boolean;
+  treatmentTypes: string[];
 }) {
   const [state, formAction, pending] = useActionState<PatientFormState, FormData>(action, {});
   const v = values ?? {};
@@ -70,12 +70,18 @@ export function PatientForm({
       <fieldset className="space-y-2">
         <legend className="text-ink-soft text-xs font-bold">סוגי טיפול</legend>
         <div className="flex flex-wrap gap-3">
-          {treatmentType.map((t) => (
-            <label key={t} className="flex items-center gap-2 text-sm">
-              <Checkbox name="treatmentTypes" value={t} defaultChecked={tt.has(t)} />
-              {TREATMENT_LABEL[t]}
-            </label>
-          ))}
+          {treatmentTypes.length === 0 ? (
+            <p className="text-ink-faint text-[13px]">
+              אין סוגי טיפול מוגדרים — הוסיפו בהגדרות ← סוגי טיפול.
+            </p>
+          ) : (
+            treatmentTypes.map((t) => (
+              <label key={t} className="flex items-center gap-2 text-sm">
+                <Checkbox name="treatmentTypes" value={t} defaultChecked={tt.has(t)} />
+                {t}
+              </label>
+            ))
+          )}
         </div>
       </fieldset>
 

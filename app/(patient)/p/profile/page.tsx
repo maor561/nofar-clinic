@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getPatientDb } from "@/modules/core/authz/server";
-import { getMyProfile, TREATMENT_LABEL, CONSENT_LABEL } from "@/modules/patients";
+import { getMyProfile, CONSENT_LABEL } from "@/modules/patients";
 import { Card, CardContent, CardHeader, CardTitle, Icon } from "@/modules/core/design-system";
 
 export const metadata: Metadata = { title: "הפרופיל שלי — נופר" };
@@ -59,7 +59,7 @@ export default async function ProfilePage() {
                     key={t}
                     className="bg-sage-soft text-sage-deep rounded-md px-2 py-0.5 text-[12px] font-semibold"
                   >
-                    {TREATMENT_LABEL[t]}
+                    {t}
                   </span>
                 ))
               )}

@@ -8,10 +8,8 @@ import {
   createPatient,
   updatePatient,
   type PatientInput,
-  type TreatmentType,
   type ConsentKind,
   patientStatus,
-  treatmentType,
   consentKind,
 } from "@/modules/patients";
 import { provisionPatientUser, createPatientInvite } from "@/modules/core/auth";
@@ -44,7 +42,10 @@ function parse(fd: FormData): PatientInput {
     treatmentGoal: str("treatmentGoal"),
     generalNotes: str("generalNotes"),
     status,
-    treatmentTypes: list<TreatmentType>("treatmentTypes", treatmentType),
+    treatmentTypes: fd
+      .getAll("treatmentTypes")
+      .filter((x): x is string => typeof x === "string" && x.trim().length > 0)
+      .map((x) => x.trim()),
     consents: list<ConsentKind>("consents", consentKind),
   };
 }

@@ -98,6 +98,24 @@ export default async function SettingsPage({
 
       <Card>
         <CardHeader>
+          <CardTitle>סוגי טיפול</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <p className="text-ink-soft">
+            ניהול רשימת סוגי הטיפול (נטורופתיה, רפלקסולוגיה, תזונה…) — הוספה, שינוי שם והשבתה.
+            הרשימה מתעדכנת אוטומטית בכל מקום שבוחרים סוג טיפול.
+          </p>
+          <Link
+            href="/t/settings/treatment-types"
+            className="text-sage-deep inline-flex items-center gap-1 font-semibold hover:underline"
+          >
+            לניהול סוגי הטיפול ←
+          </Link>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>יומן Google</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">

@@ -11,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/core/design-system";
-import { treatmentType, TREATMENT_LABEL } from "@/modules/patients";
 import { FieldInput, type RenderableFieldDef } from "@/modules/core/fields/field-input";
 import { SESSION_SECTIONS } from "@/modules/sessions/sections";
 
@@ -44,12 +43,14 @@ export function SessionForm({
   values,
   patientName,
   submitLabel,
+  treatmentTypes,
 }: {
   action: (prev: SessionFormState, fd: FormData) => Promise<SessionFormState>;
   fieldDefs: SessionFieldDef[];
   values?: SessionFormValues;
   patientName: string;
   submitLabel: string;
+  treatmentTypes: string[];
 }) {
   const [state, formAction, pending] = useActionState<SessionFormState, FormData>(action, {});
   const v = values ?? {};
@@ -71,9 +72,9 @@ export function SessionForm({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">— ללא —</SelectItem>
-              {treatmentType.map((t) => (
+              {treatmentTypes.map((t) => (
                 <SelectItem key={t} value={t}>
-                  {TREATMENT_LABEL[t]}
+                  {t}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -1,17 +1,20 @@
 import { and, asc, eq, ilike, inArray, or, type SQL } from "drizzle-orm";
 import type { TherapistDb, PatientDb } from "@/modules/core/authz";
 import { recordEvent } from "@/modules/patient-file";
+import { appointment } from "@/modules/appointments/schema";
+import { treatmentSession } from "@/modules/sessions/schema";
 import {
   patient,
   patientTreatmentType,
   consent,
+  treatmentType as treatmentTypeTable,
   type PatientStatus,
   type TreatmentType,
   type ConsentKind,
 } from "./schema";
 
 export type { PatientStatus, TreatmentType, ConsentKind } from "./schema";
-export { patientStatus, treatmentType, consentKind } from "./schema";
+export { patientStatus, consentKind } from "./schema";
 
 export const STATUS_LABEL: Record<PatientStatus, string> = {
   active: "פעיל",
@@ -19,11 +22,70 @@ export const STATUS_LABEL: Record<PatientStatus, string> = {
   completed: "הושלם",
   paused: "מושהה",
 };
-export const TREATMENT_LABEL: Record<TreatmentType, string> = {
+
+/** Fallback labels for the three built-ins, in case a record still holds an
+ *  old slug (migration 0015 converts them to Hebrew names). */
+export const TREATMENT_LABEL: Record<string, string> = {
   naturopathy: "נטורופתיה",
   reflexology: "רפלקסולוגיה",
   nutrition: "תזונה",
 };
+
+export type TreatmentTypeRow = typeof treatmentTypeTable.$inferSelect;
+
+/** Active types for pickers; pass `includeInactive` for the settings screen. */
+export async function listTreatmentTypes(
+  tdb: TherapistDb,
+  opts: { includeInactive?: boolean } = {},
+): Promise<TreatmentTypeRow[]> {
+  return tdb.list(treatmentTypeTable, {
+    where: opts.includeInactive ? undefined : eq(treatmentTypeTable.active, true),
+    orderBy: [asc(treatmentTypeTable.sortOrder), asc(treatmentTypeTable.name)],
+  });
+}
+
+export async function createTreatmentType(tdb: TherapistDb, name: string): Promise<void> {
+  const clean = name.trim();
+  if (!clean || clean.length > 60) throw new Error("invalid_name");
+  const existing = await tdb.list(treatmentTypeTable, {});
+  if (existing.some((r) => r.name === clean)) throw new Error("duplicate");
+  await tdb.insert(treatmentTypeTable, { name: clean, sortOrder: existing.length });
+}
+
+/** Rename + propagate to every record that stored the old name (guard-scoped). */
+export async function renameTreatmentType(
+  tdb: TherapistDb,
+  id: string,
+  name: string,
+): Promise<void> {
+  const clean = name.trim();
+  if (!clean || clean.length > 60) throw new Error("invalid_name");
+  const current = await tdb.findOne(treatmentTypeTable, eq(treatmentTypeTable.id, id));
+  if (!current) throw new Error("not_found");
+  if (current.name === clean) return;
+
+  await tdb.update(treatmentTypeTable, { name: clean }, eq(treatmentTypeTable.id, id));
+  const old = current.name;
+  await tdb.update(
+    patientTreatmentType,
+    { treatmentType: clean },
+    eq(patientTreatmentType.treatmentType, old),
+  );
+  await tdb.update(appointment, { treatmentType: clean }, eq(appointment.treatmentType, old));
+  await tdb.update(
+    treatmentSession,
+    { treatmentType: clean },
+    eq(treatmentSession.treatmentType, old),
+  );
+}
+
+export async function setTreatmentTypeActive(
+  tdb: TherapistDb,
+  id: string,
+  active: boolean,
+): Promise<void> {
+  await tdb.update(treatmentTypeTable, { active }, eq(treatmentTypeTable.id, id));
+}
 export const CONSENT_LABEL: Record<ConsentKind, string> = {
   data_processing: "עיבוד מידע רפואי",
   data_transfer_abroad: "העברת מידע לחו״ל (EU)",

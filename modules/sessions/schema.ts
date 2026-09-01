@@ -1,6 +1,6 @@
 import { pgTable, uuid, text, date, timestamp, index } from "drizzle-orm/pg-core";
 import { therapist } from "@/modules/core/auth/schema";
-import { patient, treatmentType } from "@/modules/patients/schema";
+import { patient } from "@/modules/patients/schema";
 import { appointment } from "@/modules/appointments/schema";
 
 /**
@@ -25,7 +25,7 @@ export const treatmentSession = pgTable(
       onDelete: "set null",
     }),
     date: date("date").notNull(),
-    treatmentType: text("treatment_type", { enum: treatmentType }),
+    treatmentType: text("treatment_type"),
     patientReport: text("patient_report"),
     complaints: text("complaints"),
     changesSinceLast: text("changes_since_last"),
