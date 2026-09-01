@@ -126,8 +126,8 @@ export default async function PatientPage({
             </Link>
           </Button>
           <Button asChild variant="outline" size="sm">
-            <Link href={`/t/sessions/new?patient=${id}`}>
-              <Icon name="leaf" size={16} /> מפגש
+            <Link href={`/t/patients/${id}/sessions`}>
+              <Icon name="leaf" size={16} /> מפגשים
             </Link>
           </Button>
           <Button asChild variant="outline" size="sm">
