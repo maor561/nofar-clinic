@@ -10,7 +10,7 @@ import { AppointmentForm } from "../../appointment-form";
 import { buildDayBlocks } from "../../day-blocks";
 import { updateAppointmentAction } from "../../actions";
 
-export const metadata: Metadata = { title: "עריכת פגישה — נופר" };
+export const metadata: Metadata = { title: "עריכת פגישה" };
 
 export default async function EditAppointmentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/modules/core/auth/server";
 import { Button, Logo } from "@/modules/core/design-system";
+import { BRAND_SLOGAN, THERAPIST_NAME } from "@/lib/brand";
 import { buildInfo } from "@/lib/build-info";
 
 /**
@@ -22,14 +23,14 @@ export default async function Home() {
 
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-md flex-1 flex-col items-center justify-center gap-7 px-6 py-16 text-center">
-      <Logo subtitle="ניהול הקשר הטיפולי" />
+      <Logo />
 
       <div className="space-y-1.5">
         <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold">
-          המרחב של נופר כהן
+          {BRAND_SLOGAN}
         </h1>
         <p className="text-ink-soft text-sm">
-          נטורופתיה · רפלקסולוגיה · תזונה. הכניסה למטפלת ולמטופלים.
+          {THERAPIST_NAME} · נטורופתיה קלינית ותזונה. הכניסה למטפלת ולמטופלים.
         </p>
       </div>
 

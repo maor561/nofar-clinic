@@ -12,7 +12,7 @@ import { Button, Card, EmptyState, Icon, cn } from "@/modules/core/design-system
 import { clinicDateFmt, clinicWeekStart, toClinicFields } from "@/lib/tz";
 import { ApptStatus } from "./appt-status";
 
-export const metadata: Metadata = { title: "יומן — נופר" };
+export const metadata: Metadata = { title: "יומן" };
 
 type SP = { w?: string; s?: string };
 

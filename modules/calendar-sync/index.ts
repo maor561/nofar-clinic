@@ -155,7 +155,7 @@ export async function syncAppointment(
 
     const event: g.CalEvent = {
       summary: `פגישה — ${appt.patientFirstName}`.trim(),
-      description: `נקבע במערכת של נופר\n${appBase()}/t/calendar/${appt.id}`,
+      description: `נקבע ב-Momentum\n${appBase()}/t/calendar/${appt.id}`,
       startsAt: appt.startsAt,
       endsAt: appt.endsAt,
     };

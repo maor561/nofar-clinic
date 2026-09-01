@@ -6,7 +6,7 @@ import { getTask } from "@/modules/tasks";
 import { TaskForm } from "../../task-form";
 import { updateTaskAction } from "../../actions";
 
-export const metadata: Metadata = { title: "עריכת משימה — נופר" };
+export const metadata: Metadata = { title: "עריכת משימה" };
 
 export default async function EditTaskPage({
   params,

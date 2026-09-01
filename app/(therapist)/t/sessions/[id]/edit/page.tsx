@@ -8,7 +8,7 @@ import type { FieldSchema } from "@/modules/core/fields";
 import { SessionForm, type SessionFieldDef } from "../../session-form";
 import { updateSessionAction } from "../../actions";
 
-export const metadata: Metadata = { title: "עריכת מפגש — נופר" };
+export const metadata: Metadata = { title: "עריכת מפגש" };
 
 export default async function EditSessionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

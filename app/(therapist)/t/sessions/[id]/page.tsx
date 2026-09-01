@@ -13,7 +13,7 @@ import {
   Icon,
 } from "@/modules/core/design-system";
 
-export const metadata: Metadata = { title: "מפגש — נופר" };
+export const metadata: Metadata = { title: "מפגש" };
 
 const dateFmt = new Intl.DateTimeFormat("he-IL", { dateStyle: "long" });
 

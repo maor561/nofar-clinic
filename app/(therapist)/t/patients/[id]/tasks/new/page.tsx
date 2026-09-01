@@ -6,7 +6,7 @@ import { getPatient } from "@/modules/patients";
 import { TaskForm } from "../task-form";
 import { createTaskAction } from "../actions";
 
-export const metadata: Metadata = { title: "משימה חדשה — נופר" };
+export const metadata: Metadata = { title: "משימה חדשה" };
 
 export default async function NewTaskPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

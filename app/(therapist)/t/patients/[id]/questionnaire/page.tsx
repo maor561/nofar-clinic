@@ -8,7 +8,7 @@ import { getQuestionnaire } from "@/modules/questionnaires";
 import { EmptyState } from "@/modules/core/design-system";
 import { AnswersList } from "@/app/(patient)/p/questionnaire/answers";
 
-export const metadata: Metadata = { title: "שאלון קליטה — נופר" };
+export const metadata: Metadata = { title: "שאלון קליטה" };
 
 const dtf = new Intl.DateTimeFormat("he-IL", { dateStyle: "long" });
 

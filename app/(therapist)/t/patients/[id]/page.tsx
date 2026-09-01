@@ -23,7 +23,7 @@ import {
 import { StatusPill } from "../status-pill";
 import { PatientTimeline } from "./timeline";
 
-export const metadata: Metadata = { title: "תיק מטופל — נופר" };
+export const metadata: Metadata = { title: "תיק מטופל" };
 
 type SP = { ev?: string };
 

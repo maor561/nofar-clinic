@@ -5,7 +5,7 @@ import { listAppointmentRows, APPT_STATUS_LABEL, treatmentLabel } from "@/module
 import { Button, Card, EmptyState, cn } from "@/modules/core/design-system";
 import { clinicDateFmt } from "@/lib/tz";
 
-export const metadata: Metadata = { title: "הפגישות שלי — נופר" };
+export const metadata: Metadata = { title: "הפגישות שלי" };
 
 const whenFmt = clinicDateFmt({ dateStyle: "full", timeStyle: "short" });
 const timeFmt = clinicDateFmt({ hour: "2-digit", minute: "2-digit" });

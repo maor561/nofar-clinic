@@ -26,17 +26,13 @@
 
 ---
 
-## שלב 2 — מיתוג (⛔ ממתין לחומר מהלקוחה)
+## שלב 2 — מיתוג
 
-### WP-53 · לוגו + שם מערכת חדשים (#13) ⛔
-**מה:** להחליף לוגו ("מרחב נופר" / "נופר כהן") ושם המערכת בכל מקום — `Logo`, `<title>`-ים, מיילים, דף `/privacy`, `manifest` (כשיהיה).
-**גישה:** ריכוז השם למקור אחד (`lib/brand.ts`), החלפת נכס הלוגו, סריקת מחרוזות.
-**חוסם:** הלקוחה תשלח לוגו + שם.
+### WP-53 · שם מערכת חדש: "Momentum" (#13) ✅ (לוגו וקטורי — בהמשך)
+**בוצע 2026-09-01.** `lib/brand.ts` — `BRAND = "Momentum"`, `BRAND_BY = "by Nofar-Cohen"`, `BRAND_SLOGAN = "תזונה שעובדת בשבילך כל יום מחדש"`, `THERAPIST_NAME`. `<title>` דרך template ב-root layout (`%s — Momentum`), כל 45 המסכים עברו sed. `Logo` wordmark = "Momentum" + subtitle "by Nofar-Cohen" בשני ה-shells. דף הבית: הסלוגן ככותרת. `/privacy`, מיילים (wordmark + footer), TOTP issuer, תיאור אירוע Google — כולם "Momentum". **הבחנה נשמרה:** "נופר" כמטפלת (מיילים "פגישה עם נופר", "פנו לנופר") לא שונה. הלוגו הגרפי — הלקוחה תשלח קובץ וקטורי, אז נחליף את סמל העלה + נוסיף favicon/PWA icons.
 
-### WP-54 · פלטת צבעים (#2) ⛔
-**מה:** לעדכן את ה-tokens ("Calm Wellness") ב-`app/globals.css` לפי פלטה שהלקוחה תשלח.
-**גישה:** מיפוי הפלטה החדשה ל-tokens הקיימים (`--sage*`, `--rose*`, `--ink*`, רקעים). בדיקת ניגודיות. ה-artifact של `/privacy` מסונכרן ידנית.
-**חוסם:** הלקוחה תשלח פלטה. **מומלץ לבצע יחד עם WP-53 בבת אחת.**
+### WP-54 · פלטת צבעים (#2) ✅
+**בוצע 2026-09-01.** מהלוגו: `--color-sage-soft #dbe4d8`, `--color-ground #fefbf1`, `--color-blush-soft #e9d4d5`. הותאמו ה-tokens הסמוכים (sage, sage-tint, surface-2, line, line-soft, chart-2/3) לכיוון הקרם החמים. sage-deep, ink וצבעי סטטוס — ללא שינוי. עדיין light-only.
 
 ---
 

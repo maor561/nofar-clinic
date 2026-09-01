@@ -8,7 +8,7 @@ import type { FieldSchema } from "@/modules/core/fields";
 import { PlanForm, type PlanFieldDef } from "../plan-form";
 import { savePlanAction } from "../actions";
 
-export const metadata: Metadata = { title: "עדכון תוכנית — נופר" };
+export const metadata: Metadata = { title: "עדכון תוכנית" };
 
 export default async function EditPlanPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

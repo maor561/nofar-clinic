@@ -15,7 +15,7 @@ import {
   Icon,
 } from "@/modules/core/design-system";
 
-export const metadata: Metadata = { title: "תוכנית טיפול — נופר" };
+export const metadata: Metadata = { title: "תוכנית טיפול" };
 
 const dtf = new Intl.DateTimeFormat("he-IL", { dateStyle: "medium", timeStyle: "short" });
 

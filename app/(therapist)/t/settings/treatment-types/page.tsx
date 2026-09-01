@@ -14,7 +14,7 @@ import {
 import { renameTypeAction, toggleTypeAction } from "./actions";
 import { AddTypeForm } from "./types-form";
 
-export const metadata: Metadata = { title: "סוגי טיפול — נופר" };
+export const metadata: Metadata = { title: "סוגי טיפול" };
 
 export default async function TreatmentTypesPage() {
   const tdb = await getTherapistDb();

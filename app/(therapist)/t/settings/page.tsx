@@ -15,7 +15,7 @@ import { clinicDateFmt } from "@/lib/tz";
 import { ChangePasswordForm, TotpEnroll } from "./settings-forms";
 import { disconnectGoogleAction } from "./actions";
 
-export const metadata: Metadata = { title: "הגדרות — נופר" };
+export const metadata: Metadata = { title: "הגדרות" };
 
 const SOON = ["פרטי הקליניקה והמיתוג", "מדיניות שמירת מידע ונספח רגולציה"];
 const dateFmt = clinicDateFmt({ dateStyle: "medium" });

@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/modules/core/design-system";
 
-export const metadata: Metadata = { title: "יומן פעילות — נופר" };
+export const metadata: Metadata = { title: "יומן פעילות" };
 
 const ACTION_LABEL: Record<AuditAction, string> = {
   view: "צפייה",

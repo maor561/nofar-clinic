@@ -3,8 +3,8 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, Icon, Logo } from "@/modules/core/design-system";
 
 export const metadata: Metadata = {
-  title: "מדיניות פרטיות — נופר",
-  description: "מדיניות הפרטיות של מערכת מרחב נופר, כולל חיבור Google Calendar.",
+  title: "מדיניות פרטיות",
+  description: "מדיניות הפרטיות של Momentum, כולל חיבור Google Calendar.",
 };
 
 const SECTIONS: { title: string; body: React.ReactNode }[] = [
@@ -12,9 +12,9 @@ const SECTIONS: { title: string; body: React.ReactNode }[] = [
     title: "מי מפעיל/ה את המערכת",
     body: (
       <p>
-        &quot;מרחב נופר&quot; היא מערכת Web פרטית שמפעילה נופר כהן, נטורופתית קלינית, לניהול הקשר
-        הטיפולי מול המטופלים והמטופלות שלה בלבד. המערכת אינה פתוחה לציבור הרחב — כל מטופל/ת מצטרפ/ת
-        בהזמנה אישית מנופר.
+        Momentum היא מערכת Web פרטית שמפעילה נופר כהן, נטורופתית קלינית, לניהול הקשר הטיפולי מול
+        המטופלים והמטופלות שלה בלבד. המערכת אינה פתוחה לציבור הרחב — כל מטופל/ת מצטרפ/ת בהזמנה אישית
+        מנופר.
       </p>
     ),
   },
@@ -159,10 +159,10 @@ export default function PrivacyPolicyPage() {
         <span className="bg-sage-soft text-sage-deep inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-bold">
           <Icon name="lock" size={13} /> מדיניות פרטיות
         </span>
-        <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">מרחב נופר</h1>
+        <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">Momentum</h1>
         <p className="text-ink-soft mx-auto max-w-md text-sm">
-          איך המערכת של נופר כהן — לניהול הקשר הטיפולי בנטורופתיה, רפלקסולוגיה ותזונה — אוספת,
-          משתמשת ושומרת על המידע שלך, כולל חיבור אופציונלי ליומן Google.
+          איך Momentum — המערכת של נופר כהן לניהול הקשר הטיפולי בנטורופתיה ותזונה — אוספת, משתמשת
+          ושומרת על המידע שלך, כולל חיבור אופציונלי ליומן Google.
         </p>
         <p className="text-ink-faint text-[12px] tabular-nums">עודכן לאחרונה: 1 בספטמבר 2026</p>
       </header>
@@ -186,7 +186,7 @@ export default function PrivacyPolicyPage() {
       </div>
 
       <footer className="border-line text-ink-faint mt-8 flex flex-wrap items-center justify-between gap-2 border-t pt-5 text-[13px]">
-        <span>מרחב נופר · מערכת ניהול מטפל–מטופל</span>
+        <span>Momentum · מערכת ניהול מטפל–מטופל</span>
         <a href="mailto:nofar@nofar-health.com" className="text-sage-deep hover:underline">
           יצירת קשר: nofar@nofar-health.com
         </a>

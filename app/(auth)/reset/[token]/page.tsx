@@ -5,7 +5,7 @@ import { DbNotConfiguredError } from "@/modules/core/authz";
 import { Button } from "@/modules/core/design-system";
 import { ResetForm } from "./reset-form";
 
-export const metadata: Metadata = { title: "איפוס סיסמה — נופר" };
+export const metadata: Metadata = { title: "איפוס סיסמה" };
 
 export default async function ResetPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;

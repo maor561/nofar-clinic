@@ -4,7 +4,7 @@ import { myNotifications } from "@/modules/core/notifications/server";
 import { Button, Card, EmptyState, cn } from "@/modules/core/design-system";
 import { markAllReadAction } from "./actions";
 
-export const metadata: Metadata = { title: "התראות — נופר" };
+export const metadata: Metadata = { title: "התראות" };
 
 export default async function AlertsPage() {
   const items = await myNotifications({ limit: 100 });

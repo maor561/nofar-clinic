@@ -7,7 +7,7 @@ import { MessageList } from "@/app/(therapist)/t/messages/message-list";
 import { ChatComposer, ChatPoller } from "@/app/(therapist)/t/messages/chat";
 import { sendMessageAction } from "@/app/(therapist)/t/messages/actions";
 
-export const metadata: Metadata = { title: "הודעות — נופר" };
+export const metadata: Metadata = { title: "הודעות" };
 
 export default async function MyMessagesPage() {
   if (!FEATURES.messaging) notFound();

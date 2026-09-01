@@ -5,7 +5,7 @@ import { listTreatmentTypes } from "@/modules/patients";
 import { PatientForm } from "../patient-form";
 import { createPatientAction } from "../actions";
 
-export const metadata: Metadata = { title: "מטופל חדש — נופר" };
+export const metadata: Metadata = { title: "מטופל חדש" };
 
 export default async function NewPatientPage() {
   const tdb = await getTherapistDb();

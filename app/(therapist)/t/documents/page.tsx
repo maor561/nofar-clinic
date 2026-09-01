@@ -4,7 +4,7 @@ import { getTherapistDb } from "@/modules/core/authz/server";
 import { listRecentDocuments, DOCUMENT_KIND_LABEL } from "@/modules/documents";
 import { Card, EmptyState, Icon } from "@/modules/core/design-system";
 
-export const metadata: Metadata = { title: "מסמכים — נופר" };
+export const metadata: Metadata = { title: "מסמכים" };
 
 const df = new Intl.DateTimeFormat("he-IL", { dateStyle: "medium" });
 

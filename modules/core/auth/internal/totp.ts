@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import type { Db } from "@/modules/core/data/client";
 import { user } from "../schema";
 
-const ISSUER = "נופר";
+const ISSUER = "Momentum";
 
 function totpFor(email: string, secretBase32: string): TOTP {
   return new TOTP({

@@ -1,4 +1,5 @@
 import { FEATURES } from "@/lib/features";
+import { BRAND_BY } from "@/lib/brand";
 import { Logo } from "../logo";
 import { TopNav, type NavItem } from "./shell-nav";
 
@@ -37,7 +38,7 @@ export function PatientShell({ user, nav = DEFAULT_NAV, headerSlot, children }: 
   return (
     <div className="flex min-h-svh flex-col">
       <header className="border-line bg-surface flex flex-wrap items-center gap-x-5 gap-y-2 border-b px-6 py-3.5">
-        <Logo />
+        <Logo subtitle={BRAND_BY} />
         <TopNav items={nav} />
         <div className="ms-auto flex items-center gap-2.5">
           <span className="text-[13px] font-semibold">{user.name}</span>

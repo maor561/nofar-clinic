@@ -16,7 +16,7 @@ import {
 } from "@/modules/core/design-system";
 import { clinicDateFmt } from "@/lib/tz";
 
-export const metadata = { title: "המרחב שלי — נופר" };
+export const metadata = { title: "המרחב שלי" };
 
 const whenFmt = clinicDateFmt({
   weekday: "long",

@@ -10,7 +10,7 @@ import {
   type PolicyValue,
 } from "./availability-form";
 
-export const metadata: Metadata = { title: "זמינות וקביעת תורים — נופר" };
+export const metadata: Metadata = { title: "זמינות וקביעת תורים" };
 
 function hhmm(minute: number): string {
   return `${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`;

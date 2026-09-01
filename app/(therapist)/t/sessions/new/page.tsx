@@ -9,7 +9,7 @@ import { toClinicFields } from "@/lib/tz";
 import { SessionForm, type SessionFieldDef } from "../session-form";
 import { createSessionAction } from "../actions";
 
-export const metadata: Metadata = { title: "מפגש חדש — נופר" };
+export const metadata: Metadata = { title: "מפגש חדש" };
 
 type SP = { patient?: string; appointment?: string };
 

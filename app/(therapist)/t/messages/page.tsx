@@ -8,7 +8,7 @@ import { listPatients } from "@/modules/patients";
 import { Card, EmptyState, cn } from "@/modules/core/design-system";
 import { ChatPoller } from "./chat";
 
-export const metadata: Metadata = { title: "הודעות — נופר" };
+export const metadata: Metadata = { title: "הודעות" };
 
 const dtf = new Intl.DateTimeFormat("he-IL", {
   timeZone: "Asia/Jerusalem",

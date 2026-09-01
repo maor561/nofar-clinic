@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Assistant, Frank_Ruhl_Libre } from "next/font/google";
 import "./globals.css";
+import { BRAND } from "@/lib/brand";
 import { Providers } from "./providers";
 
 const assistant = Assistant({
@@ -18,7 +19,7 @@ const frankRuhl = Frank_Ruhl_Libre({
 });
 
 export const metadata: Metadata = {
-  title: "נופר — ניהול מטפל–מטופל",
+  title: { default: `${BRAND} — ניהול מטפל–מטופל`, template: `%s — ${BRAND}` },
   description: "מערכת לניהול הקשר הטיפולי בין מטפל למטופליו.",
 };
 

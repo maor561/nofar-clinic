@@ -17,14 +17,14 @@ function layout(bodyHtml: string): string {
     <tr><td align="center">
       <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border:1px solid ${LINE};border-radius:16px;overflow:hidden">
         <tr><td style="padding:22px 26px;border-bottom:1px solid ${LINE}">
-          <span style="font-size:18px;font-weight:bold;color:${SAGE}">נופר</span>
-          <span style="font-size:12px;color:${MUTED}"> · ניהול קליניקה</span>
+          <span style="font-size:18px;font-weight:bold;color:${SAGE}">Momentum</span>
+          <span style="font-size:12px;color:${MUTED}"> · נופר כהן</span>
         </td></tr>
         <tr><td style="padding:26px">
           ${bodyHtml}
         </td></tr>
         <tr><td style="padding:16px 26px;border-top:1px solid ${LINE};font-size:11px;color:${MUTED}">
-          הודעה זו נשלחה ממערכת הקליניקה של נופר כהן. אם לא ציפית לה, אפשר להתעלם.
+          הודעה זו נשלחה מ-Momentum, מערכת הקליניקה של נופר כהן. אם לא ציפית לה, אפשר להתעלם.
         </td></tr>
       </table>
     </td></tr>
@@ -62,7 +62,7 @@ export function inviteEmail(opts: { inviteUrl: string; patientName?: string }): 
 
 export function passwordResetEmail(opts: { resetUrl: string }): Template {
   return {
-    subject: "איפוס סיסמה — המרחב הטיפולי של נופר",
+    subject: "איפוס סיסמה — Momentum",
     html: layout(
       p("קיבלנו בקשה לאיפוס הסיסמה לחשבון שלך.") +
         p("לבחירת סיסמה חדשה:") +

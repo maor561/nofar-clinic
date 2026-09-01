@@ -8,7 +8,7 @@ import { AppointmentForm } from "../appointment-form";
 import { buildDayBlocks } from "../day-blocks";
 import { createAppointmentAction } from "../actions";
 
-export const metadata: Metadata = { title: "פגישה חדשה — נופר" };
+export const metadata: Metadata = { title: "פגישה חדשה" };
 
 type SP = { patient?: string; date?: string };
 

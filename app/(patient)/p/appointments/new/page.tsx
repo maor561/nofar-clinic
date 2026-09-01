@@ -7,7 +7,7 @@ import { Card, CardContent, EmptyState, Icon } from "@/modules/core/design-syste
 import { clinicWeekStart, clinicDateFmt, toClinicFields } from "@/lib/tz";
 import { BookGrid, type DaySlots } from "./book-grid";
 
-export const metadata: Metadata = { title: "קביעת תור — נופר" };
+export const metadata: Metadata = { title: "קביעת תור" };
 
 const dayLabelFmt = clinicDateFmt({ weekday: "long", day: "numeric", month: "long" });
 const timeFmt = clinicDateFmt({ hour: "2-digit", minute: "2-digit" });

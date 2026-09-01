@@ -3,7 +3,7 @@ import { getPatientDb } from "@/modules/core/authz/server";
 import { getMyProfile, CONSENT_LABEL } from "@/modules/patients";
 import { Card, CardContent, CardHeader, CardTitle, Icon } from "@/modules/core/design-system";
 
-export const metadata: Metadata = { title: "הפרופיל שלי — נופר" };
+export const metadata: Metadata = { title: "הפרופיל שלי" };
 
 const dateFmt = new Intl.DateTimeFormat("he-IL", { dateStyle: "long" });
 

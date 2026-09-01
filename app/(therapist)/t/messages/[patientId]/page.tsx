@@ -11,7 +11,7 @@ import { MessageList } from "../message-list";
 import { ChatComposer, ChatPoller } from "../chat";
 import { sendMessageAction } from "../actions";
 
-export const metadata: Metadata = { title: "שיחה — נופר" };
+export const metadata: Metadata = { title: "שיחה" };
 
 export default async function ConversationPage({
   params,

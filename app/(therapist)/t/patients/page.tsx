@@ -23,7 +23,7 @@ import {
 } from "@/modules/core/design-system";
 import { StatusPill } from "./status-pill";
 
-export const metadata: Metadata = { title: "מטופלים — נופר" };
+export const metadata: Metadata = { title: "מטופלים" };
 
 type SP = { q?: string; status?: string; tt?: string };
 

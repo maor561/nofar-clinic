@@ -8,7 +8,7 @@ import { QuestionnaireForm, type QFieldDef } from "./questionnaire-form";
 import { AnswersList } from "./answers";
 import { submitQuestionnaireAction } from "./actions";
 
-export const metadata: Metadata = { title: "שאלון קליטה — נופר" };
+export const metadata: Metadata = { title: "שאלון קליטה" };
 
 const dtf = new Intl.DateTimeFormat("he-IL", { dateStyle: "long" });
 

@@ -16,7 +16,7 @@ import { clinicDateFmt } from "@/lib/tz";
 import { ApptStatus } from "../appt-status";
 import { setStatusAction } from "../actions";
 
-export const metadata: Metadata = { title: "פגישה — נופר" };
+export const metadata: Metadata = { title: "פגישה" };
 
 const whenFmt = clinicDateFmt({ dateStyle: "full", timeStyle: "short" });
 const timeFmt = clinicDateFmt({ hour: "2-digit", minute: "2-digit" });

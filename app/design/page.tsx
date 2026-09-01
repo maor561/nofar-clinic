@@ -121,7 +121,7 @@ export default function DesignSystemPage() {
           <Section title="טיפוגרפיה">
             <div className="border-line bg-surface space-y-3 rounded-[var(--radius-card)] border p-6">
               <p className="font-[family-name:var(--font-display)] text-3xl font-bold">
-                נופר — כותרת ראשית (Frank Ruhl Libre)
+                Momentum — כותרת ראשית (Frank Ruhl Libre)
               </p>
               <p className="text-ink-soft font-[family-name:var(--font-display)] text-xl font-medium">
                 כותרת משנה · 20px

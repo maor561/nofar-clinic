@@ -8,7 +8,7 @@ import { listTaskRows, TASK_FREQUENCY_LABEL, type TaskRow } from "@/modules/task
 import { Button, Card, EmptyState, Icon, cn } from "@/modules/core/design-system";
 import { setTaskStatusAction, deleteTaskAction } from "./actions";
 
-export const metadata: Metadata = { title: "משימות — נופר" };
+export const metadata: Metadata = { title: "משימות" };
 
 const df = new Intl.DateTimeFormat("he-IL", { dateStyle: "medium" });
 

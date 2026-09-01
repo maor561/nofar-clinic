@@ -5,7 +5,7 @@ import { getTherapistDb } from "@/modules/core/authz/server";
 import { getPlanVersion } from "@/modules/plans";
 import { Card, CardContent, CardHeader, CardTitle } from "@/modules/core/design-system";
 
-export const metadata: Metadata = { title: "גרסת תוכנית — נופר" };
+export const metadata: Metadata = { title: "גרסת תוכנית" };
 
 const dtf = new Intl.DateTimeFormat("he-IL", { dateStyle: "long", timeStyle: "short" });
 

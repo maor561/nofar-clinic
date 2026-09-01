@@ -6,7 +6,7 @@ import { getPatient, listTreatmentTypes } from "@/modules/patients";
 import { PatientForm } from "../../patient-form";
 import { updatePatientAction } from "../../actions";
 
-export const metadata: Metadata = { title: "עריכת מטופל — נופר" };
+export const metadata: Metadata = { title: "עריכת מטופל" };
 
 export default async function EditPatientPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

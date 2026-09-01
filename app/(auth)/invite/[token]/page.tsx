@@ -5,7 +5,7 @@ import { DbNotConfiguredError } from "@/modules/core/authz";
 import { Button } from "@/modules/core/design-system";
 import { InviteForm } from "./invite-form";
 
-export const metadata: Metadata = { title: "הזמנה — נופר" };
+export const metadata: Metadata = { title: "הזמנה" };
 
 export default async function InvitePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;

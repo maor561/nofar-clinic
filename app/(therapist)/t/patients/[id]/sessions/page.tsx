@@ -6,7 +6,7 @@ import { getPatient } from "@/modules/patients";
 import { listSessions } from "@/modules/sessions";
 import { Button, Card, EmptyState, Icon } from "@/modules/core/design-system";
 
-export const metadata: Metadata = { title: "מפגשים — נופר" };
+export const metadata: Metadata = { title: "מפגשים" };
 
 const dateFmt = new Intl.DateTimeFormat("he-IL", { dateStyle: "full" });
 
