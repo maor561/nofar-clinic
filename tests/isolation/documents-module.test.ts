@@ -22,6 +22,7 @@ vi.mock("@/modules/core/files", () => ({
   deleteFile: vi.fn().mockResolvedValue(undefined),
 }));
 
+import { document } from "@/modules/documents/schema";
 import {
   listDocuments,
   listRecentDocuments,
@@ -30,6 +31,9 @@ import {
   setDocumentVisibility,
   deleteDocument,
   shareDocumentWithPatients,
+  listRetentionReview,
+  countRetentionReview,
+  deferRetention,
 } from "@/modules/documents";
 
 let db: Db;
@@ -191,6 +195,54 @@ describe("share to many patients (WP-63)", () => {
     ).rejects.toThrow("patient_not_found");
     // nothing was written for the valid patient either
     expect(await listDocuments(tdb(t1), A)).toEqual([]);
+  });
+});
+
+describe("retention review loop (WP-64)", () => {
+  const DAY = 86_400_000;
+  const age = (id: string, days: number) =>
+    db
+      .update(document)
+      .set({ createdAt: new Date(Date.now() - days * DAY) })
+      .where(eq(document.id, id));
+
+  it("surfaces only documents older than a year, scoped to the therapist", async () => {
+    const old = await createDocument(tdb(t1), base(A));
+    const fresh = await createDocument(tdb(t1), base(A));
+    const otherOld = await createDocument(tdb(t2), base(B));
+    await age(old.id, 400);
+    await age(otherOld.id, 400);
+
+    const review = await listRetentionReview(tdb(t1));
+    expect(review.map((d) => d.id)).toEqual([old.id]);
+    expect(review[0].patientName).toBe("איי בדיקה");
+    expect(await countRetentionReview(tdb(t1))).toBe(1);
+    // fresh one is not there
+    expect(review.some((d) => d.id === fresh.id)).toBe(false);
+    // t2's old doc is on t2's list only
+    expect((await listRetentionReview(tdb(t2))).map((d) => d.id)).toEqual([otherOld.id]);
+  });
+
+  it("'keep' defers the next review by 90 days, then it returns", async () => {
+    const { id } = await createDocument(tdb(t1), base(A));
+    await age(id, 400);
+    await deferRetention(tdb(t1), id);
+    expect(await countRetentionReview(tdb(t1))).toBe(0);
+
+    // simulate 91 days passing: pull the defer date into the past
+    await db
+      .update(document)
+      .set({ retentionDeferUntil: new Date(Date.now() - DAY) })
+      .where(eq(document.id, id));
+    expect(await countRetentionReview(tdb(t1))).toBe(1);
+  });
+
+  it("a therapist cannot defer another therapist's document", async () => {
+    const { id } = await createDocument(tdb(t2), base(B));
+    await age(id, 400);
+    await expect(deferRetention(tdb(t1), id)).rejects.toThrow("document_not_found");
+    // still up for review on t2's list, untouched
+    expect(await countRetentionReview(tdb(t2))).toBe(1);
   });
 });
 

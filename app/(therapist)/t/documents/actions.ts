@@ -6,7 +6,13 @@ import { getTherapistDb } from "@/modules/core/authz/server";
 import { getPatientUserId } from "@/modules/core/auth";
 import { notify } from "@/modules/core/notifications";
 import { putFile, isAllowedMime, MAX_FILE_BYTES } from "@/modules/core/files";
-import { shareDocumentWithPatients, documentKind, type DocumentKind } from "@/modules/documents";
+import {
+  shareDocumentWithPatients,
+  deferRetention,
+  deleteDocument,
+  documentKind,
+  type DocumentKind,
+} from "@/modules/documents";
 
 export type ShareState = { error?: string; ok?: number };
 
@@ -89,4 +95,29 @@ export async function shareToPatientsAction(_prev: ShareState, fd: FormData): Pr
   revalidatePath("/t/documents");
   revalidatePath("/p/documents");
   return { ok: created.length };
+}
+
+/* --- WP-64 retention review --- */
+
+/** "Keep for another year" — defer the next review by 90 days. */
+export async function keepDocumentAction(id: string): Promise<void> {
+  const tdb = await getTherapistDb();
+  try {
+    await deferRetention(tdb, id);
+  } catch {
+    return;
+  }
+  revalidatePath("/t/documents/review");
+  revalidatePath("/t/documents");
+  revalidatePath("/t");
+}
+
+/** "Delete now" — remove the row + blob + audit (via the scoped handle). */
+export async function deleteReviewedDocumentAction(id: string): Promise<void> {
+  const tdb = await getTherapistDb();
+  await deleteDocument(tdb, id);
+  revalidatePath("/t/documents/review");
+  revalidatePath("/t/documents");
+  revalidatePath("/t");
+  revalidatePath("/p/documents");
 }

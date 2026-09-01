@@ -134,6 +134,13 @@
       "when": 1788298157856,
       "tag": "0018_session_patient_summary",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1788299611325,
+      "tag": "0019_document_retention",
+      "breakpoints": true
     }
   ]
 }

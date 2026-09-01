@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTherapistDb } from "@/modules/core/authz/server";
-import { listRecentDocuments, DOCUMENT_KIND_LABEL } from "@/modules/documents";
+import {
+  listRecentDocuments,
+  countRetentionReview,
+  DOCUMENT_KIND_LABEL,
+} from "@/modules/documents";
 import { listPatients } from "@/modules/patients";
 import {
   Card,
@@ -25,9 +29,10 @@ function humanSize(bytes: number): string {
 
 export default async function AllDocumentsPage() {
   const tdb = await getTherapistDb();
-  const [docs, patients] = await Promise.all([
+  const [docs, patients, reviewCount] = await Promise.all([
     listRecentDocuments(tdb),
     listPatients(tdb, { status: "active", limit: 200 }),
+    countRetentionReview(tdb),
   ]);
   const patientOptions = patients.map((p) => ({
     id: p.id,
@@ -42,6 +47,18 @@ export default async function AllDocumentsPage() {
           כל המסמכים לפי סדר העלאה. להעלאה לתיק יחיד — דרך תיק המטופל/ת.
         </p>
       </header>
+
+      {reviewCount > 0 && (
+        <Link
+          href="/t/documents/review"
+          className="border-warn/40 bg-warn-soft/50 text-warn flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm"
+        >
+          <span>
+            <b>{reviewCount}</b> מסמכים עברו שנה וממתינים להחלטה (מחיקה / שמירה).
+          </span>
+          <span className="font-semibold">לבדיקה ←</span>
+        </Link>
+      )}
 
       <Card>
         <CardHeader>

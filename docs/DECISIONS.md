@@ -606,3 +606,27 @@ argon2id, נעילת חשבון, throttle IP, ו-TOTP אופציונלי — ל�
 
 **בידוד:** `shareDocumentWithPatients(tdb, patientIds, meta, fileKeyFor)` מאמת שכל `patientId` שייך
 למטפלת (`inArray` על `patient`) **לפני** כתיבה כלשהי — id זר מבטל את כל האצווה. 2 בדיקות בידוד.
+
+## ADR-044 — מחיקת מסמכים אחרי שנה: לולאת אישור בכניסה, ללא cron (WP-64)
+**תאריך:** 2026-09-02 · **סטטוס:** נעול
+
+בקשה #15: מסמך בן שנה → לשאול את המטפלת; "כן"→מחיקה, "לא"→לשאול שוב בעוד 3 חודשים.
+
+- **מנגנון:** עמודה אחת — `document.retention_defer_until` (מיגרציה `0019`). "קבוצת הבדיקה" =
+  `created_at < now-365d AND (retention_defer_until IS NULL OR retention_defer_until < now)`. אין
+  state machine — השאילתה עצמה היא הרשימה.
+- **"שמירה"** → `retention_defer_until = now + 90d` (המסמך יורד מהרשימה וחוזר אליה כעבור 90 יום).
+  **"מחיקה"** → `deleteDocument` (row + blob + audit דרך ה-handle ה-scoped).
+- **ללא cron.** התוכנית המקורית דיברה על cron (WP-25) שסורק חוצה-דיירים ושולח התראה. מוצר
+  **מטפל-יחיד** שנכנס למערכת בקביעות לא צריך את זה, ו-cron חוצה-דיירים היה שובר את גבול ה-scoping
+  guard (`getDb()` חסום מחוץ ל-core המהימן). במקום — **בדיקה מקומית ב-handle ה-scoped**:
+  `countRetentionReview(tdb)` נקרא ב-`/t` (דשבורד) וב-`/t/documents`, ומראה באנר אזהרה עם קישור
+  ל-`/t/documents/review`. אם המוצר יהפוך לרב-מטפלים — להוסיף cron אמיתי שקורא לאותן פונקציות
+  per-therapist.
+- **❓ שנפתר — להחריג סוגי מסמכים (`lab_result` וכו')?** לא. שום סוג לא מוחרג אוטומטית; המטפלת
+  מאשרת כל מחיקה ידנית, והמסך מזכיר שמסמכים רפואיים עשויים להיות כפופים לחובת שמירה — ההחלטה
+  באחריותה (עקבי עם גישת "באחריות הלקוחה" של בקשה #14).
+
+**DoD:** עמודה + מיגרציה (הוחל על Neon) · `listRetentionReview`/`countRetentionReview`/`deferRetention` +
+`deleteDocument` · מסך `/t/documents/review` (מחיקה/שמירה) · באנר ב-`/t` וב-`/t/documents` ·
+3 בדיקות בידוד (רשימה scoped, מחזור defer-and-return, אי-אפשר לדחות מסמך של מטפלת אחרת).

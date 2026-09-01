@@ -1,0 +1,1 @@
+ALTER TABLE "document" ADD COLUMN "retention_defer_until" timestamp with time zone;

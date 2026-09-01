@@ -39,6 +39,12 @@ export const document = pgTable(
     visibility: text("visibility", { enum: documentVisibility })
       .notNull()
       .default("therapist_only"),
+    /**
+     * WP-64 retention loop. A document older than a year surfaces on
+     * `/t/documents/review`; "keep" sets this to now + 90d and it drops off the
+     * list until then, then reappears. NULL = never reviewed / not deferred.
+     */
+    retentionDeferUntil: timestamp("retention_defer_until", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("document_patient_idx").on(t.patientId, t.createdAt)],

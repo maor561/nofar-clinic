@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireTherapist, getDisplayName } from "@/modules/core/auth/server";
 import { getTherapistDb } from "@/modules/core/authz/server";
 import { listPatients } from "@/modules/patients";
+import { countRetentionReview } from "@/modules/documents";
 import { listAppointments, treatmentLabel } from "@/modules/appointments";
 import { listTasks } from "@/modules/tasks";
 import { myUnreadCount } from "@/modules/core/notifications/server";
@@ -29,12 +30,13 @@ export default async function TherapistDashboard() {
   const now = new Date();
   const todayKey = toClinicFields(now).date;
 
-  const [patients, upcoming, past, openTasks, notifUnread] = await Promise.all([
+  const [patients, upcoming, past, openTasks, notifUnread, docReview] = await Promise.all([
     listPatients(tdb, { limit: 200 }),
     listAppointments(tdb, { from: now, ascending: true, limit: 60 }),
     listAppointments(tdb, { to: now, ascending: false, limit: 60 }),
     listTasks(tdb, { status: "open", limit: 6 }),
     myUnreadCount(),
+    countRetentionReview(tdb),
   ]);
 
   const active = patients.filter((p) => p.status === "active");
@@ -58,6 +60,17 @@ export default async function TherapistDashboard() {
       </header>
 
       {/* WP-16 messaging tile removed while the feature is hidden — see lib/features.ts */}
+      {docReview > 0 && (
+        <Link
+          href="/t/documents/review"
+          className="border-warn/40 bg-warn-soft/50 text-warn flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm"
+        >
+          <span>
+            <b>{docReview}</b> מסמכים עברו שנה וממתינים להחלטה על מחיקה / שמירה.
+          </span>
+          <span className="font-semibold">לבדיקה ←</span>
+        </Link>
+      )}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <Stat href="/t/patients" label="מטופלים פעילים" value={active.length} icon="users" />
         <Stat href="/t/calendar" label="פגישות היום" value={today.length} icon="calendar" />

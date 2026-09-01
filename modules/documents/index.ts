@@ -1,4 +1,14 @@
-import { and, desc, eq, inArray, type SQL, type InferSelectModel } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  inArray,
+  isNull,
+  lt,
+  or,
+  type SQL,
+  type InferSelectModel,
+} from "drizzle-orm";
 import type { TherapistDb, PatientDb } from "@/modules/core/authz";
 import { patient } from "@/modules/patients/schema";
 import { recordEvent } from "@/modules/patient-file";
@@ -166,4 +176,46 @@ export async function deleteDocument(tdb: TherapistDb, id: string): Promise<void
       // orphan blob is harmless; the metadata row is what matters
     }
   }
+}
+
+/* --- retention review loop (WP-64) --- */
+
+export const RETENTION_MAX_AGE_DAYS = 365;
+export const RETENTION_DEFER_DAYS = 90;
+const DAY_MS = 86_400_000;
+
+/** A document is up for review once it is older than a year and not deferred. */
+function retentionReviewWhere(): SQL {
+  const olderThan = new Date(Date.now() - RETENTION_MAX_AGE_DAYS * DAY_MS);
+  const now = new Date();
+  return and(
+    lt(document.createdAt, olderThan),
+    or(isNull(document.retentionDeferUntil), lt(document.retentionDeferUntil, now)),
+  )!;
+}
+
+/** Documents (with patient names) the therapist needs to decide on. */
+export async function listRetentionReview(tdb: TherapistDb): Promise<DocumentListItem[]> {
+  const rows = await tdb.list(document, {
+    where: retentionReviewWhere(),
+    orderBy: [desc(document.createdAt)],
+    limit: 500,
+  });
+  if (rows.length === 0) return [];
+  const ids = [...new Set(rows.map((r) => r.patientId))];
+  const people = await tdb.findMany(patient, inArray(patient.id, ids));
+  const nameById = new Map(people.map((p) => [p.id, `${p.firstName} ${p.lastName}`]));
+  return rows.map((r) => ({ ...r, patientName: nameById.get(r.patientId) ?? "מטופל/ת" }));
+}
+
+/** Cheap badge count for the dashboard / documents banner. */
+export function countRetentionReview(tdb: TherapistDb): Promise<number> {
+  return tdb.count(document, retentionReviewWhere());
+}
+
+/** "Keep" — push the next review out by RETENTION_DEFER_DAYS. */
+export async function deferRetention(tdb: TherapistDb, id: string): Promise<void> {
+  const until = new Date(Date.now() + RETENTION_DEFER_DAYS * DAY_MS);
+  const rows = await tdb.update(document, { retentionDeferUntil: until }, eq(document.id, id));
+  if (rows.length === 0) throw new Error("document_not_found");
 }
