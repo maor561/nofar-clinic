@@ -37,6 +37,10 @@ export default async function Home() {
         <Link href="/login">כניסה</Link>
       </Button>
 
+      <Link href="/privacy" className="text-ink-faint text-[12px] hover:underline">
+        מדיניות פרטיות
+      </Link>
+
       <p className="text-ink-faint mt-6 text-[11px] tabular-nums" dir="ltr">
         build {buildInfo.shortSha} · {buildInfo.ref} · {built} ·{" "}
         <Link href="/api/version" className="underline">

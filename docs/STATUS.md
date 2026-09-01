@@ -1,6 +1,6 @@
 # STATUS
 
-**עודכן:** 2026-08-31
+**עודכן:** 2026-09-01
 
 ---
 
@@ -10,8 +10,8 @@
 **133 בדיקות ירוקות**, הפריסה חיה, פונקציות רצות ב-`fra1`.
 **מודול ההודעות (WP-16) מוסתר** מאחורי `lib/features.ts` (`messaging: false`) — קוד נשמר, ניווט+מסלולים כבויים (ADR-038).
 **היומן — חלק א׳ (WP-28 + WP-29 ✓):** זמינות מטפלת (`/t/settings/availability`) + מנוע חלונות טהור + קביעת תור עצמית למטופל (`/p/appointments/new`, אישור אוטומטי). `SchedulingView` ב-`core/authz` (ADR-040). נבדק מקצה לקצה מול Neon. מיגרציה `0013`.
-**היומן — חלק ב׳ (WP-32, Google Calendar ✓ קוד):** מודול `calendar-sync` — דחיפה Nofar→Google (best-effort, `void`), free/busy למנוע החלונות, טוקן refresh מוצפן AES-256-GCM (`0014`), מסלולי OAuth, כרטיס `/t/settings`. degradation חלק ללא env. ADR-041.
-**חסמי לקוח ל-Google:** (1) ב-Google Cloud — הוספת scopes ב-Data Access + הוספת המטפלת כ-Test user + (לשימוש קבוע) Publish app; (2) הוספת `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` / `CALENDAR_TOKEN_KEY` ל-Vercel env (הערכים אצל הלקוח/ב-`.env.local` המקומי). round-trip חי מול Google — אחרי זה.
+**היומן — חלק ב׳ (WP-32, Google Calendar ✓ קוד + חי):** מודול `calendar-sync` — דחיפה Nofar→Google (best-effort, `void`), free/busy למנוע החלונות + לאג'נדת המטפלת (`/t/calendar` מציג בלוקים חסומים מ-Google לצד הפגישות, עם דה-דופ), טוקן refresh מוצפן AES-256-GCM (`0014`), מסלולי OAuth, כרטיס `/t/settings`. ADR-041.
+**✅ הלקוחה חיברה את Google Calendar בהצלחה (2026-09-01)** — env הוזן ב-Vercel, אומת מול נתונים אמיתיים. **נותר (לא חוסם):** Publish App ב-Google Cloud כדי שהחיבור לא יתנתק כל 7 ימים (מצב Testing).
 **הבא: חיבור Google חי (לקוח) · WP-24..27 (לא חוסמי v1).**
 
 ## קישורים
@@ -134,6 +134,13 @@
 **WP-D1 — כל 8 המסכים הוגשו** ב-3 Artifacts (מקור ב-`docs/mockups/`), והלקוח אישר את הכיוון העיצובי ("מדהים"; תוכן יעודכן בהמשך).
 נגזר `docs/DESIGN_SYSTEM.md` — פלטה מרווה/רוז' (זמנית) · Frank Ruhl Libre + Assistant · shell מטפל (side rail) מול shell מטופל (top nav) ·
 תיק מטופל כ-hub סביב Timeline · מסך פגישה = זרימה רציפה אחת עם stepper דביק · מלאי רכיבים ל-WP-01.
+
+### 2026-09-01 — Google Calendar חי + בלוקים ביומן המטפלת
+הלקוחה השלימה את הצד שלה: scopes ב-Data Access, Test user, OAuth client עם שתי כתובות ה-redirect, env ב-Vercel (`GOOGLE_OAUTH_CLIENT_ID`/`_SECRET`/`CALENDAR_TOKEN_KEY`) + Redeploy. תקלה בדרך: ניסתה קודם ליצור **Service account** (לא מתאים — עוקף הסכמת משתמש, לא עובד עם Gmail אישי) — כוונתי אותה ל-**OAuth client ID**. שגיאת `access_denied: 403` כי החשבון שהתחברה איתו לא היה ב-Test users — נוסף, ואז עברה את מסך "Google לא אימתה" (צפוי במצב Testing). **חיבור הצליח.**
+הוסבר ללקוחה: הניתוק כל 7 ימים הוא תוצר של מצב Testing בלבד (לא של "לא מאומת") — הפתרון: Google Auth Platform → Audience → **Publish App**. לא חוסם, לא בוצע עדיין.
+**בקשה נוספת:** בלוקים חסומים מ-Google יוצגו גם באג'נדה של המטפלת, לא רק במסך הקביעה של המטופל. הוספתי ל-`/t/calendar`: `googleBusy` נשלף במקביל ל-`listAppointments`, ממוזג עם הפגישות הפנימיות ליחידת `DayItem` אחת ממוינת לפי שעה; פריט Google מוצג כשורה מוחשכת + אייקון מנעול, ללא קישור. **דה-דופ:** פגישת Nofar שנדחפה ל-Google תופיע גם ב-free/busy של עצמה — מזוהה ומדולגת לפי התאמת `[start,end]` מדויקת מול הפגישות הפנימיות. אומת בדפדפן מול היומן האמיתי המחובר — דה-דופ תקין (0 כפילויות על 3 פגישות פנימיות). typecheck/lint/build ירוקים (127+6 flaky suite לא קשור — `questionnaires-module.test.ts` עבר נקי בהרצה בודדת).
+
+**מדיניות פרטיות:** Google לא קיבלה קישור ל-`claude.ai` (MISSING DOMAIN — הלקוחה לא הבעלים). נבנה דף `/privacy` בתוך האפליקציה עצמה (`app/privacy/page.tsx`, ציבורי, מחוץ ל-middleware) על הדומיין `nofar-clinic.vercel.app` שכבר משמש כ-redirect URI. כולל את הגילוי הנדרש (Google API Services User Data Policy + Limited Use), scopes, הצפנה, מיקום מידע EU, תיקון 13. קישור מה-footer של דף הבית. → הלקוחה מדביקה `https://nofar-clinic.vercel.app/privacy` ב-Branding, `https://nofar-clinic.vercel.app` כ-home page, ואז Publish App.
 
 ### 2026-08-31 — WP-32: Google Calendar (קוד)
 מודול `modules/calendar-sync` (תשתית, getDb-backed, פטור מ-lint כמו core/email). `calendar_connection` (מיגרציה `0014`) — `refresh_token_enc` מוצפן AES-256-GCM (`CALENDAR_TOKEN_KEY`). `internal/google.ts` — לקוח REST כתוב-יד (authUrl/exchange/refresh/insert/patch/delete/freeBusy), scopes `calendar.events`+`calendar.freebusy`. מסלולים `/api/integrations/google/{connect,callback}` (state ב-cookie httpOnly). `syncAppointment(therapistId, appt)` נקרא `void` מ-4 actions (create/update/cancel של המטפלת + bookSlot של המטופל) — best-effort, `last_error` בלבד, `gcal_event_id` נכתב חזרה. `googleBusy()` מוזג ל-`SchedulingView.busyRanges` במסך הקביעה + ב-action. כרטיס "יומן Google" ב-`/t/settings` (מצב + חיבור + `disconnectGoogleAction`). ADR-041.

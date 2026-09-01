@@ -187,11 +187,11 @@ GitHub Action / Vercel Cron → dump ל-Blob/יעד מוצפן · שמירת 4 �
 ### WP-29 · קביעת תור עצמית למטופל ✅
 `SchedulingView` ב-`core/authz` (ADR-040) — משטח קריאה צר: config של המטפלת + `busyRanges` אטומים (`{start,end}` בלבד, ללא PII). `getSchedulingView()` — `therapistId` מה-session בלבד. `bookSelfAppointment(pdb,…)` ב-`modules/appointments` — insert דרך ה-guard, status `scheduled` (**אישור אוטומטי**), `recordEvent`. `bookSlotAction` מאמת מחדש את השעה מול view טרי לפני ה-insert. מסך `/p/appointments/new` (ניווט שבועי, שעה=כפתור, `confirm`) + כפתור "קביעת תור חדש" ב-`/p/appointments` (מותנה בטוגל).
 **DoD:** מטופל רואה חלונות פנויים בלבד ✓ · קובע → פגישה ביומן המטפלת + בפגישות שלו + timeline + התראה לשני הצדדים ✓ · שעה שנתפסה נעלמת מהרשת + נדחית ב-action ✓ · 6 בדיקות בידוד ✓ · נבדק בדפדפן מול Neon מקצה לקצה.
-**תלוי:** WP-28, WP-12 · **הבא:** WP-32 (Google Calendar — חסום על credentials מהלקוח)
+**תלוי:** WP-28, WP-12 · **הבא:** WP-32 (Google Calendar) ✅
 
-### WP-32 · Google Calendar — דחיפה + free/busy 🟡
-`modules/calendar-sync` (ADR-041, מיגרציה `0014`): `calendar_connection` (טוקן refresh מוצפן AES-256-GCM) · `internal/google.ts` לקוח REST כתוב-יד (OAuth + events + freeBusy) · מסלולי `/api/integrations/google/{connect,callback}` · `syncAppointment` best-effort (`void`) מ-4 actions, `gcal_event_id` נכתב חזרה · `googleBusy` מוזג ל-`SchedulingView` · כרטיס `/t/settings`. 4 בדיקות crypto.
-**DoD:** קוד + מסלולים + הגדרות + degradation ✓ · `/connect` מפנה ל-Google עם פרמטרים נכונים (אומת) · **round-trip חי — חסום על הלקוח:** scopes+test-user ב-Google Cloud, Publish app, env ב-Vercel (`GOOGLE_OAUTH_CLIENT_ID/SECRET`, `CALENDAR_TOKEN_KEY`).
+### WP-32 · Google Calendar — דחיפה + free/busy ✅
+`modules/calendar-sync` (ADR-041, מיגרציה `0014`): `calendar_connection` (טוקן refresh מוצפן AES-256-GCM) · `internal/google.ts` לקוח REST כתוב-יד (OAuth + events + freeBusy) · מסלולי `/api/integrations/google/{connect,callback}` · `syncAppointment` best-effort (`void`) מ-4 actions, `gcal_event_id` נכתב חזרה · `googleBusy` מוזג ל-`SchedulingView` (מסך הקביעה) **וגם ל-`/t/calendar`** (אג'נדת המטפלת — בלוקים חסומים מוצגים לצד הפגישות, עם דה-דופ לפי `[start,end]`) · כרטיס `/t/settings`. 4 בדיקות crypto.
+**DoD:** קוד + מסלולים + הגדרות + degradation ✓ · **round-trip חי אומת** — הלקוחה חיברה בהצלחה מול Google אמיתי (2026-09-01), נראה גם ביומן המטפלת. **פתוח (לא חוסם):** Publish App ב-Google Cloud למניעת ניתוק כל 7 ימים (מצב Testing).
 **תלוי:** WP-28, WP-29, WP-12
 
 ### WP-22 · חומרת בידוד — סקירה סופית ✅

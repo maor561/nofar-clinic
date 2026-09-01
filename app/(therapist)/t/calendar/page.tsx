@@ -8,9 +8,23 @@ import {
   treatmentLabel,
   type AppointmentStatus,
 } from "@/modules/appointments";
+import { googleBusy } from "@/modules/calendar-sync";
+import type { TreatmentType } from "@/modules/patients";
 import { Button, Card, EmptyState, Icon, cn } from "@/modules/core/design-system";
 import { clinicDateFmt, clinicWeekStart, toClinicFields } from "@/lib/tz";
 import { ApptStatus } from "./appt-status";
+
+type DayItem =
+  | {
+      kind: "appt";
+      id: string;
+      startsAt: Date;
+      endsAt: Date;
+      patientName: string;
+      treatmentType: TreatmentType | null;
+      status: AppointmentStatus;
+    }
+  | { kind: "google"; startsAt: Date; endsAt: Date };
 
 export const metadata: Metadata = { title: "יומן — נופר" };
 
@@ -32,21 +46,41 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
     : undefined;
 
   const tdb = await getTherapistDb();
-  const appts = await listAppointments(tdb, {
-    from: weekStart,
-    to: weekEnd,
-    status,
-    ascending: true,
-    limit: 500,
-  });
+  const [appts, gBusy] = await Promise.all([
+    listAppointments(tdb, { from: weekStart, to: weekEnd, status, ascending: true, limit: 500 }),
+    googleBusy(tdb.therapistId, weekStart, weekEnd),
+  ]);
 
-  const byDay = new Map<string, typeof appts>();
-  for (const a of appts) {
-    const key = toClinicFields(a.startsAt).date;
+  const byDay = new Map<string, DayItem[]>();
+  const push = (key: string, item: DayItem) => {
     const bucket = byDay.get(key);
-    if (bucket) bucket.push(a);
-    else byDay.set(key, [a]);
+    if (bucket) bucket.push(item);
+    else byDay.set(key, [item]);
+  };
+  for (const a of appts) {
+    push(toClinicFields(a.startsAt).date, {
+      kind: "appt",
+      id: a.id,
+      startsAt: a.startsAt,
+      endsAt: a.endsAt,
+      patientName: a.patientName,
+      treatmentType: a.treatmentType,
+      status: a.status,
+    });
   }
+  // Google's free/busy response has no event id, so a block that's really the
+  // mirror of one of our own appointments (pushed by calendar-sync) is
+  // recognised by its exact [start,end] match instead, and skipped — otherwise
+  // every synced appointment would show twice.
+  const ownRanges = new Set(appts.map((a) => `${a.startsAt.getTime()}-${a.endsAt.getTime()}`));
+  for (const b of gBusy) {
+    if (b.start < weekStart || b.start >= weekEnd) continue;
+    if (ownRanges.has(`${b.start.getTime()}-${b.end.getTime()}`)) continue;
+    push(toClinicFields(b.start).date, { kind: "google", startsAt: b.start, endsAt: b.end });
+  }
+  for (const items of byDay.values())
+    items.sort((x, y) => x.startsAt.getTime() - y.startsAt.getTime());
+  const totalItems = [...byDay.values()].reduce((n, arr) => n + arr.length, 0);
 
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekStart.getTime() + i * 864e5);
@@ -104,7 +138,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         ))}
       </div>
 
-      {appts.length === 0 ? (
+      {totalItems === 0 ? (
         <EmptyState
           icon="calendar"
           title="אין פגישות בשבוע הזה"
@@ -130,26 +164,41 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                   </p>
                 ) : (
                   <Card className="divide-line-soft divide-y p-0">
-                    {items.map((a) => (
-                      <Link
-                        key={a.id}
-                        href={`/t/calendar/${a.id}`}
-                        className="hover:bg-surface-2 flex items-center gap-3 px-3.5 py-2.5 transition-colors"
-                      >
-                        <span className="text-ink w-24 shrink-0 text-sm font-semibold tabular-nums">
-                          {timeFmt.format(a.startsAt)}–{timeFmt.format(a.endsAt)}
-                        </span>
-                        <span className="min-w-0 flex-1 truncate text-sm font-semibold">
-                          {a.patientName}
-                        </span>
-                        {treatmentLabel(a.treatmentType) && (
-                          <span className="bg-sage-soft text-sage-deep hidden rounded-md px-2 py-0.5 text-[11px] font-semibold sm:inline">
-                            {treatmentLabel(a.treatmentType)}
+                    {items.map((a) =>
+                      a.kind === "google" ? (
+                        <div
+                          key={`g-${a.startsAt.toISOString()}`}
+                          className="bg-surface-2/60 flex items-center gap-3 px-3.5 py-2.5"
+                          title="תפוס ביומן Google — לא ניתן לפתיחה כאן"
+                        >
+                          <span className="text-ink-faint w-24 shrink-0 text-sm font-semibold tabular-nums">
+                            {timeFmt.format(a.startsAt)}–{timeFmt.format(a.endsAt)}
                           </span>
-                        )}
-                        <ApptStatus status={a.status} />
-                      </Link>
-                    ))}
+                          <span className="text-ink-faint flex min-w-0 flex-1 items-center gap-1.5 truncate text-[13px]">
+                            <Icon name="lock" size={13} /> תפוס ביומן Google
+                          </span>
+                        </div>
+                      ) : (
+                        <Link
+                          key={a.id}
+                          href={`/t/calendar/${a.id}`}
+                          className="hover:bg-surface-2 flex items-center gap-3 px-3.5 py-2.5 transition-colors"
+                        >
+                          <span className="text-ink w-24 shrink-0 text-sm font-semibold tabular-nums">
+                            {timeFmt.format(a.startsAt)}–{timeFmt.format(a.endsAt)}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+                            {a.patientName}
+                          </span>
+                          {treatmentLabel(a.treatmentType) && (
+                            <span className="bg-sage-soft text-sage-deep hidden rounded-md px-2 py-0.5 text-[11px] font-semibold sm:inline">
+                              {treatmentLabel(a.treatmentType)}
+                            </span>
+                          )}
+                          <ApptStatus status={a.status} />
+                        </Link>
+                      ),
+                    )}
                   </Card>
                 )}
               </section>
