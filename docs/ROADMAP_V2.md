@@ -103,13 +103,10 @@ _[גרסה מקורית]_ ⬜
 
 ## שלב 7 — פלטפורמה
 
-### WP-65 · PWA להתקנה + התראות Push (#1) ⬜
-**מה:** המערכת תתנהג כאפליקציה — הוספה למסך הבית, והתראות מגיעות כ-Push.
-**גישה — שני חלקים:**
-- **PWA להתקנה:** `manifest.webmanifest` (שם, אייקונים, `display: standalone`, theme color), service worker בסיסי, meta tags ל-iOS. → "הוסף למסך הבית" נותן חוויה של אפליקציה.
-- **Web Push:** service worker עם `push` handler, מפתחות VAPID (env), טבלה `push_subscription` (per user/device), `web-push` npm ב-cron/notify, בקשת הרשאה מהמשתמש. שילוב ב-`notify()` — כל התראה נשלחת גם כ-Push למי שנרשם.
-**תלוי:** WP-53/54 (אייקונים + theme color למ-manifest — עדיף אחרי המיתוג).
-**❓ (קריטי):** Push מלא (התראה מגיעה גם כשהאפליקציה סגורה — דורש service worker + הרשאת המשתמש, **ובאייפון חובה קודם "הוסף למסך הבית"**) — או שבשלב זה מספיק PWA להתקנה + התראות בתוך האפליקציה + מייל?
+### WP-65 · PWA להתקנה + התראות Push (#1) ✅
+**בוצע 2026-09-02 · ADR-045.** **PWA:** `app/manifest.ts` (RTL/he, standalone, theme `#8aa287`, אייקונים 192/512/maskable מ-`logo-mark.png`), `<ServiceWorker/>` ב-layout רושם `public/sw.js` (push + notificationclick; ללא cache ב-v1). **Web Push:** `modules/core/push` (טבלה `push_subscription` מיגרציה `0020`, `web-push`/VAPID, `sendPushToUser` best-effort + גיזום 404/410) — **מחווט ל-`notify()`** כך שכל התראה קיימת נשלחת גם כ-Push. מסלולים `/api/push/{vapid,subscribe,unsubscribe}`. `<PushToggle>` ב-`/t/settings` וב-`/p/profile` (מתדרדר: לא נתמך / לא מוגדר / חסום). 5 בדיקות בידוד. אומת: manifest + `/api/push/vapid` + SW נרשם ו-activated.
+**❓ נענה:** Push מלא ברקע (החלטת הלקוח מהסיכום — "full background Push + PWA").
+**חסם לקוח:** `WEB_PUSH_VAPID_PUBLIC_KEY` / `_PRIVATE_KEY` / `WEB_PUSH_SUBJECT` ב-Vercel env.
 
 ---
 

@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Assistant, Frank_Ruhl_Libre } from "next/font/google";
 import "./globals.css";
 import { BRAND } from "@/lib/brand";
 import { Providers } from "./providers";
+import { ServiceWorker } from "@/modules/core/push/service-worker";
 
 const assistant = Assistant({
   variable: "--font-assistant",
@@ -21,6 +22,13 @@ const frankRuhl = Frank_Ruhl_Libre({
 export const metadata: Metadata = {
   title: { default: `${BRAND} — ניהול מטפל–מטופל`, template: `%s — ${BRAND}` },
   description: "מערכת לניהול הקשר הטיפולי בין מטפל למטופליו.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, statusBarStyle: "default", title: BRAND },
+  icons: { icon: "/icon-192.png", apple: "/icon-192.png" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#8aa287",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -32,6 +40,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="flex min-h-full flex-col">
         <Providers>{children}</Providers>
+        <ServiceWorker />
       </body>
     </html>
   );

@@ -630,3 +630,30 @@ argon2id, נעילת חשבון, throttle IP, ו-TOTP אופציונלי — ל�
 **DoD:** עמודה + מיגרציה (הוחל על Neon) · `listRetentionReview`/`countRetentionReview`/`deferRetention` +
 `deleteDocument` · מסך `/t/documents/review` (מחיקה/שמירה) · באנר ב-`/t` וב-`/t/documents` ·
 3 בדיקות בידוד (רשימה scoped, מחזור defer-and-return, אי-אפשר לדחות מסמך של מטפלת אחרת).
+
+## ADR-045 — PWA להתקנה + Web Push ברקע (WP-65)
+**תאריך:** 2026-09-02 · **סטטוס:** נעול
+
+בקשה #1: המערכת תתנהג כאפליקציה (מסך הבית) + התראות מגיעות כ-Push גם כשהאתר סגור.
+
+- **PWA:** `app/manifest.ts` (`/manifest.webmanifest`, `display: standalone`, RTL/he, theme
+  `#8aa287`, אייקונים 192/512/maskable שנגזרו מ-`logo-mark.png`). `app/layout.tsx` — `manifest`,
+  `appleWebApp`, `viewport.themeColor`. `public/sw.js` — service worker מינימלי (**ללא cache של
+  assets ב-v1** — קיים רק בשביל Push): `push` → `showNotification`, `notificationclick` → מיקוד/פתיחת
+  ה-URL. נרשם ע"י `<ServiceWorker/>` ב-layout.
+- **Web Push:** מודול תשתית חדש `modules/core/push` (getDb-backed, ב-eslint allowlist כמו
+  `core/notifications`). טבלה `push_subscription` (מיגרציה `0020`, `endpoint` unique, `p256dh`/`auth`,
+  FK ל-`user` עם `onDelete: cascade`). `web-push` (RFC 8291) עם VAPID. `sendPushToUser(userId,
+  payload)` — best-effort fan-out לכל המכשירים, 404/410 → גיזום השורה. **מחווט ל-`notify()`** —
+  כל התראה קיימת יוצרת גם Push (fire-and-forget, fail-open).
+- **מסלולים:** `GET /api/push/vapid` (מפתח ציבורי) · `POST /api/push/subscribe` / `unsubscribe`
+  (דורש session). **רכיב `<PushToggle>`** ב-`/t/settings` וב-`/p/profile` — עושה את כל הריקוד
+  (הרשאה → `pushManager.subscribe` → POST). מתדרדר בחן: דפדפן לא נתמך / VAPID לא מוגדר / הרשאה
+  חסומה → שורת הסבר במקום כפתור.
+- **degradation:** בלי `WEB_PUSH_VAPID_*` — `pushConfigured()=false`, `sendPushToUser` הוא no-op,
+  הרכיב מראה "לא הוגדר". 5 בדיקות בידוד. אומת בדפדפן: manifest + `/api/push/vapid` + SW נרשם
+  ו-activated; מסלול ההרשמה עצמו לא נבדק E2E כי הדפדפן האוטומטי חוסם התראות.
+
+**חסמי לקוח:** להוסיף ל-Vercel env — `WEB_PUSH_VAPID_PUBLIC_KEY`, `WEB_PUSH_VAPID_PRIVATE_KEY`
+(להריץ `node -e "console.log(require('web-push').generateVAPIDKeys())"` פעם אחת), `WEB_PUSH_SUBJECT`
+(mailto:). עד אז — הכל עובד חוץ מה-Push עצמו.

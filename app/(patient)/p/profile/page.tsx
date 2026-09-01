@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getPatientDb } from "@/modules/core/authz/server";
 import { getMyProfile, CONSENT_LABEL } from "@/modules/patients";
 import { Card, CardContent, CardHeader, CardTitle, Icon } from "@/modules/core/design-system";
+import { PushToggle } from "@/modules/core/push/push-toggle";
 
 export const metadata: Metadata = { title: "הפרופיל שלי" };
 
@@ -93,6 +94,19 @@ export default async function ProfilePage() {
           <CardContent className="text-ink text-sm">{me.treatmentGoal}</CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>התראות Push</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <p className="text-ink-soft">
+            קבלו התראה על פגישות, משימות וסיכומים גם כשהאפליקציה סגורה. אפשר להוסיף את המרחב למסך
+            הבית (שיתוף → הוספה למסך הבית) ולהשתמש בו כאפליקציה.
+          </p>
+          <PushToggle />
+        </CardContent>
+      </Card>
     </div>
   );
 }

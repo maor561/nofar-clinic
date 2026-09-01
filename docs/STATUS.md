@@ -55,6 +55,7 @@
 
 - **לאפס סיסמת Neon + API key של Resend** (שניהם הודבקו בצ'אט) → לעדכן `.env.local` + Vercel env.
 - **Vercel env:** להוסיף `RESEND_API_KEY`, `EMAIL_FROM=נופר כהן <nofar@nofar-health.com>`, `APP_URL=https://nofar-clinic.vercel.app`.
+- **Vercel env — Web Push (WP-65):** `WEB_PUSH_VAPID_PUBLIC_KEY`, `WEB_PUSH_VAPID_PRIVATE_KEY` (להריץ פעם: `node -e "console.log(require('web-push').generateVAPIDKeys())"`), `WEB_PUSH_SUBJECT=mailto:...`. עד אז ה-Push לא פעיל (השאר עובד).
 - **לוודא ש-Neon מחובר לפרויקט Vercel** (Settings → Environment Variables).
 - **למחוק את ה-MongoDB** שנוצר בטעות.
 
@@ -121,6 +122,9 @@
 - **push ל-GitHub:** אין `gh` במכונה; ה-remote נוסף. ה-push הראשון דורש credentials של הלקוח (Git Credential Manager) — אם נכשל, הלקוח מריץ `git push` פעם אחת ידנית.
 
 ## יומן סשנים
+
+### 2026-09-02 (המשך ד') — WP-65: PWA + Web Push ברקע
+PWA: `app/manifest.ts` (standalone, RTL, theme sage, אייקונים 192/512/maskable), SW `public/sw.js` (push + click) נרשם ב-layout. Web Push: מודול `modules/core/push` (טבלה `push_subscription` מיגרציה `0020`, `web-push`+VAPID), מחווט ל-`notify()` — כל התראה נשלחת גם כ-Push. מסלולי `/api/push/*`, `<PushToggle>` ב-`/t/settings` + `/p/profile` (מתדרדר בחן). 5 בדיקות בידוד (160 סה"כ). אומת: manifest + vapid endpoint + SW activated. **חסם לקוח:** VAPID keys ב-Vercel env. **הבא: WP-66** (מחיקת מטופל בלתי-הפיכה — צריך ADR שמתעד עקיפת anonymize+lock + המלצה להיוועץ עו"ד).
 
 ### 2026-09-02 (המשך ג') — WP-64: מחיקת מסמכים אחרי שנה + לולאת אישור
 עמודה `document.retention_defer_until` (מיגרציה `0019`, הוחל על Neon). קבוצת בדיקה = בן >שנה + לא נדחה. מסך `/t/documents/review` (שמירה=+90d / מחיקה=row+blob+audit). **ללא cron** (ADR-044 — מטפל יחיד): `countRetentionReview(tdb)` → באנר אזהרה ב-`/t` וב-`/t/documents`. שום סוג לא מוחרג — כל מחיקה ידנית. 3 בדיקות בידוד. **הבא: WP-65** (PWA + Web Push — צריך VAPID keys) ו-WP-66 (מחיקת מטופל בלתי הפיכה — צריך ADR).

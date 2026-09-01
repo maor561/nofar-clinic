@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import type { Db } from "@/modules/core/data/client";
 import { user } from "@/modules/core/auth/schema";
 import { sendEmail } from "@/modules/core/email/internal/client";
+import { sendPushToUser } from "@/modules/core/push";
 import { createNotification, markEmailed, type NewNotification } from "./store";
 
 /** Types that also send an email. */
@@ -26,6 +27,13 @@ export type NotifyInput = NewNotification & {
  */
 export async function notify(db: Db, input: NotifyInput): Promise<{ id: string }> {
   const { id } = await createNotification(db, input);
+
+  // Web Push (WP-65) — best-effort, never blocks or fails the notification.
+  void sendPushToUser(input.recipientUserId, {
+    title: input.titleHe,
+    body: input.bodyHe ?? undefined,
+    url: input.link ?? "/",
+  }).catch(() => {});
 
   const wantsEmail = input.email ?? CRITICAL.has(input.type);
   if (wantsEmail) {

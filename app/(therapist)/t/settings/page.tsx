@@ -12,6 +12,7 @@ import {
   Icon,
 } from "@/modules/core/design-system";
 import { clinicDateFmt } from "@/lib/tz";
+import { PushToggle } from "@/modules/core/push/push-toggle";
 import { ChangePasswordForm, TotpEnroll } from "./settings-forms";
 import { disconnectGoogleAction } from "./actions";
 
@@ -75,6 +76,19 @@ export default async function SettingsPage({
         </CardHeader>
         <CardContent>
           <TotpEnroll enabled={acc?.totpEnabled ?? false} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>התראות Push</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <p className="text-ink-soft">
+            התראות שמגיעות למכשיר גם כשהמערכת סגורה. ההפעלה היא פר-מכשיר ופר-דפדפן. אפשר גם להוסיף
+            את המערכת למסך הבית (שיתוף → הוספה למסך הבית) ולהשתמש בה כאפליקציה.
+          </p>
+          <PushToggle />
         </CardContent>
       </Card>
 
