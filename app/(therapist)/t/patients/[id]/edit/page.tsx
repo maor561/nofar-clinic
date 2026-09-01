@@ -5,6 +5,7 @@ import { getTherapistDb } from "@/modules/core/authz/server";
 import { getPatient, listTreatmentTypes } from "@/modules/patients";
 import { PatientForm } from "../../patient-form";
 import { updatePatientAction } from "../../actions";
+import { DeletePatientCard } from "./delete-patient";
 
 export const metadata: Metadata = { title: "עריכת מטופל" };
 
@@ -47,6 +48,8 @@ export default async function EditPatientPage({ params }: { params: Promise<{ id
           consents: p.consents,
         }}
       />
+
+      <DeletePatientCard id={id} fullName={`${p.firstName} ${p.lastName}`.trim()} />
     </div>
   );
 }

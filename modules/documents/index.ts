@@ -213,6 +213,31 @@ export function countRetentionReview(tdb: TherapistDb): Promise<number> {
   return tdb.count(document, retentionReviewWhere());
 }
 
+/**
+ * Delete every stored blob for a patient's documents (WP-66 hard delete). The
+ * `document` rows themselves are removed by the `patient` cascade; this only
+ * clears the bytes in Vercel Blob, which no cascade can reach. Best-effort.
+ */
+export async function deletePatientDocumentBlobs(
+  tdb: TherapistDb,
+  patientId: string,
+): Promise<number> {
+  const rows = await tdb.list(document, {
+    where: eq(document.patientId, patientId),
+    limit: 2000,
+  });
+  let n = 0;
+  for (const r of rows) {
+    try {
+      await deleteFile(r.fileKey);
+      n++;
+    } catch {
+      /* an orphaned blob is harmless; the metadata row is what matters */
+    }
+  }
+  return n;
+}
+
 /** "Keep" — push the next review out by RETENTION_DEFER_DAYS. */
 export async function deferRetention(tdb: TherapistDb, id: string): Promise<void> {
   const until = new Date(Date.now() + RETENTION_DEFER_DAYS * DAY_MS);

@@ -148,6 +148,13 @@
       "when": 1788300335077,
       "tag": "0020_push_subscription",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1788301385342,
+      "tag": "0021_patient_hard_delete_cascades",
+      "breakpoints": true
     }
   ]
 }

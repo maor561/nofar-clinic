@@ -4,6 +4,7 @@ import { eq, and } from "drizzle-orm";
 import { createTestDb } from "@/modules/core/data/testing";
 import type { Db } from "@/modules/core/data/client";
 import { therapist } from "@/modules/core/auth/schema";
+import { patient } from "@/modules/patients/schema";
 import { fieldDefinition, fieldValue } from "./schema";
 import { compileFieldSchema } from "./internal/field-schema";
 import { validateFieldValue, FieldValidationError } from "./internal/validate";
@@ -127,6 +128,7 @@ describe("registry", () => {
 describe("store (DB)", () => {
   let db: Db;
   let t1: string;
+  let p1: string;
 
   beforeEach(async () => {
     db = await createTestDb();
@@ -135,6 +137,12 @@ describe("store (DB)", () => {
       .values({ name: "נופר", email: "n@ex.co" })
       .returning({ id: therapist.id });
     t1 = t.id;
+    // field_value.patient_id now has an FK -> patient (migration 0021)
+    const [p] = await db
+      .insert(patient)
+      .values({ therapistId: t1, firstName: "בדיקה", lastName: "מטופל" })
+      .returning({ id: patient.id });
+    p1 = p.id;
     await loadRegistry(db, t1);
   });
 
@@ -160,7 +168,7 @@ describe("store (DB)", () => {
       );
     const energy = defs.find((d) => d.key === "energy_level")!;
     const weight = defs.find((d) => d.key === "weight_kg")!;
-    const scope = { therapistId: t1, patientId: crypto.randomUUID() };
+    const scope = { therapistId: t1, patientId: p1 };
     const sessionId = crypto.randomUUID();
 
     await setFieldValues(db, scope, "treatment_session", sessionId, [

@@ -1,6 +1,7 @@
 import { and, asc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 import type { TherapistDb, PatientDb } from "@/modules/core/authz";
 import { recordEvent } from "@/modules/patient-file";
+import { deletePatientDocumentBlobs } from "@/modules/documents";
 import { appointment } from "@/modules/appointments/schema";
 import { treatmentSession } from "@/modules/sessions/schema";
 import {
@@ -439,4 +440,31 @@ export async function setPatientStatus(
     lastName: existing.lastName,
     status,
   });
+}
+
+/**
+ * HARD, IRREVERSIBLE delete of a patient and everything belonging to them
+ * (WP-66, ADR-046). The client accepted the compliance risk in writing and was
+ * advised to consult legal counsel — this deliberately overrides the
+ * anonymize-and-lock recommendation in `docs/OPERATIONS.md`.
+ *
+ * Order: blobs first (no cascade can reach Vercel Blob), then one scoped
+ * `DELETE FROM patient` — migration 0021 made `field_value` / `invite` / `user`
+ * cascade too, so the login, sessions, notifications and push subscriptions go
+ * with it. The immutable `audit_log` trail (metadata only, no clinical content)
+ * is retained by design; the guard also records this delete.
+ */
+export async function deletePatientCompletely(
+  tdb: TherapistDb,
+  id: string,
+): Promise<{ name: string; blobsDeleted: number }> {
+  const p = await tdb.findOne(patient, eq(patient.id, id));
+  if (!p) throw new Error("patient_not_found");
+
+  const blobsDeleted = await deletePatientDocumentBlobs(tdb, id);
+
+  const rows = await tdb.delete(patient, eq(patient.id, id));
+  if (rows.length === 0) throw new Error("patient_not_found");
+
+  return { name: `${p.firstName} ${p.lastName}`, blobsDeleted };
 }

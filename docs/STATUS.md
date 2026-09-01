@@ -123,6 +123,9 @@
 
 ## יומן סשנים
 
+### 2026-09-02 (המשך ה') — WP-66: מחיקת מטופל קשה ובלתי-הפיכה
+`deletePatientCompletely(tdb, id)` ב-`modules/patients` — מוחק blobs של מסמכים → `tdb.delete(patient)` יחיד scoped. מיגרציה `0021` הוסיפה `ON DELETE CASCADE` ל-`field_value`/`invite`/`user` → גורר login → session/notification/push. `audit_log` נשמר בכוונה (append-only, מטא-דאטה בלבד). UI: כרטיס "אזור מסוכן" ב-`/t/patients/[id]/edit` (checkbox + הקלדת שם). **ADR-046 — עוקף במפורש את המלצת anonymize+lock ב-OPERATIONS.md, באחריות הלקוחה, עם המלצה מוצגת להיוועץ בעו״ד.** 3 בדיקות בידוד (0 שורות בכל טבלה, tenant שני שלם). **סיום 17 הדיוקים של ROADMAP_V2** (חוץ מ-WP-62 שחסום על חומר מהלקוחה).
+
 ### 2026-09-02 (המשך ד') — WP-65: PWA + Web Push ברקע
 PWA: `app/manifest.ts` (standalone, RTL, theme sage, אייקונים 192/512/maskable), SW `public/sw.js` (push + click) נרשם ב-layout. Web Push: מודול `modules/core/push` (טבלה `push_subscription` מיגרציה `0020`, `web-push`+VAPID), מחווט ל-`notify()` — כל התראה נשלחת גם כ-Push. מסלולי `/api/push/*`, `<PushToggle>` ב-`/t/settings` + `/p/profile` (מתדרדר בחן). 5 בדיקות בידוד (160 סה"כ). אומת: manifest + vapid endpoint + SW activated. **חסם לקוח:** VAPID keys ב-Vercel env. **הבא: WP-66** (מחיקת מטופל בלתי-הפיכה — צריך ADR שמתעד עקיפת anonymize+lock + המלצה להיוועץ עו"ד).
 

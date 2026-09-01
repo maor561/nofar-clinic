@@ -25,7 +25,7 @@ import { StatusPill } from "./status-pill";
 
 export const metadata: Metadata = { title: "מטופלים" };
 
-type SP = { q?: string; status?: string; tt?: string };
+type SP = { q?: string; status?: string; tt?: string; deleted?: string };
 
 export default async function PatientsPage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
@@ -50,6 +50,11 @@ export default async function PatientsPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="space-y-5">
+      {sp.deleted && (
+        <p className="border-line bg-surface-2 text-ink-soft rounded-lg border px-4 py-2.5 text-[13px]">
+          המטופל/ת וכל הנתונים נמחקו לצמיתות.
+        </p>
+      )}
       <header className="flex items-start justify-between gap-4">
         <div>
           <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold">מטופלים</h1>

@@ -7,6 +7,8 @@ import { requireTherapist } from "@/modules/core/auth/server";
 import {
   createPatient,
   updatePatient,
+  getPatient,
+  deletePatientCompletely,
   type PatientInput,
   type ConsentKind,
   patientStatus,
@@ -108,4 +110,36 @@ export async function updatePatientAction(
   revalidatePath(`/t/patients/${id}`);
   revalidatePath("/t/patients");
   redirect(`/t/patients/${id}`);
+}
+
+/**
+ * WP-66 — HARD, IRREVERSIBLE delete. Guarded by a typed-name confirmation from
+ * the client. Removes the patient, every record, all document blobs, and the
+ * login. Only the metadata-only audit trail remains (immutable by design).
+ */
+export async function deletePatientAction(
+  id: string,
+  _prev: PatientFormState,
+  fd: FormData,
+): Promise<PatientFormState> {
+  const confirmName = String(fd.get("confirmName") ?? "").trim();
+
+  const tdb = await getTherapistDb();
+  const p = await getPatient(tdb, id);
+  if (!p) return { error: "המטופל/ת לא נמצא/ה." };
+
+  const fullName = `${p.firstName} ${p.lastName}`.trim();
+  if (confirmName !== fullName) {
+    return { error: "השם שהוקלד אינו תואם. הקלד/י את השם המלא בדיוק כדי לאשר." };
+  }
+
+  try {
+    await deletePatientCompletely(tdb, id);
+  } catch {
+    return { error: "מחיקת המטופל/ת נכשלה." };
+  }
+
+  revalidatePath("/t/patients");
+  revalidatePath("/t");
+  redirect("/t/patients?deleted=1");
 }

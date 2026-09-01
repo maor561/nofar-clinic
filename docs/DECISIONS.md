@@ -657,3 +657,34 @@ argon2id, נעילת חשבון, throttle IP, ו-TOTP אופציונלי — ל�
 **חסמי לקוח:** להוסיף ל-Vercel env — `WEB_PUSH_VAPID_PUBLIC_KEY`, `WEB_PUSH_VAPID_PRIVATE_KEY`
 (להריץ `node -e "console.log(require('web-push').generateVAPIDKeys())"` פעם אחת), `WEB_PUSH_SUBJECT`
 (mailto:). עד אז — הכל עובד חוץ מה-Push עצמו.
+
+## ADR-046 — מחיקת מטופל קשה ובלתי-הפיכה (WP-66) — עוקף את המלצת anonymize+lock
+**תאריך:** 2026-09-02 · **סטטוס:** נעול · **עוקף במפורש את `OPERATIONS.md` §מחיקת מידע**
+
+`docs/OPERATIONS.md` ומועצת הביקורת בחרו במכוון ב-**anonymize + lock** (שמירת התוכן הקליני,
+גריפת מזהים, נעילת גישה) ולא במחיקה קשה — בגלל חובות שמירת רשומות טיפוליות (עד ~7 שנים) שעשויות
+לחול על המטפלת.
+
+**הלקוחה ביקשה במפורש מחיקה קשה בלתי-הפיכה ולקחה על עצמה את האחריות הרגולטורית** (מתועד
+בצ'אט, 2026-09-01). **הומלץ לה להיוועץ עם עו״ד** לפני שימוש בפועל, וההמלצה חוזרת בטקסט שעל מסך
+המחיקה עצמו.
+
+**מימוש:**
+- **`deletePatientCompletely(tdb, id)`** ב-`modules/patients` — (1) מוחק את כל ה-blobs של מסמכי
+  המטופל מ-Vercel Blob (שום cascade לא מגיע לשם), (2) `tdb.delete(patient, …)` יחיד, scoped
+  ל-`therapist_id` (מטפלת לא יכולה למחוק מטופל של אחרת).
+- **מיגרציה `0021`** הוסיפה `ON DELETE CASCADE` ל-`field_value` / `invite` / `user` על
+  `patient_id` (קודם בלי FK). כך מחיקת ה-`patient` גוררת גם את ה-login, וממנו `session` /
+  `notification` / `push_subscription` / `password_reset`. כל שאר הטבלאות המטופל-scoped כבר היו
+  cascade.
+- **`audit_log` נשמר בכוונה** — הטבלה append-only עם trigger שחוסם UPDATE/DELETE (מיגרציה 0002).
+  הרישום הוא מטא-דאטה בלבד (action/entity/entity_id/therapist/timestamp/ip; ללא תוכן קליני).
+  זו תכונת accountability, לא באג. הגארד גם רושם את המחיקה עצמה.
+- **UI:** כרטיס "אזור מסוכן" ב-`/t/patients/[id]/edit` — checkbox "אני מבין/ה שסופי" + הקלדת
+  השם המלא בדיוק → כפתור נפתח. `deletePatientAction` מאמת שוב את השם בשרת.
+- **בדיקה:** `tests/isolation/patient-hard-delete.test.ts` — אחרי מחיקה: 0 שורות בכל טבלה
+  (כולל `field_value`/`invite`/`user`/`session`/`notification`/`push_subscription`), blob נמחק,
+  המטופל של המטפלת השנייה שלם, אירוע audit מסוג `delete` נרשם, מטפלת אחרת מקבלת `patient_not_found`.
+
+**נדחה:** anonymize+lock (המלצת ה-ops — הלקוחה בחרה אחרת), מחיקה מותרת רק אחרי תום תקופת השמירה
+(הלקוחה בחרה ללא תלות ברגולציה, באחריותה).
