@@ -6,39 +6,39 @@
 
 /*
  * Calm Wellness — light by design (ADR-012). Derived from docs/DESIGN_SYSTEM.md.
- * The palette is provisional until Nofar's logo / brand colours are supplied.
- * shadcn semantic tokens (:root below) are mapped onto this palette; there is no
- * dark theme on purpose.
+ * Brand colours from Nofar's logo (WP-54, 2026-09-01): sage-soft #dbe4d8,
+ * ground #fefbf1, blush-soft #e9d4d5. shadcn semantic tokens (:root below) map
+ * onto this palette; there is no dark theme on purpose.
  */
 
 @theme {
   /* ---- brand: sage ---- */
   --color-sage-deep: #4e6b58;
-  --color-sage: #7c9885;
-  --color-sage-soft: #e4ede4;
-  --color-sage-tint: #f1f5f0;
+  --color-sage: #8aa287;
+  --color-sage-soft: #dbe4d8;
+  --color-sage-tint: #eef2ea;
 
   /* ---- accent: blush (use sparingly) ---- */
-  --color-blush: #ce8a90;
-  --color-blush-soft: #f6e7e8;
+  --color-blush: #cf9297;
+  --color-blush-soft: #e9d4d5;
 
   /* ---- semantic status (separate from the accent hue) ---- */
   --color-ok: #4e6b58;
-  --color-ok-soft: #e4ede4;
+  --color-ok-soft: #dbe4d8;
   --color-warn: #9a6b33;
   --color-warn-soft: #f6ebd9;
   --color-danger: #a9524a;
   --color-danger-soft: #f4e2e0;
 
-  /* ---- warm neutrals (biased toward sage) ---- */
-  --color-ground: #faf8f4;
+  /* ---- warm neutrals (biased toward the cream ground) ---- */
+  --color-ground: #fefbf1;
   --color-surface: #ffffff;
-  --color-surface-2: #fbfaf7;
+  --color-surface-2: #fdfbf4;
   --color-ink: #2c3630;
   --color-ink-soft: #6c756e;
   --color-ink-faint: #9aa29b;
-  --color-line: #ebe7de;
-  --color-line-soft: #f2efe8;
+  --color-line: #ece6da;
+  --color-line-soft: #f4f0e6;
 
   /* ---- type ---- */
   --font-sans: var(--font-assistant), "Segoe UI", "Helvetica Neue", Arial, sans-serif;
@@ -76,8 +76,8 @@
   --ring: var(--color-sage);
 
   --chart-1: #4e6b58;
-  --chart-2: #7c9885;
-  --chart-3: #ce8a90;
+  --chart-2: #8aa287;
+  --chart-3: #cf9297;
   --chart-4: #9a6b33;
   --chart-5: #a9524a;
 
