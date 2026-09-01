@@ -133,6 +133,24 @@ export default async function SettingsPage({
 
       <Card>
         <CardHeader>
+          <CardTitle>מדדי מפגש</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <p className="text-ink-soft">
+            ניהול הפרמטרים שנרשמים בכל תיעוד מפגש (משקל, אנרגיה, שינה…) — הוספה, שינוי שם, סדר
+            והשבתה. מה שמוגדר כאן מופיע אוטומטית בטופס המפגש.
+          </p>
+          <Link
+            href="/t/settings/fields"
+            className="text-sage-deep inline-flex items-center gap-1 font-semibold hover:underline"
+          >
+            לניהול מדדי המפגש ←
+          </Link>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>יומן Google</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">

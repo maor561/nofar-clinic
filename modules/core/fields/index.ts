@@ -26,7 +26,20 @@ import {
   type FieldScope,
   type FieldWrite,
 } from "./internal/store";
+import {
+  listFieldDefs as _listFieldDefs,
+  createFieldDef as _createFieldDef,
+  updateFieldDef as _updateFieldDef,
+  type NewFieldInput,
+} from "./internal/manage";
 export type { FieldScope, FieldWrite, FieldValueOut } from "./internal/store";
+export {
+  UI_FIELD_TYPES,
+  FieldDefError,
+  type UiFieldType,
+  type ManagedFieldDef,
+  type NewFieldInput,
+} from "./internal/manage";
 export type { FieldEntity, FieldType } from "./schema";
 
 /** Upsert the field values for one (entity, entityId). Every value is validated. */
@@ -57,4 +70,33 @@ export async function fieldDefinitionsFor(therapistId: string, entity: FieldEnti
       ),
     )
     .orderBy(fieldDefinition.order);
+}
+
+/* --- therapist-managed definitions (WP-60) — see internal/manage.ts --- */
+
+/** All definitions for one entity (default active only), for the settings screen. */
+export function listManagedFieldDefs(
+  therapistId: string,
+  entity: FieldEntity,
+  opts?: { includeInactive?: boolean },
+) {
+  return _listFieldDefs(getDb(), therapistId, entity, opts);
+}
+
+/** Create a definition from typed inputs — schema compiled before insert. */
+export function createManagedFieldDef(
+  therapistId: string,
+  entity: FieldEntity,
+  input: NewFieldInput,
+) {
+  return _createFieldDef(getDb(), therapistId, entity, input);
+}
+
+/** Edit label / order / active. Type & schema stay frozen. */
+export function updateManagedFieldDef(
+  therapistId: string,
+  id: string,
+  patch: { labelHe?: string; order?: number; active?: boolean },
+) {
+  return _updateFieldDef(getDb(), therapistId, id, patch);
 }
