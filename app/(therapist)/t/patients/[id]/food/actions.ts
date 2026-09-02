@@ -6,17 +6,20 @@ import { getPatientUserId } from "@/modules/core/auth";
 import { notify } from "@/modules/core/notifications";
 import { setTherapistNote } from "@/modules/food-log";
 
+export type NoteState = { ok?: number; error?: string };
+
 export async function saveFoodNoteAction(
   patientId: string,
   date: string,
+  _prev: NoteState,
   fd: FormData,
-): Promise<void> {
+): Promise<NoteState> {
   const note = String(fd.get("therapistNote") ?? "");
   const tdb = await getTherapistDb();
   try {
     await setTherapistNote(tdb, patientId, date, note);
   } catch {
-    return;
+    return { error: "שמירת ההערה נכשלה. נסו שוב." };
   }
 
   if (note.trim()) {
@@ -36,4 +39,5 @@ export async function saveFoodNoteAction(
 
   revalidatePath(`/t/patients/${patientId}/food`);
   revalidatePath("/p/food");
+  return { ok: Date.now() };
 }

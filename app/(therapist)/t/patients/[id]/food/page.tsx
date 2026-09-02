@@ -5,16 +5,9 @@ import { getTherapistDb } from "@/modules/core/authz/server";
 import { audit } from "@/modules/core/audit/server";
 import { getPatient } from "@/modules/patients";
 import { getFoodDay, listFoodDays, MEALS, MEAL_LABEL } from "@/modules/food-log";
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Icon,
-} from "@/modules/core/design-system";
+import { Card, CardContent, CardHeader, CardTitle, Icon } from "@/modules/core/design-system";
 import { clinicDateFmt, toClinicFields } from "@/lib/tz";
-import { saveFoodNoteAction } from "./actions";
+import { TherapistNoteForm } from "./note-form";
 
 export const metadata: Metadata = { title: "יומן אכילה" };
 
@@ -100,18 +93,11 @@ export default async function PatientFoodPage({
                 <CardTitle>הערת משוב (מוצגת למטופל/ת)</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <form action={saveFoodNoteAction.bind(null, id, date)} className="space-y-2">
-                  <textarea
-                    name="therapistNote"
-                    defaultValue={day?.therapistNote ?? ""}
-                    rows={4}
-                    placeholder="מה לדייק, מה טוב, מה להוסיף…"
-                    className="border-line bg-surface w-full rounded-lg border px-3 py-2 text-sm"
-                  />
-                  <Button type="submit" variant="outline" size="sm">
-                    שמירת ההערה
-                  </Button>
-                </form>
+                <TherapistNoteForm
+                  patientId={id}
+                  date={date}
+                  defaultNote={day?.therapistNote ?? ""}
+                />
                 <div className="text-ink-faint flex flex-wrap gap-3 text-[13px]">
                   <Link href={`/t/patients/${id}/tasks/new`} className="hover:underline">
                     + משימה מהיומן

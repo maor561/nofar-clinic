@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { FEATURES } from "@/lib/features";
 import { BRAND_BY } from "@/lib/brand";
 import { Logo } from "../logo";
@@ -54,7 +55,9 @@ export function TherapistShell({ user, groups = DEFAULT_GROUPS, headerSlot, chil
         className="border-line-soft bg-surface-2 flex flex-col gap-1 border-s p-3.5 max-md:flex-row max-md:flex-wrap max-md:items-center max-md:border-s-0 max-md:border-b"
       >
         <div className="flex items-center justify-between gap-2 px-2 pt-1.5 pb-3.5 max-md:flex-1">
-          <Logo subtitle={BRAND_BY} />
+          <Link href="/t" aria-label="לדשבורד">
+            <Logo subtitle={BRAND_BY} />
+          </Link>
           {/* actions stay reachable on mobile (rail collapses to a top bar) */}
           <div className="md:hidden">{headerSlot}</div>
         </div>
