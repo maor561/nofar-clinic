@@ -30,11 +30,18 @@ function parseFields(fd: FormData, defs: Def[]): FieldWriteInput[] {
         break;
       case "select": {
         const s = def.schema as { multiple?: boolean };
-        value = s.multiple ? raw.filter((x) => x !== "") : raw[0]?.trim() || null;
+        if (s.multiple) {
+          value = raw.filter((x) => x !== "");
+        } else {
+          const t = raw[0]?.trim() ?? "";
+          value = t === "" ? null : t;
+        }
         break;
       }
-      default:
-        value = raw[0]?.trim() ? raw[0].trim() : null;
+      default: {
+        const t = raw[0]?.trim() ?? "";
+        value = t === "" ? null : t;
+      }
     }
     return { definitionId: def.id, value };
   });

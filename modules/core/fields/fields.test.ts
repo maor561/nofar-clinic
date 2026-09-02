@@ -64,6 +64,12 @@ describe("validateFieldValue", () => {
     expect(() => V({ type: "select", options: ["a", "b"], multiple: true }, ["a", "z"])).toThrow();
   });
 
+  it("select — coerces a numeric option to its string form", () => {
+    const s = { type: "select", options: ["1–2", "3", "4"], required: true };
+    expect(V(s, 3)).toBe("3");
+    expect(V({ ...s, multiple: true }, [3, "1–2"])).toEqual(["3", "1–2"]);
+  });
+
   it("boolean / date / text rules", () => {
     expect(V({ type: "boolean", required: true }, false)).toBe(false);
     expect(() => V({ type: "boolean", required: true }, "true")).toThrow();
@@ -187,7 +193,8 @@ describe("store (DB)", () => {
       ]),
     ).rejects.toBeInstanceOf(FieldValidationError);
 
-    // a corrupt row (inserted past the validator) is caught on read
+    // a corrupt row (inserted past the validator on write) is NOT re-validated
+    // away on read — it must not 500 the screen, so the raw value comes back
     const corruptEntityId = crypto.randomUUID();
     await db.insert(fieldValue).values({
       therapistId: t1,
@@ -197,8 +204,7 @@ describe("store (DB)", () => {
       definitionId: energy.id,
       value: "not a number",
     });
-    await expect(
-      getFieldValues(db, scope, "treatment_session", corruptEntityId),
-    ).rejects.toBeInstanceOf(FieldValidationError);
+    const lenient = await getFieldValues(db, scope, "treatment_session", corruptEntityId);
+    expect(lenient[0]?.value).toBe("not a number");
   });
 });

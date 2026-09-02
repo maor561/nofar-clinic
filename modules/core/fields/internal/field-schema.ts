@@ -77,7 +77,11 @@ export function compileFieldSchema(raw: unknown): z.ZodType {
     case "boolean":
       return opt(z.boolean());
     case "select": {
-      const one = z.enum(fs.options as [string, ...string[]]);
+      // a stored option may arrive as a number ("3") — coerce scalars to string
+      const one = z.preprocess(
+        (v) => (typeof v === "number" || typeof v === "boolean" ? String(v) : v),
+        z.enum(fs.options as [string, ...string[]]),
+      );
       return opt(fs.multiple ? z.array(one).min(fs.required ? 1 : 0) : one);
     }
     case "date":

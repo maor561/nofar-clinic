@@ -130,13 +130,23 @@ export async function getFieldValues(
     )
     .orderBy(fieldDefinition.order);
 
-  return rows.map((r) => ({
-    definitionId: r.definitionId,
-    key: r.key,
-    labelHe: r.labelHe,
-    type: r.type,
-    unit: r.unit,
-    value: validateFieldValue({ key: r.key, schema: r.schema }, r.value),
-    recordedAt: r.recordedAt,
-  }));
+  return rows.map((r) => {
+    // Re-validate on read (ADR-019). A single stale/odd row must not 500 a whole
+    // patient screen, so on failure we surface the raw stored value instead.
+    let value: unknown;
+    try {
+      value = validateFieldValue({ key: r.key, schema: r.schema }, r.value);
+    } catch {
+      value = r.value;
+    }
+    return {
+      definitionId: r.definitionId,
+      key: r.key,
+      labelHe: r.labelHe,
+      type: r.type,
+      unit: r.unit,
+      value,
+      recordedAt: r.recordedAt,
+    };
+  });
 }
