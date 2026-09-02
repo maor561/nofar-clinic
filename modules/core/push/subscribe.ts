@@ -35,20 +35,62 @@ async function vapidKey(): Promise<string | null> {
   }
 }
 
-/** Current push status for this device, without prompting. */
+/** True when the subscription was created with `expectedB64` as applicationServerKey. */
+function subMatchesKey(sub: PushSubscription, expectedB64: string): boolean {
+  const raw = sub.options?.applicationServerKey;
+  if (!raw) return false;
+  const a = new Uint8Array(raw as ArrayBuffer);
+  const b = urlBase64ToUint8Array(expectedB64);
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
+async function dropSub(sub: PushSubscription): Promise<void> {
+  try {
+    await fetch("/api/push/unsubscribe", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ endpoint: sub.endpoint }),
+    });
+  } catch {
+    /* ignore */
+  }
+  try {
+    await sub.unsubscribe();
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * Current push status for this device, without prompting. A subscription made
+ * with a *different* VAPID key (server key rotated / fixed) is stale — the push
+ * service would reject every send — so we drop it and report "off", prompting a
+ * one-tap re-enable.
+ */
 export async function currentPushStatus(): Promise<PushStatus> {
   if (!pushSupported()) return "unsupported";
-  if (!(await vapidKey())) return "unconfigured";
+  const key = await vapidKey();
+  if (!key) return "unconfigured";
   if (Notification.permission === "denied") return "denied";
   try {
     const reg = await navigator.serviceWorker.ready;
-    return (await reg.pushManager.getSubscription()) ? "on" : "off";
+    const sub = await reg.pushManager.getSubscription();
+    if (!sub) return "off";
+    if (!subMatchesKey(sub, key)) {
+      await dropSub(sub);
+      return "off";
+    }
+    return "on";
   } catch {
     return "off";
   }
 }
 
-/** Ask permission + subscribe + register with the server. */
+/** Ask permission + subscribe + register with the server. Any stale subscription
+ *  is replaced, so this button always ends on a subscription matching the
+ *  current server key. */
 export async function enablePush(): Promise<PushStatus> {
   if (!pushSupported()) return "unsupported";
   const key = await vapidKey();
@@ -57,10 +99,16 @@ export async function enablePush(): Promise<PushStatus> {
     const perm = await Notification.requestPermission();
     if (perm !== "granted") return perm === "denied" ? "denied" : "off";
     const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(key),
-    });
+
+    const existing = await reg.pushManager.getSubscription();
+    if (existing && !subMatchesKey(existing, key)) await dropSub(existing);
+
+    const sub =
+      (await reg.pushManager.getSubscription()) ??
+      (await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(key),
+      }));
     const res = await fetch("/api/push/subscribe", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -77,14 +125,7 @@ export async function disablePush(): Promise<PushStatus> {
   try {
     const reg = await navigator.serviceWorker.ready;
     const sub = await reg.pushManager.getSubscription();
-    if (sub) {
-      await fetch("/api/push/unsubscribe", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ endpoint: sub.endpoint }),
-      });
-      await sub.unsubscribe();
-    }
+    if (sub) await dropSub(sub);
   } catch {
     /* leave as-is */
   }
