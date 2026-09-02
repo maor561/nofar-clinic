@@ -699,3 +699,33 @@ argon2id, נעילת חשבון, throttle IP, ו-TOTP אופציונלי — ל�
 - `normalizeRules` ב-`modules/availability` — במקום לדחות `weekday` כפול, ממיין את חלונות היום ודוחה **חפיפה** (`overlapping_windows`). חלונות שנוגעים (end == next start) מותרים.
 - מסך `/t/settings/availability` — רכיב `DayRow` (client) מנהל רשימת חלונות ליום עם "+ הוספת חלון שעות" ו-"הסרת חלון". שדות `d{i}_start` / `d{i}_end` חוזרים, ה-action קורא `fd.getAll`.
 - בדיקות: `slots.test.ts` — יום עם שני חלונות; `availability-module.test.ts` — שמירת 2 חלונות + דחיית חפיפה. אומת בדפדפן (שמירה → רענון → שני חלונות ליום ראשון).
+
+## ADR-048 — מאגר שאלונים + שיוך מרובה בהקמת מטופל (WP-67)
+**תאריך:** 2026-09-02 · **סטטוס:** נעול · **מרחיב ADR-030, חלק מ-#3 / WP-62**
+
+הלקוחה רצתה מאגר שאלונים (במקום שאלון קליטה יחיד קבוע) ולבחור בהקמת מטופל אילו שאלונים —
+**יותר מאחד** — יישלחו אליו.
+
+- **`questionnaire_template`** (therapist-scoped, מיגרציה `0023`): שם + טקסט פתיחה + active + sort.
+- **שאלות = `field_definition`** (`entity='questionnaire'`) עם עמודה חדשה `template_id`. כל תשובה
+  עדיין עוברת דרך ה-validator היחיד של ה-Field Registry (`compileFieldSchema`/`validateFieldValue`).
+  ה-CRUD של השאלות משתמש ב-`createManagedFieldDef`/`updateManagedFieldDef` מ-WP-60 עם פרמטר
+  `templateId`.
+- **`questionnaire_response` = שורה אחת פר (מטופל, template)** — היא גם השיוך וגם מיכל התשובות.
+  העמודה `template_id` נוספה, האילוץ `unique(patient_id)` הוחלף ב-`unique(patient_id, template_id)
+  NULLS NOT DISTINCT`. שורה ישנה (`template_id = NULL`) = שאלון הקליטה הגנרי הישן — נשמר וקריא.
+- **בידוד:** התשובות (`questionnaire_response` + `field_value`) עוברות תמיד דרך ה-scoping guard.
+  **מטא-דאטה של template** (שם, טקסט פתיחה) — קונפיגורציה של המטפלת, לא מידע מטופל — נקראת גולמית
+  ב-`modules/questionnaires/internal/template-config.ts` (בדיוק כמו `fieldDefinitionsFor` ב-`core/fields`),
+  מסוננת תמיד ב-`therapistId` שהגיע משורת response guard-scoped. רק ה-`internal/` פטור מ-lint.
+- **UI:** `/t/settings/questionnaires` (CRUD templates) + `/t/settings/questionnaires/[id]` (טקסט פתיחה
+  + CRUD שאלות, אותו דפוס כמו WP-60). טופס הקמת/עריכת מטופל — צ'ק-בוקס "שאלונים לשליחה".
+  `/p/questionnaire` → רשימה; `/p/questionnaire/[rid]` → מילוי/צפייה פר-שאלון. `/t/patients/[id]/questionnaire`
+  → רשימת כל השאלונים של המטופל + תשובות.
+- **seed:** `pnpm db:questionnaires` — 3 השאלונים של נופר מ-Google Forms (נטורופתי / רפלקסולוגיה /
+  הסכם טיפולי). idempotent לפי שם. **"גיל" → שדה `date` "תאריך לידה"** בכל מקום.
+- **בדיקות:** 9 בדיקות בידוד (templates פר-מטפלת, שיוך idempotent, אי-שיוך template של מטפלת אחרת,
+  מילוי/הגשה, cross-tenant על field_value, מטופל לא קורא response של מטופל אחר).
+
+**קשר ל-WP-62:** "טופס הסכם טיפולי" מומש כ-template (טקסט ההסכם = טקסט הפתיחה, אישור סופי = שאלת
+boolean חובה). דיוק השאלון (#3) — מכוסה. נוסח מסמך הסכמה עצמאי (`/p/consent` חוסם כניסה) עדיין פתוח.

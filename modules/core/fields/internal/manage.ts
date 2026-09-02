@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import type { Db } from "@/modules/core/data/client";
 import { fieldDefinition, type FieldEntity } from "../schema";
 import { compileFieldSchema, type FieldSchema } from "./field-schema";
@@ -86,14 +86,22 @@ function newKey(): string {
   return "f_" + crypto.randomUUID().replace(/-/g, "");
 }
 
-/** All definitions for one entity, ordered, flagged `builtin`. */
+/** entity scope, optionally narrowed to one questionnaire template (WP-67). */
+function scopeConds(therapistId: string, entity: FieldEntity, templateId?: string | null) {
+  const conds = [eq(fieldDefinition.therapistId, therapistId), eq(fieldDefinition.entity, entity)];
+  if (templateId === null) conds.push(isNull(fieldDefinition.templateId));
+  else if (templateId !== undefined) conds.push(eq(fieldDefinition.templateId, templateId));
+  return conds;
+}
+
+/** All definitions for one entity (optionally one template), ordered, flagged `builtin`. */
 export async function listFieldDefs(
   db: Db,
   therapistId: string,
   entity: FieldEntity,
-  opts: { includeInactive?: boolean } = {},
+  opts: { includeInactive?: boolean; templateId?: string | null } = {},
 ): Promise<ManagedFieldDef[]> {
-  const conds = [eq(fieldDefinition.therapistId, therapistId), eq(fieldDefinition.entity, entity)];
+  const conds = scopeConds(therapistId, entity, opts.templateId);
   if (!opts.includeInactive) conds.push(eq(fieldDefinition.active, true));
   const rows = await db
     .select()
@@ -109,6 +117,7 @@ export async function createFieldDef(
   therapistId: string,
   entity: FieldEntity,
   input: NewFieldInput,
+  templateId?: string | null,
 ): Promise<string> {
   const labelHe = input.labelHe.trim();
   if (labelHe.length < 2) throw new FieldDefError("invalid_label");
@@ -120,11 +129,7 @@ export async function createFieldDef(
     .select({ id: fieldDefinition.id })
     .from(fieldDefinition)
     .where(
-      and(
-        eq(fieldDefinition.therapistId, therapistId),
-        eq(fieldDefinition.entity, entity),
-        eq(fieldDefinition.labelHe, labelHe),
-      ),
+      and(...scopeConds(therapistId, entity, templateId), eq(fieldDefinition.labelHe, labelHe)),
     )
     .limit(1);
   if (dup[0]) throw new FieldDefError("duplicate_label");
@@ -132,13 +137,14 @@ export async function createFieldDef(
   const [{ maxOrder }] = await db
     .select({ maxOrder: sql<number>`coalesce(max(${fieldDefinition.order}), 0)` })
     .from(fieldDefinition)
-    .where(and(eq(fieldDefinition.therapistId, therapistId), eq(fieldDefinition.entity, entity)));
+    .where(and(...scopeConds(therapistId, entity, templateId)));
 
   const [row] = await db
     .insert(fieldDefinition)
     .values({
       therapistId,
       entity,
+      templateId: templateId ?? null,
       key: newKey(),
       labelHe,
       type: input.type,

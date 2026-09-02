@@ -147,6 +147,23 @@ export default async function SettingsPage({
 
       <Card>
         <CardHeader>
+          <CardTitle>שאלונים</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <p className="text-ink-soft">
+            מאגר השאלונים שנשלחים למטופלים. בהקמת מטופל/ת אפשר לבחור אילו שאלונים לשלוח — יותר מאחד.
+          </p>
+          <Link
+            href="/t/settings/questionnaires"
+            className="text-sage-deep inline-flex items-center gap-1 font-semibold hover:underline"
+          >
+            לניהול השאלונים ←
+          </Link>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>מדדי מפגש</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">

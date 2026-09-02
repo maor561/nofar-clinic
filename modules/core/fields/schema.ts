@@ -36,6 +36,8 @@ export const fieldDefinition = pgTable(
       .notNull()
       .references(() => therapist.id, { onDelete: "restrict" }),
     entity: text("entity", { enum: fieldEntity }).notNull(),
+    /** WP-67: for entity 'questionnaire', which library template this question belongs to. */
+    templateId: uuid("template_id"),
     key: text("key").notNull(),
     labelHe: text("label_he").notNull(),
     type: text("type", { enum: fieldType }).notNull(),

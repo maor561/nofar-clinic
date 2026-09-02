@@ -1,4 +1,4 @@
-import { eq, type InferSelectModel } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, type InferSelectModel } from "drizzle-orm";
 import type { TherapistDb, PatientDb } from "@/modules/core/authz";
 import { recordEvent } from "@/modules/patient-file";
 import {
@@ -7,72 +7,207 @@ import {
   getFieldValuesFrom,
   type FieldValueOut,
 } from "@/modules/core/fields";
-import { questionnaireResponse } from "./schema";
+import { questionnaireResponse, questionnaireTemplate } from "./schema";
+import { templateConfigByIds, type TemplateConfig } from "./internal/template-config";
 
 export { questionnaireStatus, type QuestionnaireStatus } from "./schema";
+export type { TemplateConfig } from "./internal/template-config";
 
 export const QUESTIONNAIRE_FIELD_ENTITY = "questionnaire" as const;
 
 type AnyScoped = TherapistDb | PatientDb;
 
+export type TemplateRow = InferSelectModel<typeof questionnaireTemplate>;
 export type ResponseRow = InferSelectModel<typeof questionnaireResponse>;
-export type QuestionnaireView = { response: ResponseRow; fields: FieldValueOut[] } | null;
-
 export type FieldWriteInput = { definitionId: string; value: unknown };
 
-/** Field definitions that make up the intake questionnaire, ordered. */
-export function questionnaireFieldDefs(db: AnyScoped) {
-  return fieldDefinitionsFor((db as TherapistDb).therapistId, QUESTIONNAIRE_FIELD_ENTITY);
+/* --------------------------------------------------------------------------- *
+ *  Templates (the library) — therapist-scoped
+ * --------------------------------------------------------------------------- */
+
+export async function listTemplates(
+  tdb: TherapistDb,
+  opts: { includeInactive?: boolean } = {},
+): Promise<TemplateRow[]> {
+  return tdb.list(questionnaireTemplate, {
+    where: opts.includeInactive ? undefined : eq(questionnaireTemplate.active, true),
+    orderBy: [asc(questionnaireTemplate.sortOrder), asc(questionnaireTemplate.createdAt)],
+    limit: 200,
+  });
 }
 
-async function findResponse(db: AnyScoped, patientId: string): Promise<ResponseRow | null> {
-  return (db as TherapistDb).findOne(
-    questionnaireResponse,
-    eq(questionnaireResponse.patientId, patientId),
+export async function getTemplate(tdb: TherapistDb, id: string): Promise<TemplateRow | null> {
+  return tdb.findOne(questionnaireTemplate, eq(questionnaireTemplate.id, id));
+}
+
+export async function createTemplate(
+  tdb: TherapistDb,
+  input: { name: string; descriptionHe?: string | null },
+): Promise<{ id: string }> {
+  const name = input.name.trim();
+  if (name.length < 2) throw new Error("invalid_name");
+  const dupe = await tdb.findOne(questionnaireTemplate, eq(questionnaireTemplate.name, name));
+  if (dupe) throw new Error("duplicate");
+  const rows = await tdb.list(questionnaireTemplate, {
+    orderBy: [desc(questionnaireTemplate.sortOrder)],
+    limit: 1,
+  });
+  const [row] = await tdb.insert(questionnaireTemplate, {
+    name,
+    descriptionHe: input.descriptionHe?.trim() || null,
+    sortOrder: (rows[0]?.sortOrder ?? 0) + 10,
+  });
+  return { id: row.id };
+}
+
+export async function updateTemplate(
+  tdb: TherapistDb,
+  id: string,
+  patch: { name?: string; descriptionHe?: string | null; active?: boolean },
+): Promise<void> {
+  const set: Record<string, unknown> = {};
+  if (patch.name !== undefined) {
+    const n = patch.name.trim();
+    if (n.length < 2) throw new Error("invalid_name");
+    set.name = n;
+  }
+  if (patch.descriptionHe !== undefined) set.descriptionHe = patch.descriptionHe?.trim() || null;
+  if (patch.active !== undefined) set.active = patch.active;
+  if (Object.keys(set).length === 0) return;
+  const rows = await tdb.update(questionnaireTemplate, set, eq(questionnaireTemplate.id, id));
+  if (rows.length === 0) throw new Error("not_found");
+}
+
+/** The questions of one template, ordered — for the settings editor and the form. */
+export function templateQuestions(db: AnyScoped, templateId: string) {
+  return fieldDefinitionsFor(
+    (db as TherapistDb).therapistId,
+    QUESTIONNAIRE_FIELD_ENTITY,
+    templateId,
   );
 }
 
-/** Patient-side: the response, creating an empty `open` one on first visit. */
-export async function startResponse(pdb: PatientDb, patientId: string): Promise<ResponseRow> {
-  const existing = await findResponse(pdb, patientId);
-  if (existing) return existing;
-  const [row] = await pdb.insert(questionnaireResponse, { patientId });
-  return row;
-}
+/* --------------------------------------------------------------------------- *
+ *  Assignment + responses — dual-scoped
+ * --------------------------------------------------------------------------- */
 
-/** The response + its answers. `null` if the patient hasn't started it. */
-export async function getQuestionnaire(
+export type PatientQuestionnaire = ResponseRow & { templateName: string | null };
+
+/** Every questionnaire assigned to a patient, newest template first. */
+export async function listPatientQuestionnaires(
   db: AnyScoped,
   patientId: string,
-): Promise<QuestionnaireView> {
-  const response = await findResponse(db, patientId);
-  if (!response) return null;
-  const fields = await getFieldValuesFrom(
-    { therapistId: (db as TherapistDb).therapistId, patientId: response.patientId },
-    QUESTIONNAIRE_FIELD_ENTITY,
-    response.id,
+): Promise<PatientQuestionnaire[]> {
+  const responses = await (db as TherapistDb).list(questionnaireResponse, {
+    where: eq(questionnaireResponse.patientId, patientId),
+    orderBy: [asc(questionnaireResponse.createdAt)],
+    limit: 100,
+  });
+  if (responses.length === 0) return [];
+  const templateIds = responses.map((r) => r.templateId).filter((x): x is string => x != null);
+  const byId = await templateConfigByIds(responses[0].therapistId, templateIds);
+  return responses.map((r) => ({
+    ...r,
+    templateName: r.templateId ? (byId.get(r.templateId)?.name ?? "שאלון") : "שאלון קליטה",
+  }));
+}
+
+/** Assign one or more library questionnaires to a patient (idempotent per template). */
+export async function assignQuestionnaires(
+  tdb: TherapistDb,
+  patientId: string,
+  templateIds: string[],
+): Promise<number> {
+  const ids = [...new Set(templateIds)];
+  if (ids.length === 0) return 0;
+
+  const templates = await tdb.findMany(
+    questionnaireTemplate,
+    inArray(questionnaireTemplate.id, ids),
   );
-  return { response, fields };
+  if (templates.length !== ids.length) throw new Error("template_not_found");
+
+  const existing = await tdb.list(questionnaireResponse, {
+    where: eq(questionnaireResponse.patientId, patientId),
+  });
+  const have = new Set(existing.map((r) => r.templateId));
+
+  let added = 0;
+  for (const id of ids) {
+    if (have.has(id)) continue;
+    await tdb.insert(questionnaireResponse, { patientId, templateId: id, status: "open" });
+    added++;
+  }
+  return added;
+}
+
+/** Remove an assignment (only while still open — a submitted one is kept). */
+export async function unassignQuestionnaire(tdb: TherapistDb, responseId: string): Promise<void> {
+  await tdb.delete(
+    questionnaireResponse,
+    and(eq(questionnaireResponse.id, responseId), eq(questionnaireResponse.status, "open"))!,
+  );
+}
+
+export type QuestionnaireDetail = {
+  response: ResponseRow;
+  template: TemplateConfig | null;
+  fields: FieldValueOut[];
+};
+
+/**
+ * One response (guard-scoped) with its template config + current answers. The
+ * response and its `field_value` answers go through the scoping guard; only the
+ * non-sensitive template label/intro is read raw (see internal/template-config).
+ */
+export async function getResponseDetail(
+  db: AnyScoped,
+  responseId: string,
+): Promise<QuestionnaireDetail | null> {
+  const response = await (db as TherapistDb).findOne(
+    questionnaireResponse,
+    eq(questionnaireResponse.id, responseId),
+  );
+  if (!response) return null;
+  const [byId, fields] = await Promise.all([
+    response.templateId
+      ? templateConfigByIds(response.therapistId, [response.templateId])
+      : Promise.resolve(new Map<string, TemplateConfig>()),
+    getFieldValuesFrom(
+      { therapistId: response.therapistId, patientId: response.patientId },
+      QUESTIONNAIRE_FIELD_ENTITY,
+      response.id,
+    ),
+  ]);
+  return {
+    response,
+    template: response.templateId ? (byId.get(response.templateId) ?? null) : null,
+    fields,
+  };
 }
 
 /**
- * Patient submits (or re-submits) the questionnaire. Writes every answer to
- * `field_value`, flips the status to `submitted`, and drops a
- * `questionnaire_submitted` timeline event.
+ * Patient submits (or re-submits) one questionnaire. Answers go to `field_value`
+ * through the single validator; status flips to `submitted`; a timeline event
+ * fires on the first submission.
  */
-export async function submitQuestionnaire(
+export async function submitResponse(
   pdb: PatientDb,
-  patientId: string,
+  responseId: string,
   answers: FieldWriteInput[],
-): Promise<{ responseId: string; therapistId: string }> {
-  const response = await startResponse(pdb, patientId);
-  // the guard forces the response's patient_id to the caller's scope — use that,
-  // never the (untrusted) `patientId` argument, for every downstream write.
-  const scopedPatientId = response.patientId;
+): Promise<{ responseId: string; templateId: string | null; firstSubmit: boolean }> {
+  const response = await pdb.findOne(
+    questionnaireResponse,
+    eq(questionnaireResponse.id, responseId),
+  );
+  if (!response) throw new Error("not_found");
+  // the guard already pinned patient_id to the caller — trust that, not any arg
+  const patientId = response.patientId;
+  const firstSubmit = response.status !== "submitted";
 
   if (answers.length) {
     await setFieldValuesIn(
-      { therapistId: pdb.therapistId, patientId: scopedPatientId },
+      { therapistId: pdb.therapistId, patientId },
       QUESTIONNAIRE_FIELD_ENTITY,
       response.id,
       answers,
@@ -85,12 +220,27 @@ export async function submitQuestionnaire(
     eq(questionnaireResponse.id, response.id),
   );
 
-  await recordEvent(pdb, {
-    patientId: scopedPatientId,
-    type: "questionnaire_submitted",
-    summary: "שאלון קליטה הוגש",
-    refId: response.id,
-  });
+  if (firstSubmit) {
+    const name = response.templateId
+      ? ((await templateConfigByIds(response.therapistId, [response.templateId])).get(
+          response.templateId,
+        )?.name ?? "שאלון")
+      : "שאלון קליטה";
+    await recordEvent(pdb, {
+      patientId,
+      type: "questionnaire_submitted",
+      summary: `${name} הוגש`,
+      refId: response.id,
+    });
+  }
 
-  return { responseId: response.id, therapistId: pdb.therapistId };
+  return { responseId: response.id, templateId: response.templateId, firstSubmit };
+}
+
+/** How many of the patient's questionnaires are still open (for the dashboard nudge). */
+export async function countOpenQuestionnaires(db: AnyScoped, patientId: string): Promise<number> {
+  return (db as TherapistDb).count(
+    questionnaireResponse,
+    and(eq(questionnaireResponse.patientId, patientId), eq(questionnaireResponse.status, "open"))!,
+  );
 }

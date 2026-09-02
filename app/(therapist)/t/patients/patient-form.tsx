@@ -39,6 +39,7 @@ export type PatientFormValues = {
 };
 
 export type SeriesOption = { id: string; name: string; sessionCount: number };
+export type QuestionnaireOption = { id: string; name: string };
 
 export function PatientForm({
   action,
@@ -47,6 +48,8 @@ export function PatientForm({
   showStatus = false,
   treatmentTypes,
   seriesOptions = [],
+  questionnaireOptions = [],
+  assignedQuestionnaireIds = [],
 }: {
   action: (prev: PatientFormState, fd: FormData) => Promise<PatientFormState>;
   values?: PatientFormValues;
@@ -54,11 +57,14 @@ export function PatientForm({
   showStatus?: boolean;
   treatmentTypes: string[];
   seriesOptions?: SeriesOption[];
+  questionnaireOptions?: QuestionnaireOption[];
+  assignedQuestionnaireIds?: string[];
 }) {
   const [state, formAction, pending] = useActionState<PatientFormState, FormData>(action, {});
   const v = values ?? {};
   const tt = new Set(v.treatmentTypes ?? []);
   const cs = new Set(v.consents ?? []);
+  const qs = new Set(assignedQuestionnaireIds);
 
   return (
     <form action={formAction} className="max-w-2xl space-y-6">
@@ -126,6 +132,23 @@ export function PatientForm({
           className="border-input min-h-[64px] rounded-lg border bg-transparent px-2.5 py-1.5 text-sm"
         />
       </div>
+
+      {questionnaireOptions.length > 0 && (
+        <fieldset className="space-y-2">
+          <legend className="text-ink-soft text-xs font-bold">שאלונים לשליחה</legend>
+          <div className="space-y-2">
+            {questionnaireOptions.map((q) => (
+              <label key={q.id} className="flex items-center gap-2 text-sm">
+                <Checkbox name="questionnaireIds" value={q.id} defaultChecked={qs.has(q.id)} />
+                {q.name}
+              </label>
+            ))}
+          </div>
+          <p className="text-ink-faint text-[11px]">
+            כל שאלון שמסומן יישלח למטופל/ת למילוי. אפשר גם לא לסמן כלום.
+          </p>
+        </fieldset>
+      )}
 
       <fieldset className="space-y-2">
         <legend className="text-ink-soft text-xs font-bold">הסכמות</legend>

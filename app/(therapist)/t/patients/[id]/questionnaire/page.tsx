@@ -4,13 +4,14 @@ import { notFound } from "next/navigation";
 import { getTherapistDb } from "@/modules/core/authz/server";
 import { audit } from "@/modules/core/audit/server";
 import { getPatient } from "@/modules/patients";
-import { getQuestionnaire } from "@/modules/questionnaires";
-import { EmptyState } from "@/modules/core/design-system";
+import { listPatientQuestionnaires, getResponseDetail } from "@/modules/questionnaires";
+import { Card, CardContent, CardHeader, CardTitle, EmptyState } from "@/modules/core/design-system";
+import { clinicDateFmt } from "@/lib/tz";
 import { AnswersList } from "@/app/(patient)/p/questionnaire/answers";
 
-export const metadata: Metadata = { title: "שאלון קליטה" };
+export const metadata: Metadata = { title: "שאלונים" };
 
-const dtf = new Intl.DateTimeFormat("he-IL", { dateStyle: "long" });
+const dtf = clinicDateFmt({ dateStyle: "long" });
 
 export default async function PatientQuestionnairePage({
   params,
@@ -22,8 +23,9 @@ export default async function PatientQuestionnairePage({
   const p = await getPatient(tdb, id);
   if (!p) notFound();
 
-  const view = await getQuestionnaire(tdb, id);
-  await audit("view", "questionnaire_response", { patientId: id, entityId: view?.response.id });
+  const list = await listPatientQuestionnaires(tdb, id);
+  const details = await Promise.all(list.map((q) => getResponseDetail(tdb, q.id)));
+  await audit("view", "questionnaire_response", { patientId: id });
 
   return (
     <div className="space-y-5">
@@ -36,26 +38,39 @@ export default async function PatientQuestionnairePage({
 
       <header className="border-line border-b pb-3">
         <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold">
-          שאלון קליטה · {p.firstName} {p.lastName}
+          שאלונים · {p.firstName} {p.lastName}
         </h1>
-        {view?.response.status === "submitted" && (
-          <p className="text-ink-soft mt-1 text-sm">
-            הוגש ב־{dtf.format(view.response.submittedAt ?? view.response.updatedAt)}
-          </p>
-        )}
-        {view && view.response.status === "open" && (
-          <p className="text-ink-soft mt-1 text-sm">טיוטה — טרם הוגש</p>
-        )}
       </header>
 
-      {!view ? (
+      {list.length === 0 ? (
         <EmptyState
           icon="form"
-          title="השאלון טרם מולא"
-          description="המטופל/ת יראה את השאלון במרחב שלו וימלא אותו לפני המפגש."
+          title="לא שויכו שאלונים"
+          description="אפשר לשייך שאלונים למטופל/ת מטופס העריכה או בהקמה."
         />
       ) : (
-        <AnswersList fields={view.fields} />
+        list.map((q, i) => {
+          const d = details[i];
+          return (
+            <Card key={q.id}>
+              <CardHeader>
+                <CardTitle>{q.templateName}</CardTitle>
+                <span className="text-ink-faint text-xs">
+                  {q.status === "submitted"
+                    ? `הוגש ${q.submittedAt ? "ב־" + dtf.format(q.submittedAt) : ""}`
+                    : "טרם הוגש"}
+                </span>
+              </CardHeader>
+              <CardContent>
+                {d && d.fields.length > 0 ? (
+                  <AnswersList fields={d.fields} />
+                ) : (
+                  <p className="text-ink-faint text-sm">אין תשובות עדיין.</p>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })
       )}
     </div>
   );

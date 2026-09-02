@@ -3,7 +3,7 @@ import { getPatientDb } from "@/modules/core/authz/server";
 import { listAppointmentRows } from "@/modules/appointments";
 import { listTaskRows } from "@/modules/tasks";
 import { listTimeline, TIMELINE_LABEL, type TimelineEventType } from "@/modules/patient-file";
-import { getQuestionnaire } from "@/modules/questionnaires";
+import { countOpenQuestionnaires } from "@/modules/questionnaires";
 import { treatmentLabel } from "@/modules/appointments";
 import { getActivePatientSeries } from "@/modules/patients";
 import {
@@ -48,16 +48,16 @@ export default async function PatientDashboard() {
   // "now" for splitting upcoming appointments — per request
   const now = new Date();
 
-  const [appts, openTasks, updates, questionnaire, series] = await Promise.all([
+  const [appts, openTasks, updates, openQuestionnaires, series] = await Promise.all([
     listAppointmentRows(pdb, { from: now, status: "scheduled", ascending: true, limit: 1 }),
     listTaskRows(pdb, { status: "open", limit: 4 }),
     listTimeline(pdb, me.id, { limit: 4 }),
-    getQuestionnaire(pdb, me.id),
+    countOpenQuestionnaires(pdb, me.id),
     getActivePatientSeries(pdb, me.id),
   ]);
   const nextAppt = appts[0] ?? null;
   const seriesRemaining = series ? Math.max(0, series.sessionCount - series.usedCount) : 0;
-  const needsQuestionnaire = !questionnaire || questionnaire.response.status !== "submitted";
+  const needsQuestionnaire = openQuestionnaires > 0;
 
   return (
     <div className="space-y-6">
@@ -72,11 +72,15 @@ export default async function PatientDashboard() {
         <Card className="border-sage bg-sage-soft/40">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
             <div>
-              <p className="font-semibold">שאלון קליטה ממתין למילוי</p>
+              <p className="font-semibold">
+                {openQuestionnaires === 1
+                  ? "שאלון ממתין למילוי"
+                  : `${openQuestionnaires} שאלונים ממתינים למילוי`}
+              </p>
               <p className="text-ink-soft text-[13px]">כמה שאלות קצרות שיעזרו לנופר להכיר אותך.</p>
             </div>
             <Button asChild size="sm">
-              <Link href="/p/questionnaire">למילוי השאלון</Link>
+              <Link href="/p/questionnaire">למילוי</Link>
             </Button>
           </CardContent>
         </Card>

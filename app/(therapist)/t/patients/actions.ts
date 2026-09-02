@@ -16,7 +16,15 @@ import {
 } from "@/modules/patients";
 import { provisionPatientUser, createPatientInvite } from "@/modules/core/auth";
 import { sendInviteEmail } from "@/modules/core/email";
+import { assignQuestionnaires } from "@/modules/questionnaires";
 import type { PatientFormState } from "./patient-form";
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function questionnaireIds(fd: FormData): string[] {
+  return fd
+    .getAll("questionnaireIds")
+    .filter((x): x is string => typeof x === "string" && UUID.test(x));
+}
 
 function parse(fd: FormData): PatientInput {
   const str = (k: string) => {
@@ -70,6 +78,9 @@ export async function createPatientAction(
     return { error: "יצירת המטופל נכשלה. נסו שוב." };
   }
 
+  const qIds = questionnaireIds(fd);
+  if (qIds.length) await assignQuestionnaires(tdb, id, qIds).catch(() => undefined);
+
   // provision the login account + one-click invite (email if we have one)
   if (input.email) {
     try {
@@ -107,8 +118,13 @@ export async function updatePatientAction(
   } catch {
     return { error: "עדכון המטופל נכשל." };
   }
+
+  const qIds = questionnaireIds(fd);
+  if (qIds.length) await assignQuestionnaires(tdb, id, qIds).catch(() => undefined);
+
   revalidatePath(`/t/patients/${id}`);
   revalidatePath("/t/patients");
+  revalidatePath(`/t/patients/${id}/questionnaire`);
   redirect(`/t/patients/${id}`);
 }
 

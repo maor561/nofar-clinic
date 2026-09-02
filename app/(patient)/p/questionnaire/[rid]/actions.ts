@@ -5,13 +5,15 @@ import { getPatientDb } from "@/modules/core/authz/server";
 import { getTherapistUserId } from "@/modules/core/auth";
 import { notify } from "@/modules/core/notifications";
 import {
-  submitQuestionnaire,
-  questionnaireFieldDefs,
+  getResponseDetail,
+  templateQuestions,
+  submitResponse,
   type FieldWriteInput,
 } from "@/modules/questionnaires";
-import type { QFormState } from "./questionnaire-form";
+import { fieldDefinitionsFor } from "@/modules/core/fields";
+import type { QFormState } from "../questionnaire-form";
 
-type Def = Awaited<ReturnType<typeof questionnaireFieldDefs>>[number];
+type Def = { id: string; type: string; schema: unknown };
 
 function parseFields(fd: FormData, defs: Def[]): FieldWriteInput[] {
   return defs.map((def) => {
@@ -38,7 +40,8 @@ function parseFields(fd: FormData, defs: Def[]): FieldWriteInput[] {
   });
 }
 
-export async function submitQuestionnaireAction(
+export async function submitResponseAction(
+  rid: string,
   _prev: QFormState,
   fd: FormData,
 ): Promise<QFormState> {
@@ -46,25 +49,33 @@ export async function submitQuestionnaireAction(
   const me = await pdb.self();
   if (!me) return { error: "יש להתחבר מחדש" };
 
-  const defs = await questionnaireFieldDefs(pdb);
+  const detail = await getResponseDetail(pdb, rid);
+  if (!detail) return { error: "השאלון לא נמצא." };
 
+  const defs = detail.response.templateId
+    ? await templateQuestions(pdb, detail.response.templateId)
+    : await fieldDefinitionsFor(pdb.therapistId, "questionnaire", null);
+
+  let firstSubmit = false;
   try {
-    await submitQuestionnaire(pdb, me.id, parseFields(fd, defs));
+    ({ firstSubmit } = await submitResponse(pdb, rid, parseFields(fd, defs)));
   } catch {
     return { error: "שליחת השאלון נכשלה. בדקו את התשובות ונסו שוב." };
   }
 
-  const therapistUserId = await getTherapistUserId(pdb.therapistId);
-  if (therapistUserId) {
-    await notify({
-      recipientUserId: therapistUserId,
-      therapistId: pdb.therapistId,
-      type: "questionnaire_submitted",
-      titleHe: "שאלון קליטה מולא",
-      bodyHe: `${me.firstName} ${me.lastName} השלים/ה את שאלון הקליטה.`,
-      link: `/t/patients/${me.id}/questionnaire`,
-      meta: { patientId: me.id },
-    });
+  if (firstSubmit) {
+    const therapistUserId = await getTherapistUserId(pdb.therapistId);
+    if (therapistUserId) {
+      await notify({
+        recipientUserId: therapistUserId,
+        therapistId: pdb.therapistId,
+        type: "questionnaire_submitted",
+        titleHe: "שאלון מולא",
+        bodyHe: `${me.firstName} ${me.lastName} השלים/ה: ${detail.template?.name ?? "שאלון קליטה"}.`,
+        link: `/t/patients/${me.id}/questionnaire`,
+        meta: { patientId: me.id },
+      });
+    }
   }
 
   revalidatePath("/p/questionnaire");

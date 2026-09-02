@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTherapistDb } from "@/modules/core/authz/server";
 import { getPatient, listTreatmentTypes } from "@/modules/patients";
+import { listTemplates, listPatientQuestionnaires } from "@/modules/questionnaires";
 import { PatientForm } from "../../patient-form";
 import { updatePatientAction } from "../../actions";
 import { DeletePatientCard } from "./delete-patient";
@@ -12,10 +13,16 @@ export const metadata: Metadata = { title: "עריכת מטופל" };
 export default async function EditPatientPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const tdb = await getTherapistDb();
-  const [p, typeRows] = await Promise.all([getPatient(tdb, id), listTreatmentTypes(tdb)]);
+  const [p, typeRows, questionnaires, assigned] = await Promise.all([
+    getPatient(tdb, id),
+    listTreatmentTypes(tdb),
+    listTemplates(tdb),
+    listPatientQuestionnaires(tdb, id),
+  ]);
   if (!p) notFound();
 
   const treatmentTypes = [...new Set([...typeRows.map((t) => t.name), ...p.treatmentTypes])];
+  const assignedIds = assigned.map((q) => q.templateId).filter((x): x is string => x != null);
   const action = updatePatientAction.bind(null, id);
 
   return (
@@ -34,6 +41,8 @@ export default async function EditPatientPage({ params }: { params: Promise<{ id
         submitLabel="שמירה"
         showStatus
         treatmentTypes={treatmentTypes}
+        questionnaireOptions={questionnaires.map((q) => ({ id: q.id, name: q.name }))}
+        assignedQuestionnaireIds={assignedIds}
         values={{
           firstName: p.firstName,
           lastName: p.lastName,

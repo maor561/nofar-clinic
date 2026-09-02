@@ -123,6 +123,9 @@
 
 ## יומן סשנים
 
+### 2026-09-02 (המשך ז') — WP-67: מאגר שאלונים + שיוך מרובה
+`questionnaire_template` (מיגרציה `0023`) — מאגר שאלונים פר-מטפלת. שאלות = `field_definition` עם `template_id` (עדיין דרך ה-validator היחיד). `questionnaire_response` = שורה פר (מטופל, template); שורה ישנה `template_id=NULL` = שאלון הקליטה הגנרי, נשמר. מטא-דאטה של template נקראת גולמית ב-`internal/template-config.ts` (קונפיג מטפלת, לא מידע מטופל); תשובות תמיד guard-scoped. מסכים: `/t/settings/questionnaires` (+`[id]` CRUD שאלות), טופס מטופל → צ'ק-בוקס "שאלונים לשליחה", `/p/questionnaire` רשימה + `[rid]` מילוי. **`pnpm db:questionnaires`** זרע את 3 השאלונים של נופר (נטורופתי 17ש׳ / רפלקסולוגיה 9ש׳ / הסכם טיפולי 10ש׳) על Neon. **"גיל" → `date` "תאריך לידה"**. 9 בדיקות בידוד (169 סה"כ) · build ✓. אומת בדפדפן מקצה-לקצה: 3 templates במאגר, שיוך 2 שאלונים למטופל בהקמה/עריכה → הופיעו ברשימת המטופל, שאלון הקליטה הישן נשמר. ADR-048. **מכסה את דיוק השאלון של #3/WP-62** (נוסח מסמך הסכמה עצמאי עדיין פתוח).
+
 ### 2026-09-02 (המשך ו') — כמה חלונות זמינות ליום + הסבר Web Push
 **חלונות מרובים (ADR-047):** מיגרציה `0022` הסירה את האילוץ unique על `(therapist_id, weekday)` ב-`availability_rule`. `normalizeRules` דוחה חפיפה במקום `weekday` כפול. מסך `/t/settings/availability` — `DayRow` client עם "+ הוספת חלון שעות" / "הסרת חלון". מנוע ה-slots כבר תמך. +3 בדיקות (166 סה"כ). אומת בדפדפן: ראשון 10:00–14:00 + 16:00–20:00 → שמירה → רענון → נשמר.
 **Web Push:** הוסבר ללקוח מה זה ומה נדרש — 4 שלבים: (1) `node -e "console.log(require('web-push').generateVAPIDKeys())"`, (2) 3 env vars ב-Vercel (`WEB_PUSH_VAPID_PUBLIC_KEY`/`_PRIVATE_KEY`/`_SUBJECT`), (3) Redeploy, (4) הפעלה במכשיר + הערת אייפון ("הוסף למסך הבית" קודם). הפעמון והמיילים עובדים כרגיל בינתיים.

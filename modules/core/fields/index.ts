@@ -9,7 +9,7 @@
  *   the test suite so a broken schema fails CI.
  */
 import { getDb } from "@/modules/core/data/client";
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { fieldDefinition, type FieldEntity } from "./schema";
 
 export { compileFieldSchema, fieldSchemaSchema, type FieldSchema } from "./internal/field-schema";
@@ -57,18 +57,27 @@ export function getFieldValuesFrom(scope: FieldScope, entity: FieldEntity, entit
   return _getFieldValues(getDb(), scope, entity, entityId);
 }
 
-/** Definitions for one entity, ordered — for rendering a form. */
-export async function fieldDefinitionsFor(therapistId: string, entity: FieldEntity) {
+/**
+ * Definitions for one entity, ordered — for rendering a form. Pass `templateId`
+ * to get a single questionnaire template's questions; pass `null` for the
+ * legacy (template-less) set; omit it for every definition of the entity.
+ */
+export async function fieldDefinitionsFor(
+  therapistId: string,
+  entity: FieldEntity,
+  templateId?: string | null,
+) {
+  const conds = [
+    eq(fieldDefinition.therapistId, therapistId),
+    eq(fieldDefinition.entity, entity),
+    eq(fieldDefinition.active, true),
+  ];
+  if (templateId === null) conds.push(isNull(fieldDefinition.templateId));
+  else if (templateId !== undefined) conds.push(eq(fieldDefinition.templateId, templateId));
   return getDb()
     .select()
     .from(fieldDefinition)
-    .where(
-      and(
-        eq(fieldDefinition.therapistId, therapistId),
-        eq(fieldDefinition.entity, entity),
-        eq(fieldDefinition.active, true),
-      ),
-    )
+    .where(and(...conds))
     .orderBy(fieldDefinition.order);
 }
 
@@ -78,7 +87,7 @@ export async function fieldDefinitionsFor(therapistId: string, entity: FieldEnti
 export function listManagedFieldDefs(
   therapistId: string,
   entity: FieldEntity,
-  opts?: { includeInactive?: boolean },
+  opts?: { includeInactive?: boolean; templateId?: string | null },
 ) {
   return _listFieldDefs(getDb(), therapistId, entity, opts);
 }
@@ -88,8 +97,9 @@ export function createManagedFieldDef(
   therapistId: string,
   entity: FieldEntity,
   input: NewFieldInput,
+  templateId?: string | null,
 ) {
-  return _createFieldDef(getDb(), therapistId, entity, input);
+  return _createFieldDef(getDb(), therapistId, entity, input, templateId);
 }
 
 /** Edit label / order / active. Type & schema stay frozen. */

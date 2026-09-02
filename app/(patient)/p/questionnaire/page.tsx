@@ -1,67 +1,68 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getPatientDb } from "@/modules/core/authz/server";
-import { getQuestionnaire, questionnaireFieldDefs } from "@/modules/questionnaires";
-import type { FieldSchema } from "@/modules/core/fields";
-import { Button } from "@/modules/core/design-system";
-import { QuestionnaireForm, type QFieldDef } from "./questionnaire-form";
-import { AnswersList } from "./answers";
-import { submitQuestionnaireAction } from "./actions";
+import { listPatientQuestionnaires } from "@/modules/questionnaires";
+import { Card, EmptyState, Icon } from "@/modules/core/design-system";
+import { clinicDateFmt } from "@/lib/tz";
 
-export const metadata: Metadata = { title: "שאלון קליטה" };
+export const metadata: Metadata = { title: "שאלונים" };
 
-const dtf = new Intl.DateTimeFormat("he-IL", { dateStyle: "long" });
+const dtf = clinicDateFmt({ dateStyle: "long" });
 
-type SP = { edit?: string };
-
-export default async function QuestionnairePage({ searchParams }: { searchParams: Promise<SP> }) {
-  const sp = await searchParams;
+export default async function QuestionnaireListPage() {
   const pdb = await getPatientDb();
   const me = await pdb.self();
   if (!me) return null;
 
-  const [view, defsRaw] = await Promise.all([
-    getQuestionnaire(pdb, me.id),
-    questionnaireFieldDefs(pdb),
-  ]);
-  const submitted = view?.response.status === "submitted";
-  const editing = sp.edit === "1" || !submitted;
-
-  const fieldDefs: QFieldDef[] = defsRaw.map((d) => ({
-    definitionId: d.id,
-    key: d.key,
-    labelHe: d.labelHe,
-    type: d.type,
-    unit: d.unit,
-    schema: d.schema as FieldSchema,
-  }));
-  const values = Object.fromEntries((view?.fields ?? []).map((f) => [f.definitionId, f.value]));
+  const items = await listPatientQuestionnaires(pdb, me.id);
+  const open = items.filter((q) => q.status === "open");
 
   return (
     <div className="space-y-5">
       <header>
-        <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold">שאלון קליטה</h1>
+        <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold">השאלונים שלי</h1>
         <p className="text-ink-soft text-sm">
-          {submitted && !editing
-            ? `הוגש ב־${view ? dtf.format(view.response.submittedAt ?? view.response.updatedAt) : ""}. אפשר לעדכן בכל עת.`
-            : "כמה שאלות קצרות שיעזרו לנופר להכיר אותך לפני המפגש הראשון."}
+          {open.length > 0
+            ? `${open.length} שאלונים ממתינים למילוי לפני המפגש הראשון.`
+            : "כל השאלונים מולאו. אפשר לעדכן תשובות בכל עת."}
         </p>
       </header>
 
-      {submitted && !editing ? (
-        <>
-          <AnswersList fields={view!.fields} />
-          <Button asChild variant="outline" size="sm">
-            <Link href="/p/questionnaire?edit=1">עריכה ושליחה מחדש</Link>
-          </Button>
-        </>
-      ) : (
-        <QuestionnaireForm
-          action={submitQuestionnaireAction}
-          fieldDefs={fieldDefs}
-          values={values}
-          submitLabel={submitted ? "עדכון ושליחה מחדש" : "שליחת השאלון"}
+      {items.length === 0 ? (
+        <EmptyState
+          icon="form"
+          title="אין שאלונים"
+          description="כשנופר תשלח לך שאלון, הוא יופיע כאן."
         />
+      ) : (
+        <ul className="space-y-2.5">
+          {items.map((q) => (
+            <li key={q.id}>
+              <Link href={`/p/questionnaire/${q.id}`}>
+                <Card className="hover:border-sage flex items-center gap-3 p-4 transition-colors">
+                  <Icon name="form" size={18} className="text-ink-faint shrink-0" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold">{q.templateName}</span>
+                    <span className="text-ink-faint text-[12px]">
+                      {q.status === "submitted"
+                        ? `הוגש ${q.submittedAt ? "ב־" + dtf.format(q.submittedAt) : ""}`
+                        : "ממתין למילוי"}
+                    </span>
+                  </span>
+                  <span
+                    className={
+                      q.status === "submitted"
+                        ? "bg-sage-soft text-sage-deep rounded-full px-2 py-0.5 text-[11px] font-bold"
+                        : "bg-warn-soft text-warn rounded-full px-2 py-0.5 text-[11px] font-bold"
+                    }
+                  >
+                    {q.status === "submitted" ? "הוגש" : "למילוי"}
+                  </span>
+                </Card>
+              </Link>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
