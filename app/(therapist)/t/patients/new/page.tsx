@@ -28,6 +28,7 @@ export default async function NewPatientPage() {
       <PatientForm
         action={createPatientAction}
         submitLabel="יצירת מטופל"
+        showConsents={false}
         treatmentTypes={types.map((t) => t.name)}
         seriesOptions={series.map((s) => ({
           id: s.id,

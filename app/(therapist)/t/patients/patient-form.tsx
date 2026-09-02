@@ -46,6 +46,7 @@ export function PatientForm({
   values,
   submitLabel,
   showStatus = false,
+  showConsents = true,
   treatmentTypes,
   seriesOptions = [],
   questionnaireOptions = [],
@@ -55,6 +56,7 @@ export function PatientForm({
   values?: PatientFormValues;
   submitLabel: string;
   showStatus?: boolean;
+  showConsents?: boolean;
   treatmentTypes: string[];
   seriesOptions?: SeriesOption[];
   questionnaireOptions?: QuestionnaireOption[];
@@ -150,17 +152,19 @@ export function PatientForm({
         </fieldset>
       )}
 
-      <fieldset className="space-y-2">
-        <legend className="text-ink-soft text-xs font-bold">הסכמות</legend>
-        <div className="space-y-2">
-          {consentKind.map((k) => (
-            <label key={k} className="flex items-start gap-2 text-[13px]">
-              <Checkbox name="consents" value={k} defaultChecked={cs.has(k)} className="mt-0.5" />
-              {CONSENT_LABEL[k]}
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      {showConsents && (
+        <fieldset className="space-y-2">
+          <legend className="text-ink-soft text-xs font-bold">הסכמות</legend>
+          <div className="space-y-2">
+            {consentKind.map((k) => (
+              <label key={k} className="flex items-start gap-2 text-[13px]">
+                <Checkbox name="consents" value={k} defaultChecked={cs.has(k)} className="mt-0.5" />
+                {CONSENT_LABEL[k]}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
       {showStatus && (
         <div className="grid max-w-xs gap-1.5">
