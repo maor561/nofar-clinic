@@ -17,6 +17,7 @@ export default async function PatientLayout({ children }: { children: React.Reac
           <LogoutButton />
         </>
       }
+      mobileHeaderSlot={<NotificationBell />}
       pushSlot={<PushToggle />}
       logoutSlot={<LogoutButton variant="row" />}
     >

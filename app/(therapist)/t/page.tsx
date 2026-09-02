@@ -15,7 +15,7 @@ import {
   cn,
   type IconName,
 } from "@/modules/core/design-system";
-import { clinicDateFmt, toClinicFields } from "@/lib/tz";
+import { clinicDateFmt, toClinicFields, clinicGreeting } from "@/lib/tz";
 import { StatusPill } from "./patients/status-pill";
 
 const timeFmt = clinicDateFmt({ hour: "2-digit", minute: "2-digit" });
@@ -54,7 +54,7 @@ export default async function TherapistDashboard() {
     <div className="space-y-6">
       <header>
         <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold">
-          בוקר טוב, {name.split(" ")[0]}
+          {clinicGreeting(now)}, {name.split(" ")[0]}
         </h1>
         <p className="text-ink-soft text-sm">{dayFmt.format(now)}</p>
       </header>

@@ -44,6 +44,17 @@ export function clinicDateFmt(opts: Intl.DateTimeFormatOptions): Intl.DateTimeFo
   return new Intl.DateTimeFormat("he-IL", { timeZone: CLINIC_TZ, ...opts });
 }
 
+/** Time-of-day greeting in clinic wall time. */
+export function clinicGreeting(instant: Date = new Date()): string {
+  const h = Number(toClinicFields(instant).time.slice(0, 2)) % 24;
+  if (h < 5) return "לילה טוב";
+  if (h < 12) return "בוקר טוב";
+  if (h < 16) return "צהריים טובים";
+  if (h < 18) return "אחר הצהריים טובים";
+  if (h < 22) return "ערב טוב";
+  return "לילה טוב";
+}
+
 /** Start (00:00 clinic time) of the ISO week (Sunday) containing `ref`. */
 export function clinicWeekStart(ref: Date): Date {
   const { date } = toClinicFields(ref);

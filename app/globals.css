@@ -42,7 +42,7 @@
 
   /* ---- type ---- */
   --font-sans: var(--font-assistant), "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --font-display: var(--font-frank-ruhl), "Frank Ruhl Libre", Georgia, serif;
+  --font-display: var(--font-rubik), "Rubik", "Segoe UI", system-ui, sans-serif;
 
   /* ---- shape ---- */
   --radius-card: 16px;

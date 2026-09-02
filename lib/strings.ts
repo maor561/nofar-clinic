@@ -6,7 +6,7 @@
 export const strings = {
   scaffold_tagline: "ניהול הקשר הטיפולי",
   scaffold_ready_body:
-    "Next.js App Router · RTL · Tailwind עם פלטת Calm Wellness · Assistant + Frank Ruhl Libre. המסכים האמיתיים נבנים לפי חבילות העבודה.",
+    "Next.js App Router · RTL · Tailwind עם פלטת Calm Wellness · Assistant + Rubik. המסכים האמיתיים נבנים לפי חבילות העבודה.",
 } as const;
 
 export type StringKey = keyof typeof strings;

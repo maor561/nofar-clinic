@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { FEATURES } from "@/lib/features";
 import { BRAND_BY } from "@/lib/brand";
 import { Logo } from "../logo";
@@ -41,7 +42,10 @@ function initials(name: string) {
 type Props = {
   user: { name: string };
   nav?: NavItem[];
+  /** desktop header actions (bell + logout) */
   headerSlot?: React.ReactNode;
+  /** phone top-bar actions — bell only; logout lives in the "עוד" sheet */
+  mobileHeaderSlot?: React.ReactNode;
   pushSlot?: React.ReactNode;
   logoutSlot?: React.ReactNode;
   children: React.ReactNode;
@@ -51,6 +55,7 @@ export function PatientShell({
   user,
   nav = DEFAULT_NAV,
   headerSlot,
+  mobileHeaderSlot,
   pushSlot,
   logoutSlot,
   children,
@@ -61,7 +66,9 @@ export function PatientShell({
     <div className="flex min-h-svh flex-col">
       {/* desktop — horizontal nav */}
       <header className="border-line bg-surface hidden flex-wrap items-center gap-x-5 gap-y-2 border-b px-6 py-3.5 md:flex">
-        <Logo subtitle={BRAND_BY} />
+        <Link href="/p" aria-label="למסך הראשי">
+          <Logo subtitle={BRAND_BY} />
+        </Link>
         <TopNav items={nav} />
         <div className="ms-auto flex items-center gap-2.5">
           <span className="text-[13px] font-semibold">{user.name}</span>
@@ -74,8 +81,10 @@ export function PatientShell({
 
       {/* phone — slim sticky top bar */}
       <header className="border-line bg-surface sticky top-0 z-30 flex items-center justify-between border-b px-4 py-2 md:hidden">
-        <Logo />
-        <div className="flex items-center gap-1">{headerSlot}</div>
+        <Link href="/p" aria-label="למסך הראשי">
+          <Logo />
+        </Link>
+        <div className="flex items-center gap-1">{mobileHeaderSlot}</div>
       </header>
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-7 max-md:px-4 max-md:pt-4 max-md:pb-24">

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Assistant, Frank_Ruhl_Libre } from "next/font/google";
+import { Assistant, Rubik } from "next/font/google";
 import "./globals.css";
 import { BRAND } from "@/lib/brand";
 import { Providers } from "./providers";
@@ -12,10 +12,10 @@ const assistant = Assistant({
   display: "swap",
 });
 
-const frankRuhl = Frank_Ruhl_Libre({
-  variable: "--font-frank-ruhl",
+const rubik = Rubik({
+  variable: "--font-rubik",
   subsets: ["hebrew", "latin"],
-  weight: ["500", "700"],
+  weight: ["500", "600", "700"],
   display: "swap",
 });
 
@@ -36,7 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="he"
       dir="rtl"
-      className={`${assistant.variable} ${frankRuhl.variable} h-full font-sans antialiased`}
+      className={`${assistant.variable} ${rubik.variable} h-full font-sans antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <Providers>{children}</Providers>
