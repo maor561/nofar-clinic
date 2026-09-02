@@ -1,5 +1,6 @@
 import { requirePatient, getDisplayName } from "@/modules/core/auth/server";
 import { PatientShell } from "@/modules/core/design-system";
+import { PushToggle } from "@/modules/core/push/push-toggle";
 import { LogoutButton } from "../logout-button";
 import { NotificationBell } from "../notification-bell";
 
@@ -11,11 +12,13 @@ export default async function PatientLayout({ children }: { children: React.Reac
     <PatientShell
       user={{ name }}
       headerSlot={
-        <div className="flex items-center gap-1">
+        <>
           <NotificationBell />
           <LogoutButton />
-        </div>
+        </>
       }
+      pushSlot={<PushToggle />}
+      logoutSlot={<LogoutButton variant="row" />}
     >
       {children}
     </PatientShell>

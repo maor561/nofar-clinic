@@ -39,6 +39,7 @@ const PATHS = {
   pill: "M9 15l6-6M5.7 9.8a3.5 3.5 0 0 1 5-5l3.5 3.5a3.5 3.5 0 0 1-5 5z",
   run: "M15 3.5a2 2 0 1 0 0 4 2 2 0 0 0 0-4M13.5 9 10 11l2.5 2.5.5 5M12.5 13.5 9 19M13 11.5l3.5 1.5 2.5-2M6 12l3-1",
   shield: "M12 3.5 5 6v5.5c0 4.6 3 7.7 7 9 4-1.3 7-4.4 7-9V6L12 3.5ZM9 12l2 2 4-4.5",
+  menu: "M4 7h16M4 12h16M4 17h16",
 } as const;
 
 export type IconName = keyof typeof PATHS;
