@@ -11,6 +11,7 @@ const TIMELINE_ICON: Record<TimelineEventType, IconName> = {
   message: "chat",
   questionnaire_submitted: "form",
   status_changed: "status",
+  food_log: "leaf",
 };
 
 const dayFmt = new Intl.DateTimeFormat("he-IL", { dateStyle: "full" });

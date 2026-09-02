@@ -19,3 +19,4 @@ export * from "@/modules/tasks/schema";
 export * from "@/modules/messaging/schema";
 export * from "@/modules/documents/schema";
 export * from "@/modules/questionnaires/schema";
+export * from "@/modules/food-log/schema";

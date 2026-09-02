@@ -139,6 +139,11 @@ export default async function PatientPage({
             </Link>
           </Button>
           <Button asChild variant="outline" size="sm">
+            <Link href={`/t/patients/${id}/food`}>
+              <Icon name="apple" size={16} /> יומן אכילה
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
             <Link href={`/t/calendar/new?patient=${id}`}>
               <Icon name="calendar" size={16} /> פגישה
             </Link>

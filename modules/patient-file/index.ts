@@ -17,6 +17,7 @@ export const TIMELINE_LABEL: Record<TimelineEventType, string> = {
   message: "הודעה",
   questionnaire_submitted: "שאלון",
   status_changed: "סטטוס",
+  food_log: "יומן אכילה",
 };
 
 export type TimelineEntry = InferSelectModel<typeof timelineEvent>;

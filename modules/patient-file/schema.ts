@@ -17,6 +17,7 @@ export const timelineEventType = [
   "message",
   "questionnaire_submitted",
   "status_changed",
+  "food_log",
 ] as const;
 export type TimelineEventType = (typeof timelineEventType)[number];
 

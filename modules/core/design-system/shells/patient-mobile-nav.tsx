@@ -8,7 +8,7 @@ import { Icon, type IconName } from "../icon";
 import type { NavItem } from "./shell-nav";
 
 /** hrefs that get a fixed slot in the bottom bar; the rest go into "עוד". */
-const PRIMARY = ["/p", "/p/appointments", "/p/tasks", "/p/questionnaire"];
+const PRIMARY = ["/p", "/p/food", "/p/tasks", "/p/appointments"];
 
 function useIsActive() {
   const pathname = usePathname();

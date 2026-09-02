@@ -14,6 +14,7 @@ const DEFAULT_NAV: NavItem[] = [
   { label: "המשימות שלי", icon: "task-done", href: "/p/tasks" },
   { label: "המפגשים שלי", icon: "leaf", href: "/p/sessions" },
   { label: "הפגישות שלי", icon: "calendar", href: "/p/appointments" },
+  { label: "יומן אכילה", icon: "apple", href: "/p/food" },
   ...(FEATURES.messaging
     ? [{ label: "הודעות", icon: "chat", href: "/p/messages" } as NavItem]
     : []),
@@ -25,9 +26,9 @@ const DEFAULT_NAV: NavItem[] = [
 /** short labels for the phone bottom bar */
 const MOBILE_LABELS: Record<string, string> = {
   "/p": "בית",
-  "/p/appointments": "פגישות",
+  "/p/food": "אוכל",
   "/p/tasks": "משימות",
-  "/p/questionnaire": "שאלונים",
+  "/p/appointments": "פגישות",
 };
 
 function initials(name: string) {
