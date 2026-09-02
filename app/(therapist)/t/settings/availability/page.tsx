@@ -20,12 +20,17 @@ export default async function AvailabilityPage() {
   const tdb = await getTherapistDb();
   const { policy, rules, exceptions } = await getAvailabilitySettings(tdb);
 
-  const byWeekday = new Map(rules.map((r) => [r.weekday, r]));
+  const byWeekday = new Map<number, { start: string; end: string }[]>();
+  for (const r of [...rules].sort((a, b) => a.startMinute - b.startMinute)) {
+    const arr = byWeekday.get(r.weekday) ?? [];
+    arr.push({ start: hhmm(r.startMinute), end: hhmm(r.endMinute) });
+    byWeekday.set(r.weekday, arr);
+  }
   const days: DayValue[] = Array.from({ length: 7 }, (_, i) => {
-    const r = byWeekday.get(i);
-    return r
-      ? { enabled: true, start: hhmm(r.startMinute), end: hhmm(r.endMinute) }
-      : { enabled: false, start: "09:00", end: "16:00" };
+    const w = byWeekday.get(i);
+    return w && w.length > 0
+      ? { enabled: true, windows: w }
+      : { enabled: false, windows: [{ start: "09:00", end: "16:00" }] };
   });
 
   const policyValue: PolicyValue = {

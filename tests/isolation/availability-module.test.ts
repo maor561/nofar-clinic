@@ -124,6 +124,30 @@ describe("availability config", () => {
       }),
     ).rejects.toThrow("invalid_availability");
   });
+
+  it("keeps several non-overlapping windows on the same weekday", async () => {
+    await saveAvailability(tdb(t1), {
+      policy: SAMPLE.policy,
+      rules: [
+        { weekday: 0, startMinute: 600, endMinute: 840 }, // 10:00–14:00
+        { weekday: 0, startMinute: 960, endMinute: 1200 }, // 16:00–20:00
+      ],
+    });
+    const s = await getAvailabilitySettings(tdb(t1));
+    expect(s.rules.filter((r) => r.weekday === 0)).toHaveLength(2);
+  });
+
+  it("rejects two windows that overlap on the same weekday", async () => {
+    await expect(
+      saveAvailability(tdb(t1), {
+        policy: SAMPLE.policy,
+        rules: [
+          { weekday: 0, startMinute: 600, endMinute: 840 },
+          { weekday: 0, startMinute: 780, endMinute: 1020 }, // starts inside the first
+        ],
+      }),
+    ).rejects.toThrow("overlapping_windows");
+  });
 });
 
 describe("self-booking", () => {

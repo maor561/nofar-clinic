@@ -123,6 +123,10 @@
 
 ## יומן סשנים
 
+### 2026-09-02 (המשך ו') — כמה חלונות זמינות ליום + הסבר Web Push
+**חלונות מרובים (ADR-047):** מיגרציה `0022` הסירה את האילוץ unique על `(therapist_id, weekday)` ב-`availability_rule`. `normalizeRules` דוחה חפיפה במקום `weekday` כפול. מסך `/t/settings/availability` — `DayRow` client עם "+ הוספת חלון שעות" / "הסרת חלון". מנוע ה-slots כבר תמך. +3 בדיקות (166 סה"כ). אומת בדפדפן: ראשון 10:00–14:00 + 16:00–20:00 → שמירה → רענון → נשמר.
+**Web Push:** הוסבר ללקוח מה זה ומה נדרש — 4 שלבים: (1) `node -e "console.log(require('web-push').generateVAPIDKeys())"`, (2) 3 env vars ב-Vercel (`WEB_PUSH_VAPID_PUBLIC_KEY`/`_PRIVATE_KEY`/`_SUBJECT`), (3) Redeploy, (4) הפעלה במכשיר + הערת אייפון ("הוסף למסך הבית" קודם). הפעמון והמיילים עובדים כרגיל בינתיים.
+
 ### 2026-09-02 (המשך ה') — WP-66: מחיקת מטופל קשה ובלתי-הפיכה
 `deletePatientCompletely(tdb, id)` ב-`modules/patients` — מוחק blobs של מסמכים → `tdb.delete(patient)` יחיד scoped. מיגרציה `0021` הוסיפה `ON DELETE CASCADE` ל-`field_value`/`invite`/`user` → גורר login → session/notification/push. `audit_log` נשמר בכוונה (append-only, מטא-דאטה בלבד). UI: כרטיס "אזור מסוכן" ב-`/t/patients/[id]/edit` (checkbox + הקלדת שם). **ADR-046 — עוקף במפורש את המלצת anonymize+lock ב-OPERATIONS.md, באחריות הלקוחה, עם המלצה מוצגת להיוועץ בעו״ד.** 3 בדיקות בידוד (0 שורות בכל טבלה, tenant שני שלם). **סיום 17 הדיוקים של ROADMAP_V2** (חוץ מ-WP-62 שחסום על חומר מהלקוחה).
 

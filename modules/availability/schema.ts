@@ -18,7 +18,11 @@ import { therapist } from "@/modules/core/auth/schema";
  * which also exposes opaque busy ranges. See ADR-039 / ADR-040.
  */
 
-/** Recurring weekly working hours. One window per weekday for v1. */
+/**
+ * Recurring weekly working hours. A weekday may have several windows (e.g.
+ * 10:00–14:00 and 16:00–20:00) — one row each. `saveAvailability` rejects
+ * windows that overlap within the same day.
+ */
 export const availabilityRule = pgTable(
   "availability_rule",
   {
@@ -33,10 +37,7 @@ export const availabilityRule = pgTable(
     endMinute: integer("end_minute").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
-    index("availability_rule_therapist_idx").on(t.therapistId),
-    unique("availability_rule_therapist_weekday_uq").on(t.therapistId, t.weekday),
-  ],
+  (t) => [index("availability_rule_therapist_idx").on(t.therapistId)],
 );
 
 /** A single blocked clinic date (vacation / day off) — removes all slots that day. */

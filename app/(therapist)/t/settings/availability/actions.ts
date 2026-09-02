@@ -18,6 +18,8 @@ function toMinutes(v: string): number | null {
   return min >= 0 && min <= 1440 ? min : null;
 }
 
+const DAY_HE = ["א", "ב", "ג", "ד", "ה", "ו", "ש"];
+
 export async function saveAvailabilityAction(
   _prev: AvailabilityFormState,
   fd: FormData,
@@ -25,12 +27,16 @@ export async function saveAvailabilityAction(
   const rules: { weekday: number; startMinute: number; endMinute: number }[] = [];
   for (let d = 0; d < 7; d++) {
     if (fd.get(`d${d}_enabled`) == null) continue;
-    const startMinute = toMinutes(String(fd.get(`d${d}_start`) ?? ""));
-    const endMinute = toMinutes(String(fd.get(`d${d}_end`) ?? ""));
-    if (startMinute == null || endMinute == null || startMinute >= endMinute) {
-      return { error: `שעות לא תקינות ליום ${["א", "ב", "ג", "ד", "ה", "ו", "ש"][d]}` };
+    const starts = fd.getAll(`d${d}_start`).map(String);
+    const ends = fd.getAll(`d${d}_end`).map(String);
+    for (let w = 0; w < starts.length; w++) {
+      const startMinute = toMinutes(starts[w]);
+      const endMinute = toMinutes(ends[w] ?? "");
+      if (startMinute == null || endMinute == null || startMinute >= endMinute) {
+        return { error: `שעות לא תקינות ליום ${DAY_HE[d]}` };
+      }
+      rules.push({ weekday: d, startMinute, endMinute });
     }
-    rules.push({ weekday: d, startMinute, endMinute });
   }
 
   const policy: BookingPolicyFields = {
@@ -49,7 +55,10 @@ export async function saveAvailabilityAction(
   const tdb = await getTherapistDb();
   try {
     await saveAvailability(tdb, { policy, rules });
-  } catch {
+  } catch (e) {
+    if (e instanceof Error && e.message === "overlapping_windows") {
+      return { error: "יש חלונות שעות שחופפים באותו יום. תקנו ונסו שוב." };
+    }
     return { error: "שמירת הזמינות נכשלה. בדקו את הערכים ונסו שוב." };
   }
 

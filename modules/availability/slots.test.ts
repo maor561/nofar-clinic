@@ -57,6 +57,17 @@ describe("computeOpenSlots", () => {
     expect(run({ rules: [{ weekday: 3, startMinute: 540, endMinute: 1020 }] })).toEqual([]);
   });
 
+  it("honours two separate windows on the same weekday", () => {
+    // Tuesday 10:00–12:00 and 16:00–19:00
+    const slots = run({
+      rules: [
+        { weekday: 2, startMinute: 600, endMinute: 720 },
+        { weekday: 2, startMinute: 960, endMinute: 1140 },
+      ],
+    });
+    expect(asHm(slots)).toEqual(["10:00", "11:00", "16:00", "17:00", "18:00"]);
+  });
+
   it("honours a finer granularity", () => {
     expect(asHm(run({ policy: { ...BASE_POLICY, granularityMinutes: 30 } }))).toHaveLength(15);
   });

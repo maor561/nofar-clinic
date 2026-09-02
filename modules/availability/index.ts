@@ -56,19 +56,30 @@ function normalizePolicy(p: BookingPolicyFields): BookingPolicyFields {
   };
 }
 
-function normalizeRules(
-  rules: SaveAvailabilityInput["rules"],
-): { weekday: number; startMinute: number; endMinute: number }[] {
-  const seen = new Set<number>();
-  const out: { weekday: number; startMinute: number; endMinute: number }[] = [];
+type NormalizedRule = { weekday: number; startMinute: number; endMinute: number };
+
+function normalizeRules(rules: SaveAvailabilityInput["rules"]): NormalizedRule[] {
+  const byDay = new Map<number, NormalizedRule[]>();
   for (const r of rules) {
     const weekday = clampInt(r.weekday, 0, 6);
-    if (seen.has(weekday)) throw new Error("invalid_availability");
-    seen.add(weekday);
     const startMinute = clampInt(r.startMinute, 0, MIN_IN_DAY - 1);
     const endMinute = clampInt(r.endMinute, 1, MIN_IN_DAY);
     if (startMinute >= endMinute) throw new Error("invalid_availability");
-    out.push({ weekday, startMinute, endMinute });
+    const day = byDay.get(weekday) ?? [];
+    day.push({ weekday, startMinute, endMinute });
+    byDay.set(weekday, day);
+  }
+
+  const out: NormalizedRule[] = [];
+  for (const [, windows] of byDay) {
+    windows.sort((a, b) => a.startMinute - b.startMinute);
+    for (let i = 1; i < windows.length; i++) {
+      // windows on one day may touch (end == next start) but never overlap
+      if (windows[i].startMinute < windows[i - 1].endMinute) {
+        throw new Error("overlapping_windows");
+      }
+    }
+    out.push(...windows);
   }
   return out;
 }

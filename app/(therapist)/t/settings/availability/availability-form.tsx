@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Button, Label, Icon } from "@/modules/core/design-system";
 import { WEEKDAY_LABELS } from "@/modules/availability";
 import {
@@ -12,7 +12,70 @@ import {
 
 const FIELD = "border-line bg-surface h-9 rounded-lg border px-2.5 text-sm";
 
-export type DayValue = { enabled: boolean; start: string; end: string };
+export type Window = { start: string; end: string };
+export type DayValue = { enabled: boolean; windows: Window[] };
+
+function DayRow({ index, value }: { index: number; value: DayValue }) {
+  const [windows, setWindows] = useState<Window[]>(value.windows);
+
+  const set = (i: number, patch: Partial<Window>) =>
+    setWindows((ws) => ws.map((w, j) => (j === i ? { ...w, ...patch } : w)));
+  const add = () => setWindows((ws) => [...ws, { start: ws.at(-1)?.end ?? "16:00", end: "20:00" }]);
+  const remove = (i: number) => setWindows((ws) => ws.filter((_, j) => j !== i));
+
+  return (
+    <div className="flex flex-wrap items-start gap-x-3 gap-y-1.5">
+      <label className="mt-1.5 flex w-24 shrink-0 items-center gap-2">
+        <input
+          type="checkbox"
+          name={`d${index}_enabled`}
+          defaultChecked={value.enabled}
+          className="accent-sage size-4"
+        />
+        <span className="text-sm">{WEEKDAY_LABELS[index]}</span>
+      </label>
+
+      <div className="flex flex-col gap-1.5">
+        {windows.map((w, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <input
+              type="time"
+              name={`d${index}_start`}
+              value={w.start}
+              onChange={(e) => set(i, { start: e.target.value })}
+              className={FIELD}
+            />
+            <span className="text-ink-faint">–</span>
+            <input
+              type="time"
+              name={`d${index}_end`}
+              value={w.end}
+              onChange={(e) => set(i, { end: e.target.value })}
+              className={FIELD}
+            />
+            {windows.length > 1 && (
+              <button
+                type="button"
+                onClick={() => remove(i)}
+                aria-label="הסרת חלון"
+                className="text-ink-faint hover:text-danger"
+              >
+                <Icon name="x" size={15} />
+              </button>
+            )}
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={add}
+          className="text-sage-deep w-fit text-[12px] font-semibold hover:underline"
+        >
+          + הוספת חלון שעות
+        </button>
+      </div>
+    </div>
+  );
+}
 export type PolicyValue = {
   selfSchedulingEnabled: boolean;
   slotMinutes: number;
@@ -43,27 +106,17 @@ export function AvailabilityForm({ days, policy }: { days: DayValue[]; policy: P
         </span>
       </label>
 
-      <fieldset className="space-y-2.5">
+      <fieldset className="space-y-3">
         <legend className="text-ink-faint mb-1 text-[11px] font-bold tracking-wide">
           שעות עבודה שבועיות
         </legend>
         {days.map((d, i) => (
-          <div key={i} className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <label className="flex w-24 shrink-0 items-center gap-2">
-              <input
-                type="checkbox"
-                name={`d${i}_enabled`}
-                defaultChecked={d.enabled}
-                className="accent-sage size-4"
-              />
-              <span className="text-sm">{WEEKDAY_LABELS[i]}</span>
-            </label>
-            <input type="time" name={`d${i}_start`} defaultValue={d.start} className={FIELD} />
-            <span className="text-ink-faint">–</span>
-            <input type="time" name={`d${i}_end`} defaultValue={d.end} className={FIELD} />
-          </div>
+          <DayRow key={i} index={i} value={d} />
         ))}
-        <p className="text-ink-faint text-[11px]">יום ללא סימון לא יוצע כלל. אפשר חלון אחד ליום.</p>
+        <p className="text-ink-faint text-[11px]">
+          יום ללא סימון לא יוצע כלל. אפשר להוסיף כמה חלונות באותו יום (למשל 10:00–14:00 וגם
+          16:00–20:00), כל עוד הם לא חופפים.
+        </p>
       </fieldset>
 
       <div className="grid gap-4 sm:grid-cols-2">

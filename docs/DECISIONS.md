@@ -688,3 +688,14 @@ argon2id, נעילת חשבון, throttle IP, ו-TOTP אופציונלי — ל�
 
 **נדחה:** anonymize+lock (המלצת ה-ops — הלקוחה בחרה אחרת), מחיקה מותרת רק אחרי תום תקופת השמירה
 (הלקוחה בחרה ללא תלות ברגולציה, באחריותה).
+
+## ADR-047 — כמה חלונות זמינות באותו יום
+**תאריך:** 2026-09-02 · **סטטוס:** נעול · **מרחיב ADR-039**
+
+בקשת הלקוחה: להגדיר יותר מחלון עבודה אחד ליום (למשל ראשון 10:00–14:00 וגם 16:00–20:00).
+
+- מנוע ה-slots (`computeOpenSlots`) **כבר** איטר על כל הכללים ליום (`rulesByDay: Map<weekday, WeeklyRule[]>`) — לא נגע.
+- **מיגרציה `0022`** הסירה את האילוץ `availability_rule_therapist_weekday_uq` (היה unique על `therapist_id + weekday`). כעת כמה שורות לאותו יום.
+- `normalizeRules` ב-`modules/availability` — במקום לדחות `weekday` כפול, ממיין את חלונות היום ודוחה **חפיפה** (`overlapping_windows`). חלונות שנוגעים (end == next start) מותרים.
+- מסך `/t/settings/availability` — רכיב `DayRow` (client) מנהל רשימת חלונות ליום עם "+ הוספת חלון שעות" ו-"הסרת חלון". שדות `d{i}_start` / `d{i}_end` חוזרים, ה-action קורא `fd.getAll`.
+- בדיקות: `slots.test.ts` — יום עם שני חלונות; `availability-module.test.ts` — שמירת 2 חלונות + דחיית חפיפה. אומת בדפדפן (שמירה → רענון → שני חלונות ליום ראשון).
