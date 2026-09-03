@@ -24,7 +24,7 @@ function Header() {
         href="/p/appointments"
         className="text-ink-faint hover:text-ink flex items-center gap-1 text-[13px]"
       >
-        <Icon name="chevron" size={14} /> לפגישות שלי
+        <Icon name="chevron" size={16} /> לפגישות שלי
       </Link>
       <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold">קביעת תור</h1>
       <p className="text-ink-soft text-sm">

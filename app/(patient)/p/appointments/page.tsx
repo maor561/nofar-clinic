@@ -49,7 +49,7 @@ export default async function MyAppointmentsPage() {
       </header>
 
       <section className="space-y-2">
-        <h2 className="text-ink-faint text-[11px] font-bold tracking-wide">קרובות</h2>
+        <h2 className="text-ink-faint text-xs font-bold tracking-wide">קרובות</h2>
         {upcoming.length === 0 ? (
           <EmptyState
             icon="calendar"
@@ -62,7 +62,7 @@ export default async function MyAppointmentsPage() {
               <div key={a.id} className="flex items-center gap-3 px-3.5 py-3">
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold">{whenFmt.format(a.startsAt)}</span>
-                  <span className="text-ink-faint text-[12px]">
+                  <span className="text-ink-faint text-[13px]">
                     עד {timeFmt.format(a.endsAt)}
                     {treatmentLabel(a.treatmentType) && <> · {treatmentLabel(a.treatmentType)}</>}
                   </span>
@@ -75,7 +75,7 @@ export default async function MyAppointmentsPage() {
 
       {past.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-ink-faint text-[11px] font-bold tracking-wide">קודמות</h2>
+          <h2 className="text-ink-faint text-xs font-bold tracking-wide">קודמות</h2>
           <Card className="divide-line-soft divide-y p-0">
             {past.map((a) => (
               <div key={a.id} className="flex items-center gap-3 px-3.5 py-2.5">
@@ -84,7 +84,7 @@ export default async function MyAppointmentsPage() {
                 </span>
                 <span
                   className={cn(
-                    "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold",
+                    "shrink-0 rounded-full px-2 py-0.5 text-xs font-bold",
                     a.status === "cancelled"
                       ? "text-ink-faint bg-[#f0eee9]"
                       : a.status === "no_show"

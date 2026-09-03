@@ -26,9 +26,9 @@ export function BookGrid({ days }: { days: DaySlots[] }) {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {days.map((d) => (
             <div key={d.label} className="space-y-2">
-              <h3 className="text-ink-faint text-[12px] font-bold">{d.label}</h3>
+              <h3 className="text-ink-faint text-[13px] font-bold">{d.label}</h3>
               {d.slots.length === 0 ? (
-                <p className="text-ink-faint text-[12px]">—</p>
+                <p className="text-ink-faint text-[13px]">—</p>
               ) : (
                 <div className="flex flex-wrap gap-1.5">
                   {d.slots.map((s) => (

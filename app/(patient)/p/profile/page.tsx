@@ -58,7 +58,7 @@ export default async function ProfilePage() {
                 me.treatmentTypes.map((t) => (
                   <span
                     key={t}
-                    className="bg-sage-soft text-sage-deep rounded-md px-2 py-0.5 text-[12px] font-semibold"
+                    className="bg-sage-soft text-sage-deep rounded-md px-2 py-0.5 text-[13px] font-semibold"
                   >
                     {t}
                   </span>
@@ -77,7 +77,7 @@ export default async function ProfilePage() {
               ) : (
                 me.consents.map((k) => (
                   <p key={k} className="text-sage-deep flex items-start gap-2">
-                    <Icon name="task-done" size={15} className="mt-0.5" /> {CONSENT_LABEL[k]}
+                    <Icon name="task-done" size={16} className="mt-0.5" /> {CONSENT_LABEL[k]}
                   </p>
                 ))
               )}

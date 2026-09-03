@@ -52,7 +52,7 @@ export default async function FillQuestionnairePage({
         href="/p/questionnaire"
         className="text-ink-faint hover:text-ink flex items-center gap-1 text-[13px]"
       >
-        <Icon name="chevron" size={14} /> לשאלונים שלי
+        <Icon name="chevron" size={16} /> לשאלונים שלי
       </Link>
 
       <header className="space-y-1">

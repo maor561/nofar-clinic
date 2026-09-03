@@ -60,9 +60,9 @@ export function NotificationBell() {
         <button
           type="button"
           aria-label={`התראות${count ? ` (${count} שלא נקראו)` : ""}`}
-          className="text-ink-faint hover:bg-sage-tint hover:text-ink relative grid size-8 place-items-center rounded-lg transition-colors"
+          className="text-ink-faint hover:bg-sage-tint hover:text-ink relative grid size-9 place-items-center rounded-lg transition-colors md:size-8"
         >
-          <Icon name="bell" size={18} />
+          <Icon name="bell" size={20} className="md:size-[18px]" />
           {count > 0 && (
             <span className="-inline-end-0.5 bg-blush absolute -top-0.5 grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] font-bold text-white">
               {count > 9 ? "9+" : count}

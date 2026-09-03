@@ -44,9 +44,7 @@ export default async function MyTasksPage() {
             (grp) =>
               grp.rows.length > 0 && (
                 <section key={grp.label} className="space-y-2">
-                  <h2 className="text-ink-faint text-[11px] font-bold tracking-wide">
-                    {grp.label}
-                  </h2>
+                  <h2 className="text-ink-faint text-xs font-bold tracking-wide">{grp.label}</h2>
                   <Card className="divide-line-soft divide-y p-0">
                     {grp.rows.map((t) => (
                       <div key={t.id} className="flex items-start gap-3 px-3.5 py-3">
@@ -61,7 +59,7 @@ export default async function MyTasksPage() {
                                 : "border-line hover:border-sage",
                             )}
                           >
-                            {t.status === "done" && <Icon name="check" size={13} />}
+                            {t.status === "done" && <Icon name="check" size={16} />}
                           </button>
                         </form>
                         <div className="min-w-0 flex-1">
@@ -78,7 +76,7 @@ export default async function MyTasksPage() {
                               {t.description}
                             </p>
                           )}
-                          <p className="text-ink-faint mt-1 flex flex-wrap gap-x-2 text-[11px]">
+                          <p className="text-ink-faint mt-1 flex flex-wrap gap-x-2 text-xs">
                             <span>{TASK_FREQUENCY_LABEL[t.frequency]}</span>
                             {range(t) && <span>· {range(t)}</span>}
                           </p>

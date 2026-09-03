@@ -43,7 +43,7 @@ export default async function QuestionnaireListPage() {
                   <Icon name="form" size={18} className="text-ink-faint shrink-0" />
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold">{q.templateName}</span>
-                    <span className="text-ink-faint text-[12px]">
+                    <span className="text-ink-faint text-[13px]">
                       {q.status === "submitted"
                         ? `הוגש ${q.submittedAt ? "ב־" + dtf.format(q.submittedAt) : ""}`
                         : "ממתין למילוי"}
@@ -52,8 +52,8 @@ export default async function QuestionnaireListPage() {
                   <span
                     className={
                       q.status === "submitted"
-                        ? "bg-sage-soft text-sage-deep rounded-full px-2 py-0.5 text-[11px] font-bold"
-                        : "bg-warn-soft text-warn rounded-full px-2 py-0.5 text-[11px] font-bold"
+                        ? "bg-sage-soft text-sage-deep rounded-full px-2 py-0.5 text-xs font-bold"
+                        : "bg-warn-soft text-warn rounded-full px-2 py-0.5 text-xs font-bold"
                     }
                   >
                     {q.status === "submitted" ? "הוגש" : "למילוי"}

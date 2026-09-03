@@ -138,6 +138,17 @@
     @apply font-sans;
     color-scheme: light;
   }
+  /* Phones: scale every rem-based size up ~9% and never zoom on focus. */
+  @media (max-width: 767px) {
+    html {
+      font-size: 17.5px;
+    }
+    input,
+    textarea,
+    select {
+      font-size: 16px;
+    }
+  }
   body {
     @apply bg-background text-foreground;
     -webkit-font-smoothing: antialiased;

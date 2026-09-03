@@ -16,7 +16,7 @@ export function AnswersList({ fields }: { fields: FieldValueOut[] }) {
     <dl className="max-w-xl space-y-3">
       {fields.map((f) => (
         <div key={f.definitionId} className="border-line-soft border-b pb-2.5">
-          <dt className="text-ink-faint text-[11px] font-bold">{f.labelHe}</dt>
+          <dt className="text-ink-faint text-xs font-bold">{f.labelHe}</dt>
           <dd className="text-ink mt-0.5 text-sm whitespace-pre-wrap">
             {fmt(f.value)}
             {f.unit && f.value != null ? ` ${f.unit}` : ""}

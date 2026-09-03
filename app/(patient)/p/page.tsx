@@ -183,11 +183,11 @@ export default async function PatientDashboard() {
               {updates.map((e) => (
                 <li key={e.id} className="flex items-start gap-2.5">
                   <span className="bg-sage-soft text-sage-deep mt-0.5 grid size-6 shrink-0 place-items-center rounded-full">
-                    <Icon name={TL_ICON[e.type]} size={13} />
+                    <Icon name={TL_ICON[e.type]} size={16} />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm">{e.summary}</span>
-                    <span className="text-ink-faint text-[11px]">
+                    <span className="text-ink-faint text-xs">
                       {TIMELINE_LABEL[e.type]} · {dayFmt.format(e.occurredAt)}
                     </span>
                   </span>

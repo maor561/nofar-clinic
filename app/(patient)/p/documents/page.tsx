@@ -51,7 +51,7 @@ export default async function MyDocumentsPage() {
                 >
                   {d.name}
                 </a>
-                <p className="text-ink-faint flex flex-wrap gap-x-2 text-[11px]">
+                <p className="text-ink-faint flex flex-wrap gap-x-2 text-xs">
                   <span>{DOCUMENT_KIND_LABEL[d.kind]}</span>
                   <span>· {humanSize(d.size)}</span>
                   <span>· {d.uploadedBy === "patient" ? "הועלה על ידך" : "מנופר"}</span>

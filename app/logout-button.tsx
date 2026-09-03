@@ -22,9 +22,9 @@ export function LogoutButton({ variant = "icon" }: { variant?: "icon" | "row" })
       <button
         type="submit"
         aria-label="יציאה"
-        className="text-ink-faint hover:bg-sage-tint hover:text-ink grid size-8 place-items-center rounded-lg transition-colors"
+        className="text-ink-faint hover:bg-sage-tint hover:text-ink grid size-9 place-items-center rounded-lg transition-colors md:size-8"
       >
-        <Icon name="status" size={18} />
+        <Icon name="status" size={20} className="md:size-[18px]" />
       </button>
     </form>
   );

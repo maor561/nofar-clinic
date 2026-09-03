@@ -63,7 +63,7 @@ export default async function FoodLogPage({
           href={`/p/food?d=${prev}`}
           className="text-sage-deep flex items-center gap-1 font-semibold hover:underline"
         >
-          <Icon name="chevron" size={14} /> יום קודם
+          <Icon name="chevron" size={16} /> יום קודם
         </Link>
         <span className="font-semibold">
           {longFmt.format(new Date(`${date}T12:00:00Z`))}
@@ -74,7 +74,7 @@ export default async function FoodLogPage({
             href={`/p/food?d=${next}`}
             className="text-sage-deep flex items-center gap-1 font-semibold hover:underline"
           >
-            יום הבא <Icon name="chevron" size={14} className="rotate-180" />
+            יום הבא <Icon name="chevron" size={16} className="rotate-180" />
           </Link>
         ) : (
           <span className="text-ink-faint/50">יום הבא</span>

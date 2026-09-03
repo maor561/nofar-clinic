@@ -37,7 +37,7 @@ export default async function MySessionsPage() {
                   {s.treatmentTypes.map((t) => (
                     <span
                       key={t}
-                      className="bg-sage-soft text-sage-deep rounded-full px-2 py-0.5 text-[11px]"
+                      className="bg-sage-soft text-sage-deep rounded-full px-2 py-0.5 text-xs"
                     >
                       {t}
                     </span>

@@ -23,7 +23,7 @@ export default async function MyMessagesPage() {
     <div className="flex h-[calc(100svh-9rem)] flex-col">
       <header className="border-line border-b pb-3">
         <h1 className="font-[family-name:var(--font-display)] text-xl font-bold">הודעות עם נופר</h1>
-        <p className="text-ink-soft text-[12px]">כל שאלה או עדכון — כאן.</p>
+        <p className="text-ink-soft text-[13px]">כל שאלה או עדכון — כאן.</p>
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto">

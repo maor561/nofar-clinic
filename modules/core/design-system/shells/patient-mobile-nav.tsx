@@ -67,18 +67,18 @@ export function PatientMobileNav({
               href={i.href}
               onClick={() => setSheet(false)}
               className={cn(
-                "flex items-center gap-2.5 rounded-xl px-3 py-3 text-sm font-semibold",
+                "flex min-h-12 items-center gap-3 rounded-xl px-3.5 py-3 text-[15px] font-semibold",
                 isActive(i.href) ? "bg-sage-soft text-sage-deep" : "bg-surface-2 text-ink-soft",
               )}
             >
-              <Icon name={i.icon} size={19} />
+              <Icon name={i.icon} size={22} />
               {i.label}
             </Link>
           ))}
         </div>
         {pushSlot && (
-          <div className="bg-surface-2 mt-2 rounded-xl px-3 py-3">
-            <p className="text-ink-faint mb-1.5 text-[11px] font-bold">התראות Push</p>
+          <div className="bg-surface-2 mt-2 rounded-xl px-3.5 py-3">
+            <p className="text-ink-faint mb-1.5 text-xs font-bold">התראות Push</p>
             {pushSlot}
           </div>
         )}
@@ -98,11 +98,11 @@ export function PatientMobileNav({
           onClick={() => setSheet((v) => !v)}
           aria-expanded={sheet}
           className={cn(
-            "flex flex-1 flex-col items-center gap-0.5 pt-2 pb-2.5 text-[11px] font-semibold",
+            "flex min-h-[52px] flex-1 flex-col items-center justify-center gap-1 pt-1.5 pb-3 text-xs font-semibold",
             sheet || moreActive ? "text-sage-deep" : "text-ink-faint",
           )}
         >
-          <Icon name="menu" size={21} />
+          <Icon name="menu" size={24} />
           עוד
         </button>
       </nav>
@@ -126,11 +126,11 @@ function Tab({
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex flex-1 flex-col items-center gap-0.5 border-t-2 pt-1.5 pb-2.5 text-[11px] font-semibold",
+        "flex min-h-[52px] flex-1 flex-col items-center justify-center gap-1 border-t-2 pt-1 pb-3 text-xs font-semibold",
         active ? "border-sage-deep text-sage-deep" : "text-ink-faint border-transparent",
       )}
     >
-      <Icon name={icon} size={21} />
+      <Icon name={icon} size={24} />
       {label}
     </Link>
   );
