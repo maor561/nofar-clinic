@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { getPatientDb } from "@/modules/core/authz/server";
-import { listAppointmentRows } from "@/modules/appointments";
+import { listAppointmentRows, treatmentLabel } from "@/modules/appointments";
 import { listTaskRows } from "@/modules/tasks";
 import { listTimeline, TIMELINE_LABEL, type TimelineEventType } from "@/modules/patient-file";
 import { countOpenQuestionnaires } from "@/modules/questionnaires";
-import { treatmentLabel } from "@/modules/appointments";
 import { getActivePatientSeries } from "@/modules/patients";
+import { countLoggedDays } from "@/modules/food-log";
 import {
   Button,
   Card,
@@ -15,17 +15,11 @@ import {
   Icon,
   type IconName,
 } from "@/modules/core/design-system";
-import { clinicDateFmt } from "@/lib/tz";
+import { clinicDateFmt, clinicWeekStart, toClinicFields } from "@/lib/tz";
+import { PatientKpis, type SmartPrompt } from "./patient-kpis";
 
 export const metadata = { title: "המרחב שלי" };
 
-const whenFmt = clinicDateFmt({
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-  hour: "2-digit",
-  minute: "2-digit",
-});
 const dayFmt = clinicDateFmt({ day: "2-digit", month: "2-digit" });
 
 const TL_ICON: Record<TimelineEventType, IconName> = {
@@ -46,19 +40,60 @@ export default async function PatientDashboard() {
   const me = await pdb.self();
   if (!me) return null;
 
-  // "now" for splitting upcoming appointments — per request
   const now = new Date();
+  const todayStr = toClinicFields(now).date;
+  const weekStartStr = toClinicFields(clinicWeekStart(now)).date;
 
-  const [appts, openTasks, updates, openQuestionnaires, series] = await Promise.all([
-    listAppointmentRows(pdb, { from: now, status: "scheduled", ascending: true, limit: 1 }),
-    listTaskRows(pdb, { status: "open", limit: 4 }),
-    listTimeline(pdb, me.id, { limit: 4 }),
-    countOpenQuestionnaires(pdb, me.id),
-    getActivePatientSeries(pdb, me.id),
-  ]);
+  const [appts, openTaskRows, updates, openQuestionnaires, series, foodWeek, foodToday] =
+    await Promise.all([
+      listAppointmentRows(pdb, { from: now, status: "scheduled", ascending: true, limit: 1 }),
+      listTaskRows(pdb, { status: "open", limit: 200 }),
+      listTimeline(pdb, me.id, { limit: 4 }),
+      countOpenQuestionnaires(pdb, me.id),
+      getActivePatientSeries(pdb, me.id),
+      countLoggedDays(pdb, me.id, weekStartStr, todayStr),
+      countLoggedDays(pdb, me.id, todayStr, todayStr),
+    ]);
+
   const nextAppt = appts[0] ?? null;
-  const seriesRemaining = series ? Math.max(0, series.sessionCount - series.usedCount) : 0;
   const needsQuestionnaire = openQuestionnaires > 0;
+
+  const seriesRemaining = series ? Math.max(0, series.sessionCount - series.usedCount) : 0;
+  const tasksOverdue = openTaskRows.filter((t) => t.endDate && t.endDate < todayStr).length;
+  const tasksDueToday = openTaskRows.filter((t) => t.endDate === todayStr).length;
+  const foodLoggedToday = foodToday > 0;
+
+  // One prioritised nudge for the "smart" line — most urgent thing first.
+  const smart: SmartPrompt =
+    tasksOverdue > 0
+      ? {
+          text:
+            tasksOverdue === 1 ? "יש לך משימה אחת באיחור." : `יש לך ${tasksOverdue} משימות באיחור.`,
+          cta: "למשימות",
+          href: "/p/tasks",
+        }
+      : series && seriesRemaining > 0 && seriesRemaining <= 2
+        ? {
+            text: `נותרו לך ${seriesRemaining} טיפולים בסדרה — כדאי לתאם את ההמשך.`,
+            cta: "קביעת תור",
+            href: "/p/appointments/new",
+          }
+        : tasksDueToday > 0
+          ? {
+              text:
+                tasksDueToday === 1
+                  ? "יש לך משימה אחת להיום."
+                  : `יש לך ${tasksDueToday} משימות להיום.`,
+              cta: "למשימות",
+              href: "/p/tasks",
+            }
+          : !foodLoggedToday
+            ? {
+                text: "עוד לא עדכנת את יומן האכילה היום.",
+                cta: "עדכון",
+                href: "/p/food",
+              }
+            : null;
 
   return (
     <div className="space-y-6">
@@ -87,89 +122,24 @@ export default async function PatientDashboard() {
         </Card>
       )}
 
-      {series && (
-        <Card>
-          <CardHeader>
-            <CardTitle>סדרת הטיפול שלך</CardTitle>
-            <span className="text-ink-faint text-xs">{series.name}</span>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p className="text-sm">
-              בוצעו <b className="tabular-nums">{series.usedCount}</b> מתוך{" "}
-              <b className="tabular-nums">{series.sessionCount}</b> · נותרו{" "}
-              <b className="text-sage-deep tabular-nums">{seriesRemaining}</b>
-            </p>
-            <div className="bg-line-soft h-2 overflow-hidden rounded-full">
-              <div
-                className="bg-sage h-full rounded-full"
-                style={{
-                  width: `${Math.min(100, (series.usedCount / series.sessionCount) * 100)}%`,
-                }}
-              />
-            </div>
-            {seriesRemaining > 0 && seriesRemaining <= 2 && (
-              <p className="text-amber-ink text-[13px]">
-                נותרו {seriesRemaining} מפגשים — כדאי לתאם עם נופר את ההמשך.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>הפגישה הבאה</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {nextAppt ? (
-              <>
-                <p className="text-sm font-semibold">{whenFmt.format(nextAppt.startsAt)}</p>
-                {treatmentLabel(nextAppt.treatmentType) && (
-                  <p className="text-ink-soft mt-0.5 text-[13px]">
-                    {treatmentLabel(nextAppt.treatmentType)}
-                  </p>
-                )}
-                <Link
-                  href="/p/appointments"
-                  className="text-sage-deep mt-2 inline-block text-[13px] hover:underline"
-                >
-                  כל הפגישות ←
-                </Link>
-              </>
-            ) : (
-              <p className="text-ink-faint text-sm">אין פגישה קרובה שנקבעה.</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>משימות פתוחות</CardTitle>
-            <span className="text-ink-faint text-xs tabular-nums">{openTasks.length}</span>
-          </CardHeader>
-          <CardContent>
-            {openTasks.length === 0 ? (
-              <p className="text-ink-faint text-sm">אין משימות פתוחות. כל הכבוד!</p>
-            ) : (
-              <ul className="space-y-1.5">
-                {openTasks.map((t) => (
-                  <li key={t.id} className="flex items-center gap-2 text-sm">
-                    <span className="border-line size-3.5 shrink-0 rounded-[4px] border" />
-                    <span className="truncate">{t.title}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <Link
-              href="/p/tasks"
-              className="text-sage-deep mt-2 inline-block text-[13px] hover:underline"
-            >
-              למשימות שלי ←
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+      <PatientKpis
+        now={now}
+        series={series}
+        openTasks={openTaskRows.length}
+        tasksDueToday={tasksDueToday}
+        tasksOverdue={tasksOverdue}
+        nextAppt={
+          nextAppt
+            ? {
+                startsAt: nextAppt.startsAt,
+                treatmentLabel: treatmentLabel(nextAppt.treatmentType) || null,
+              }
+            : null
+        }
+        foodWeek={foodWeek}
+        foodLoggedToday={foodLoggedToday}
+        smart={smart}
+      />
 
       <Card>
         <CardHeader>
