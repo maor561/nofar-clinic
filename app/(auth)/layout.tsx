@@ -20,7 +20,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <p className="mt-3 max-w-sm text-sm text-white/80">
           תוכנית הטיפול, הפגישות והמשימות עם נופר — מרוכזים ונגישים בכל זמן.
         </p>
-        <p className="mt-7 text-xs text-white/60">נופר כהן · נטורופתיה קלינית ותזונה</p>
+        <p className="mt-7 text-xs text-white/60">
+          נופר כהן נטורופתית N.D והרבליסטית קלינית Cl.H
+        </p>
       </aside>
 
       <main className="flex items-center justify-center p-8 md:p-11">
