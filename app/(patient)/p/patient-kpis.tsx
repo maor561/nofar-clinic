@@ -21,17 +21,18 @@ function Tile({
   href,
   icon,
   label,
-  tone,
+  tone = "sage",
   children,
 }: {
   href: string;
   icon: IconName;
   label: string;
-  tone: "sage" | "blush";
+  /** "blush" = needs the patient's attention (something to act on). */
+  tone?: "sage" | "blush";
   children: React.ReactNode;
 }) {
   const toneClass =
-    tone === "blush" ? "bg-blush-soft/55 border-transparent" : "bg-sage-tint border-transparent";
+    tone === "blush" ? "bg-blush-soft border-blush/30" : "bg-sage-tint border-transparent";
   return (
     <Link
       href={href}
@@ -122,7 +123,12 @@ export function PatientKpis({
           )}
         </Tile>
 
-        <Tile href="/p/tasks" icon="task" label="משימות פתוחות" tone="sage">
+        <Tile
+          href="/p/tasks"
+          icon="task"
+          label="משימות פתוחות"
+          tone={tasksOverdue > 0 || tasksDueToday > 0 ? "blush" : "sage"}
+        >
           <span
             className={`text-2xl leading-none font-bold tabular-nums ${tasksOverdue > 0 ? "text-danger" : "text-ink"}`}
           >
@@ -135,7 +141,7 @@ export function PatientKpis({
           </span>
         </Tile>
 
-        <Tile href="/p/appointments" icon="calendar" label="הפגישה הבאה" tone="blush">
+        <Tile href="/p/appointments" icon="calendar" label="הפגישה הבאה">
           <span className="text-ink text-xl leading-tight font-bold">{apptBig}</span>
           <span className="text-ink-soft mt-1.5 text-xs">
             {nextAppt
@@ -150,7 +156,7 @@ export function PatientKpis({
           </span>
         </Tile>
 
-        <Tile href="/p/food" icon="apple" label="יומן אכילה" tone="blush">
+        <Tile href="/p/food" icon="apple" label="יומן אכילה">
           <span className="text-ink text-2xl leading-none font-bold tabular-nums">
             {foodWeek}
             <span className="text-ink-faint text-base font-semibold"> / 7</span>
@@ -159,7 +165,7 @@ export function PatientKpis({
             {Array.from({ length: 7 }).map((_, i) => (
               <span
                 key={i}
-                className={`size-2 rounded-full ${i < foodWeek ? "bg-blush" : "bg-white/80"}`}
+                className={`size-2 rounded-full ${i < foodWeek ? "bg-sage" : "bg-sage-soft"}`}
               />
             ))}
           </span>
@@ -170,11 +176,9 @@ export function PatientKpis({
       </div>
 
       {smart && (
-        <div className="bg-sage-soft flex items-center gap-3 rounded-2xl px-3.5 py-3">
-          <Icon name="target" size={18} className="text-sage-deep shrink-0" />
-          <span className="text-sage-deep flex-1 text-[13px] leading-snug font-medium">
-            {smart.text}
-          </span>
+        <div className="bg-blush-soft border-blush/30 flex items-center gap-3 rounded-2xl border px-3.5 py-3">
+          <Icon name="target" size={18} className="text-ink-soft shrink-0" />
+          <span className="text-ink flex-1 text-[13px] leading-snug font-medium">{smart.text}</span>
           <Link
             href={smart.href}
             className="bg-sage-deep shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold text-white"

@@ -72,13 +72,7 @@ export default async function TherapistDashboard() {
         </Link>
       )}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <Stat
-          href="/t/patients"
-          label="מטופלים פעילים"
-          value={active.length}
-          icon="users"
-          tone="blush"
-        />
+        <Stat href="/t/patients" label="מטופלים פעילים" value={active.length} icon="users" />
         <Stat href="/t/calendar" label="פגישות היום" value={today.length} icon="calendar" />
         <Stat
           href="/t/alerts"
@@ -231,25 +225,28 @@ function Stat({
   value,
   icon,
   highlight = false,
-  tone = "sage",
 }: {
   href: string;
   label: string;
   value: number;
   icon: IconName;
+  /** true = needs attention (unread alerts) — tinted blush. */
   highlight?: boolean;
-  tone?: "sage" | "blush";
 }) {
   return (
     <Link
       href={href}
       className={cn(
         "border-line bg-surface hover:border-sage flex items-center gap-3 rounded-xl border p-3.5 transition-colors",
-        tone === "blush" && "border-blush/25 bg-blush-soft/40",
-        highlight && "border-sage bg-sage-soft/40",
+        highlight && "border-blush/30 bg-blush-soft/50",
       )}
     >
-      <span className="bg-sage-soft text-sage-deep grid size-9 shrink-0 place-items-center rounded-lg">
+      <span
+        className={cn(
+          "grid size-9 shrink-0 place-items-center rounded-lg",
+          highlight ? "bg-blush text-white" : "bg-sage-soft text-sage-deep",
+        )}
+      >
         <Icon name={icon} size={17} />
       </span>
       <span className="min-w-0">

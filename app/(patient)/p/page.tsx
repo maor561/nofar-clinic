@@ -105,7 +105,7 @@ export default async function PatientDashboard() {
       </header>
 
       {needsQuestionnaire && (
-        <Card className="border-sage bg-sage-soft/40">
+        <Card className="border-blush/40 bg-blush-soft/60">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
             <div>
               <p className="font-semibold">
