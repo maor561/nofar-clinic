@@ -21,21 +21,17 @@ function Tile({
   href,
   icon,
   label,
-  tone = "plain",
+  tone,
   children,
 }: {
   href: string;
   icon: IconName;
   label: string;
-  tone?: "sage" | "alert" | "plain";
+  tone: "sage" | "blush";
   children: React.ReactNode;
 }) {
   const toneClass =
-    tone === "sage"
-      ? "bg-sage-tint border-transparent"
-      : tone === "alert"
-        ? "bg-blush-soft/60 border-blush/30"
-        : "bg-surface border-line";
+    tone === "blush" ? "bg-blush-soft/55 border-transparent" : "bg-sage-tint border-transparent";
   return (
     <Link
       href={href}
@@ -126,13 +122,12 @@ export function PatientKpis({
           )}
         </Tile>
 
-        <Tile
-          href="/p/tasks"
-          icon="task"
-          label="משימות פתוחות"
-          tone={tasksOverdue > 0 || tasksDueToday > 0 ? "alert" : "plain"}
-        >
-          <span className="text-ink text-2xl leading-none font-bold tabular-nums">{openTasks}</span>
+        <Tile href="/p/tasks" icon="task" label="משימות פתוחות" tone="sage">
+          <span
+            className={`text-2xl leading-none font-bold tabular-nums ${tasksOverdue > 0 ? "text-danger" : "text-ink"}`}
+          >
+            {openTasks}
+          </span>
           <span
             className={`mt-2 text-xs ${tasksOverdue > 0 ? "text-danger font-semibold" : "text-ink-soft"}`}
           >
@@ -140,7 +135,7 @@ export function PatientKpis({
           </span>
         </Tile>
 
-        <Tile href="/p/appointments" icon="calendar" label="הפגישה הבאה">
+        <Tile href="/p/appointments" icon="calendar" label="הפגישה הבאה" tone="blush">
           <span className="text-ink text-xl leading-tight font-bold">{apptBig}</span>
           <span className="text-ink-soft mt-1.5 text-xs">
             {nextAppt
@@ -155,7 +150,7 @@ export function PatientKpis({
           </span>
         </Tile>
 
-        <Tile href="/p/food" icon="apple" label="יומן אכילה" tone="sage">
+        <Tile href="/p/food" icon="apple" label="יומן אכילה" tone="blush">
           <span className="text-ink text-2xl leading-none font-bold tabular-nums">
             {foodWeek}
             <span className="text-ink-faint text-base font-semibold"> / 7</span>
@@ -164,7 +159,7 @@ export function PatientKpis({
             {Array.from({ length: 7 }).map((_, i) => (
               <span
                 key={i}
-                className={`size-2 rounded-full ${i < foodWeek ? "bg-sage" : "bg-sage-soft"}`}
+                className={`size-2 rounded-full ${i < foodWeek ? "bg-blush" : "bg-white/80"}`}
               />
             ))}
           </span>
